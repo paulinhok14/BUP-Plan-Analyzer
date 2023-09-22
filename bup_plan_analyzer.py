@@ -1,9 +1,14 @@
 import pandas as pd
 import warnings
-import sys  # sys.exit() para funcionar como um 'EXIT SCRIPT;' em Qlik
+import matplotlib.pyplot as plt
+from PIL import Image
 import customtkinter as ctk
 
+
 warnings.filterwarnings("ignore")
+
+# Lista de Scenarios
+scenarios_list = []
 
 
 # Função para ler o arquivo e informações complementares
@@ -55,11 +60,56 @@ def read_scope_file(file_full_path: str):
     del bup_scope['QTY']
     del bup_scope['LEADTIME']
 
-    # Maiores Leadtimes
-    highest_leadimes = bup_scope.nlargest(3, 'Leadtime')
-
-    return bup_scope, highest_leadimes
+    return bup_scope
 
 
-def generate_histogram():
-    pass
+def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e os maiores Leadtimes
+
+    # DF com os maiores Leadtimes
+    highest_leadimes = bup_scope.nlargest(3, 'Leadtime').to_string(index=False)
+
+    # Criando uma figura e eixos para inserir o gráfico
+    fig, ax = plt.subplots(figsize=(8, 4))
+    fig.patch.set_facecolor("None")
+
+    # Criando Histograma, e salvando as informações em variáveis de controle
+    n, bins, patches = ax.hist(bup_scope['Leadtime'], bins=20, edgecolor='k', linewidth=0.7, alpha=0.9)
+
+    # Configuração do Histograma
+    ax.set_xlabel('Leadtime (in days)')
+    ax.set_ylabel('Materials Count')
+    ax.set_title('Leadtime Histogram')
+
+    # Inserindo a contagem em cada barra
+    for count, bar in zip(n, patches):
+        x = bar.get_x() + bar.get_width() / 2
+        y = bar.get_height()
+        ax.text(x, y, f'{int(count)}', ha='center', va='bottom', fontdict={
+            'family': 'open sans',
+            'size': 9
+        })
+
+    # Salvando a figura com fundo transparente, para depois carregá-la.
+    fig.savefig('histogram.png', transparent=True)
+
+    # Carregando para um objeto Image
+    histogram_image = ctk.CTkImage(Image.open('histogram.png'),
+                                   dark_image=Image.open('histogram.png'),
+                                   size=(660, 330))
+
+    return histogram_image, highest_leadimes
+
+
+# Função para criação dos Scenarios
+def create_scenario() -> None:
+
+    global scenarios_list
+
+    scenario = {}
+
+    if not scenarios_list:
+
+        # Caso não tenha nenhum elemento na lista, segue o procedimento normal para cadastro.
+
+        print("\nCONTRACT INFORMATION FULLFILMENT:\n")
+        print("--------------------------------\n")

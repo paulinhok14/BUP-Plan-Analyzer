@@ -4,6 +4,8 @@ import tkinter as tk
 from PIL import Image
 import os
 from tkinter import ttk
+from pandastable import Table, TableModel  # Para exibição de df pandas em objeto tinker
+
 import bup_plan_analyzer as bup  # Arquivo-fonte com as funções do programa
 
 logo_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\logo.png'
@@ -39,7 +41,7 @@ def select_file():  # Função para selecionar o arquivo do Escopo
 def create_new_window(title: str):  # Função para criar nova janela
     # Lendo o arquivo de Escopo antes de criar a tela
     full_file_path = select_file()
-    bup_scope, highest_leadimes = bup.read_scope_file(full_file_path)
+    bup_scope = bup.read_scope_file(full_file_path)
 
     # Criando janela
     new_window = ctk.CTkToplevel(main_screen)
@@ -105,6 +107,33 @@ def create_new_window(title: str):  # Função para criar nova janela
     lbl_rows_count.pack(side="right", padx=10)
 
     # Aba 2 - Histograma de Leadtimes
+
+    # Gerando o Histograma e salvando a imagem do gráfico
+    histogram_image, highest_leadimes = bup.generate_histogram(bup_scope)
+
+    # Label com os maiores Leadtimes
+    ctk.CTkLabel(tbvmenu.tab("Leadtime Histogram"),
+                 text=highest_leadimes).pack()
+
+    # Gráfico de Histograma - inputando no Label e posicionando na tela
+    ctk.CTkLabel(tbvmenu.tab("Leadtime Histogram"), image=histogram_image,
+                 text="").place(relx=0.5, rely=0.6, anchor=ctk.CENTER)
+
+    # Aba 3 - Scenarios
+
+    # Label com a instrução de criar um Scenario
+    lbl_pending_scenario = ctk.CTkLabel(tbvmenu.tab("Scenarios"),
+                                        text="Please create a Scenario in order to generate Build-Up chart.",
+                                        font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'))
+    lbl_pending_scenario.place(rely=0.5, relx=0.07)
+
+    # Botão Create Scenario
+    btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
+                                  command=lambda: (bup.create_scenario(), lbl_pending_scenario.place_forget()),
+                                  font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                                  bg_color="#dbdbdb", fg_color="#009898", hover_color="#006464",
+                                  width=200, height=30, corner_radius=30
+                                        ).place(relx=0.5, rely=0.95, anchor=ctk.CENTER)
 
 
 # Ícone botão Search File CTKImage
