@@ -122,28 +122,28 @@ def create_scenario(scenario_window) -> None:
         # t0
         lbl_t0 = ctk.CTkLabel(scenario_window, text="T0 Date (*)",
                               font=ctk.CTkFont('open sans', size=11, weight="bold")
-                              ).pack(anchor="w", padx=30)
+                              ).pack(anchor="w", padx=35)
         entry_t0 = ctk.CTkEntry(scenario_window, width=350,
                                 placeholder_text="Format: DD/MM/YYYY").pack()
 
         # Aircraft Delivery Start
         lbl_acft_delivery_start = ctk.CTkLabel(scenario_window, text="Aircraft Delivery Start (*)",
                                             font=ctk.CTkFont('open sans', size=11, weight='bold')
-                                               ).pack(anchor="w", padx=40)
+                                               ).pack(anchor="w", padx=35)
         entry_acft_delivery_start = ctk.CTkEntry(scenario_window, width=350,
                                                  placeholder_text="Format: DD/MM/YYYY").pack()
 
         # Material Delivery Start
         lbl_material_delivery_start = ctk.CTkLabel(scenario_window, text="Material Delivery Start (*)",
                                             font=ctk.CTkFont('open sans', size=11, weight='bold')
-                                                   ).pack(anchor="w", padx=40)
+                                                   ).pack(anchor="w", padx=35)
         entry_material_delivery_start = ctk.CTkEntry(scenario_window, width=350,
                                                  placeholder_text="Format: DD/MM/YYYY").pack()
 
         # Material Delivery End
         lbl_material_delivery_end = ctk.CTkLabel(scenario_window, text="Material Delivery End (*)",
                                             font=ctk.CTkFont('open sans', size=11, weight='bold')
-                                                 ).pack(anchor="w", padx=40)
+                                                 ).pack(anchor="w", padx=35)
         entry_material_delivery_end = ctk.CTkEntry(scenario_window, width=350,
                                                  placeholder_text="Format: DD/MM/YYYY").pack()
 
@@ -156,32 +156,36 @@ def create_scenario(scenario_window) -> None:
         # PR Release and Approval VSS
         lbl_pr_release_approval_vss = ctk.CTkLabel(scenario_window, text="PR Release and Approval VSS (in days)",
                                                  font=ctk.CTkFont('open sans', size=11, weight='bold')
-                                                 ).pack(anchor="w", padx=40)
+                                                 ).pack(anchor="w", padx=35)
         entry_pr_release_approval_vss = ctk.CTkEntry(scenario_window, width=350,
                                                    placeholder_text="Default: 5 days").pack()
 
         # PO Commercial Condition
         lbl_po_commercial_condition = ctk.CTkLabel(scenario_window, text="PO Commercial Condition (in days)",
                                                    font=ctk.CTkFont('open sans', size=11, weight='bold')
-                                                   ).pack(anchor="w", padx=40)
+                                                   ).pack(anchor="w", padx=35)
         entry_po_commercial_condition = ctk.CTkEntry(scenario_window, width=350,
                                                      placeholder_text="Default: 30 days").pack()
 
         # PO Conversion
-        lbl_po_conversion = ctk.CTkLabel(scenario_window, text="PO Commercial Condition (in days)",
+        lbl_po_conversion = ctk.CTkLabel(scenario_window, text="PO Conversion (in days)",
                                          font=ctk.CTkFont('open sans', size=11, weight='bold')
-                                         ).pack(anchor="w", padx=40)
+                                         ).pack(anchor="w", padx=35)
         entry_po_conversion = ctk.CTkEntry(scenario_window, width=350,
                                            placeholder_text="Default: 30 days").pack()
 
         # Export License
         lbl_export_license = ctk.CTkLabel(scenario_window, text="Export License (in days) [For Controlled Items Only.]",
                                          font=ctk.CTkFont('open sans', size=11, weight='bold')
-                                          ).pack(anchor="w", padx=40)
+                                          ).pack(anchor="w", padx=35)
         entry_export_license = ctk.CTkEntry(scenario_window, width=350,
                                            placeholder_text="Default: 0 days").pack()
 
+        # frame teste
+        # materials_frame = ctk.CTkFrame(scenario_window)
+        # materials_frame.pack()
 
+        # ----------------- BOTÕES DE INTERAÇÃO -----------------
 
         # Botão OK
         btn_ok = ctk.CTkButton(scenario_window, text='OK',
