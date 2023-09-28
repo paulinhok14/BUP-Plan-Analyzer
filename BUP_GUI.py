@@ -127,9 +127,34 @@ def create_new_window(title: str):  # Função para criar nova janela
                                         font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'))
     lbl_pending_scenario.place(rely=0.5, relx=0.07)
 
+    # Função que cria a tela para Adicionar um Novo Scenario
+    def open_form_add_new_scenario():
+        # Criando janela
+        scenario_window = ctk.CTkToplevel(tbvmenu.tab("Scenarios"))
+
+        # Configurações da nova tela
+        scenario_window.title("Add New Scenario")
+        scenario_window.resizable(width=False, height=False)
+
+        # Geometria da Nova Tela
+        sw_width = 420
+        sw_height = 610
+        total_window_width = scenario_window.winfo_screenwidth()  # Width of the screen
+        total_window_height = new_window.winfo_screenheight()  # Height of the screen
+        # Calcula o X e Y inicial a posicionar a tela
+        sw_x = (total_window_width / 2) - (sw_width / 2)
+        sw_y = (total_window_height / 2) - (sw_height / 2)
+        scenario_window.geometry('%dx%d+%d+%d' % (sw_width, sw_height, sw_x, sw_y))
+
+        # Setando(captando) o foco para a janela
+        scenario_window.grab_set()
+
+        # Função que cria os elementos e interage com a Lista de Scenarios
+        bup.create_scenario(scenario_window)
+
     # Botão Create Scenario
     btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
-                                  command=lambda: (bup.create_scenario(), lbl_pending_scenario.place_forget()),
+                                  command=lambda: (lbl_pending_scenario.place_forget(), open_form_add_new_scenario()),
                                   font=ctk.CTkFont('open sans', size=12, weight='bold'),
                                   bg_color="#dbdbdb", fg_color="#009898", hover_color="#006464",
                                   width=200, height=30, corner_radius=30

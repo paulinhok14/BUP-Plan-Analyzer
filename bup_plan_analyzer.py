@@ -101,7 +101,7 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
 
 
 # Função para criação dos Scenarios
-def create_scenario() -> None:
+def create_scenario(scenario_window) -> None:
 
     global scenarios_list
 
@@ -111,5 +111,88 @@ def create_scenario() -> None:
 
         # Caso não tenha nenhum elemento na lista, segue o procedimento normal para cadastro.
 
-        print("\nCONTRACT INFORMATION FULLFILMENT:\n")
-        print("--------------------------------\n")
+        enabled_contractual_conditions_entries = False
+
+        # ----------------- CONTRACTUAL CONDITIONS -----------------
+
+        lbl_contractual_conditions = ctk.CTkLabel(scenario_window, text="Contractual Conditions",
+                                                  font=ctk.CTkFont('open sans', size=14, weight='bold')
+                                                  ).pack(pady=10)
+
+        # t0
+        lbl_t0 = ctk.CTkLabel(scenario_window, text="T0 Date (*)",
+                              font=ctk.CTkFont('open sans', size=11, weight="bold")
+                              ).pack(anchor="w", padx=30)
+        entry_t0 = ctk.CTkEntry(scenario_window, width=350,
+                                placeholder_text="Format: DD/MM/YYYY").pack()
+
+        # Aircraft Delivery Start
+        lbl_acft_delivery_start = ctk.CTkLabel(scenario_window, text="Aircraft Delivery Start (*)",
+                                            font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                               ).pack(anchor="w", padx=40)
+        entry_acft_delivery_start = ctk.CTkEntry(scenario_window, width=350,
+                                                 placeholder_text="Format: DD/MM/YYYY").pack()
+
+        # Material Delivery Start
+        lbl_material_delivery_start = ctk.CTkLabel(scenario_window, text="Material Delivery Start (*)",
+                                            font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                                   ).pack(anchor="w", padx=40)
+        entry_material_delivery_start = ctk.CTkEntry(scenario_window, width=350,
+                                                 placeholder_text="Format: DD/MM/YYYY").pack()
+
+        # Material Delivery End
+        lbl_material_delivery_end = ctk.CTkLabel(scenario_window, text="Material Delivery End (*)",
+                                            font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                                 ).pack(anchor="w", padx=40)
+        entry_material_delivery_end = ctk.CTkEntry(scenario_window, width=350,
+                                                 placeholder_text="Format: DD/MM/YYYY").pack()
+
+        # ----------------- PROCUREMENT LENGTH -----------------
+
+        lbl_procurement_length = ctk.CTkLabel(scenario_window, text="Procurement Length",
+                                              font=ctk.CTkFont('open sans', size=14, weight='bold')
+                                              ).pack(pady=10)
+
+        # PR Release and Approval VSS
+        lbl_pr_release_approval_vss = ctk.CTkLabel(scenario_window, text="PR Release and Approval VSS (in days)",
+                                                 font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                                 ).pack(anchor="w", padx=40)
+        entry_pr_release_approval_vss = ctk.CTkEntry(scenario_window, width=350,
+                                                   placeholder_text="Default: 5 days").pack()
+
+        # PO Commercial Condition
+        lbl_po_commercial_condition = ctk.CTkLabel(scenario_window, text="PO Commercial Condition (in days)",
+                                                   font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                                   ).pack(anchor="w", padx=40)
+        entry_po_commercial_condition = ctk.CTkEntry(scenario_window, width=350,
+                                                     placeholder_text="Default: 30 days").pack()
+
+        # PO Conversion
+        lbl_po_conversion = ctk.CTkLabel(scenario_window, text="PO Commercial Condition (in days)",
+                                         font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                         ).pack(anchor="w", padx=40)
+        entry_po_conversion = ctk.CTkEntry(scenario_window, width=350,
+                                           placeholder_text="Default: 30 days").pack()
+
+        # Export License
+        lbl_export_license = ctk.CTkLabel(scenario_window, text="Export License (in days) [For Controlled Items Only.]",
+                                         font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                          ).pack(anchor="w", padx=40)
+        entry_export_license = ctk.CTkEntry(scenario_window, width=350,
+                                           placeholder_text="Default: 0 days").pack()
+
+
+
+        # Botão OK
+        btn_ok = ctk.CTkButton(scenario_window, text='OK',
+                            font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                            bg_color="#ebebeb", fg_color="#009898", hover_color="#006464",
+                            width=60, height=30, corner_radius=30
+                            ).place(relx=0.3, rely=0.95, anchor=ctk.CENTER)
+
+        # Botão Cancelar
+        btn_cancel = ctk.CTkButton(scenario_window, text='Cancel',
+                                   font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                                   bg_color="#ebebeb", fg_color="#ff0000", hover_color="#af0003",
+                                   width=100, height=30, corner_radius=30
+                                   ).place(relx=0.7, rely=0.95, anchor=ctk.CENTER)
