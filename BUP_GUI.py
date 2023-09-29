@@ -137,7 +137,7 @@ def create_new_window(title: str):  # Função para criar nova janela
         scenario_window.resizable(width=False, height=False)
 
         # Geometria da Nova Tela
-        sw_width = 420
+        sw_width = 480
         sw_height = 610
         total_window_width = scenario_window.winfo_screenwidth()  # Width of the screen
         total_window_height = new_window.winfo_screenheight()  # Height of the screen
@@ -150,7 +150,7 @@ def create_new_window(title: str):  # Função para criar nova janela
         scenario_window.grab_set()
 
         # Função que cria os elementos e interage com a Lista de Scenarios
-        bup.create_scenario(scenario_window)
+        bup.create_scenario_test(scenario_window)
 
     # Botão Create Scenario
     btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',

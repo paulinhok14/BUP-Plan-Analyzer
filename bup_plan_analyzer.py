@@ -122,16 +122,20 @@ def create_scenario(scenario_window) -> None:
         # t0
         lbl_t0 = ctk.CTkLabel(scenario_window, text="T0 Date (*)",
                               font=ctk.CTkFont('open sans', size=11, weight="bold")
-                              ).pack(anchor="w", padx=35)
+                              )
+        lbl_t0.pack(anchor="w", padx=35)
         entry_t0 = ctk.CTkEntry(scenario_window, width=350,
-                                placeholder_text="Format: DD/MM/YYYY").pack()
+                                placeholder_text="Format: DD/MM/YYYY")
+        entry_t0.pack()
 
         # Aircraft Delivery Start
         lbl_acft_delivery_start = ctk.CTkLabel(scenario_window, text="Aircraft Delivery Start (*)",
                                             font=ctk.CTkFont('open sans', size=11, weight='bold')
-                                               ).pack(anchor="w", padx=35)
+                                               )
+        lbl_acft_delivery_start.pack(anchor="w", padx=35)
         entry_acft_delivery_start = ctk.CTkEntry(scenario_window, width=350,
-                                                 placeholder_text="Format: DD/MM/YYYY").pack()
+                                                 placeholder_text="Format: DD/MM/YYYY")
+        entry_acft_delivery_start.pack()
 
         # Material Delivery Start
         lbl_material_delivery_start = ctk.CTkLabel(scenario_window, text="Material Delivery Start (*)",
@@ -181,9 +185,6 @@ def create_scenario(scenario_window) -> None:
         entry_export_license = ctk.CTkEntry(scenario_window, width=350,
                                            placeholder_text="Default: 0 days").pack()
 
-        # frame teste
-        # materials_frame = ctk.CTkFrame(scenario_window)
-        # materials_frame.pack()
 
         # ----------------- BOTÕES DE INTERAÇÃO -----------------
 
@@ -200,3 +201,67 @@ def create_scenario(scenario_window) -> None:
                                    bg_color="#ebebeb", fg_color="#ff0000", hover_color="#af0003",
                                    width=100, height=30, corner_radius=30
                                    ).place(relx=0.7, rely=0.95, anchor=ctk.CENTER)
+
+
+def create_scenario_test(scenario_window) -> None:
+
+    # ----------------- CONTRACTUAL CONDITIONS -----------------
+
+    # Frame interno Contractual Conditions
+    contractual_conditions_frame = ctk.CTkFrame(scenario_window, width=440, corner_radius=20)
+    contractual_conditions_frame.pack(pady=(15, 0), expand=False)
+
+    # Label título Contractual Conditions
+    lbl_contractual_conditions = ctk.CTkLabel(contractual_conditions_frame, text="Contractual Conditions",
+                                              font=ctk.CTkFont('open sans', size=14, weight='bold')
+                                              )
+    lbl_contractual_conditions.grid(row=0, columnspan=2, sticky="n", pady=(10, 0))
+
+    # --- t0 ---
+    lbl_t0 = ctk.CTkLabel(contractual_conditions_frame, text="T0 Date (*)",
+                          font=ctk.CTkFont('open sans', size=11, weight="bold")
+                          )
+    lbl_t0.grid(row=1, column=0, sticky="w", padx=12)
+    entry_t0 = ctk.CTkEntry(contractual_conditions_frame, width=200,
+                            placeholder_text="Format: DD/MM/YYYY")
+    entry_t0.grid(row=2, column=0, padx=10, sticky="w")
+
+    # --- Aircraft Delivery Start ---
+    lbl_acft_delivery_start = ctk.CTkLabel(contractual_conditions_frame, text="Aircraft Delivery Start (*)",
+                                           font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                           )
+    lbl_acft_delivery_start.grid(row=1, column=1, padx=12, sticky="e")
+    entry_acft_delivery_start = ctk.CTkEntry(contractual_conditions_frame, width=200,
+                                             placeholder_text="Format: DD/MM/YYYY")
+    entry_acft_delivery_start.grid(row=2, column=1, padx=10, sticky="e")
+
+    # --- Material Delivery Start ---
+    lbl_material_delivery_start = ctk.CTkLabel(contractual_conditions_frame, text="Material Delivery Start (*)",
+                                               font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                               )
+    lbl_material_delivery_start.grid(row=3, column=0, sticky="w", padx=12)
+    entry_material_delivery_start = ctk.CTkEntry(contractual_conditions_frame, width=200,
+                                                 placeholder_text="Nº of months (ex: 38 for T+38)")
+    entry_material_delivery_start.grid(row=4, column=0, padx=10, sticky="w", pady=(0, 20))
+
+    # --- Material Delivery End ---
+    lbl_material_delivery_end = ctk.CTkLabel(contractual_conditions_frame, text="Material Delivery End (*)",
+                                            font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                             )
+    lbl_material_delivery_end.grid(row=3, column=1, sticky="e", padx=12)
+    entry_material_delivery_end = ctk.CTkEntry(contractual_conditions_frame, width=200,
+                                            placeholder_text="Nº of months (ex: 43 for T+43)")
+    entry_material_delivery_end.grid(row=4, column=1, padx=10, sticky="e", pady=(0, 20))
+
+    # ----------------- PROCUREMENT LENGTH -----------------
+
+    # Frame interno Procurement Length
+    procurement_length_frame = ctk.CTkFrame(scenario_window, width=440, corner_radius=20)
+    procurement_length_frame.pack(pady=(15, 0), expand=False)
+
+    # Label título Procurement Length
+    lbl_procurement_length = ctk.CTkLabel(procurement_length_frame, text="Procurement Length",
+                                          font=ctk.CTkFont('open sans', size=14, weight='bold')
+                                          )
+    lbl_procurement_length.grid(row=0, columnspan=2, sticky="n", pady=(10, 0))
+
