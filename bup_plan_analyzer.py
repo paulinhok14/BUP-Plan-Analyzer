@@ -203,7 +203,7 @@ def create_scenario(scenario_window) -> None:
                                    ).place(relx=0.7, rely=0.95, anchor=ctk.CENTER)
 
 
-def create_scenario_test(scenario_window) -> None:
+def create_scenario_test(scenario_window, bup_scope) -> None:
 
     global scenarios_list
 
@@ -327,14 +327,89 @@ def create_scenario_test(scenario_window) -> None:
 
     # Função para retornar os valores digitados pelo usuário nos Entry, com tratativa para Defaults
     def get_entry_values():
+
+        # --------- Contractual Conditions ---------
         scenario['t0'] = pd.to_datetime(entry_t0.get(), format='%d/%m/%Y',
                                         errors='coerce')
+        scenario['acft_delivery_start'] = pd.to_datetime(entry_acft_delivery_start.get()
+                                                         , format='%d/%m/%Y', errors='coerce')
+        # Material Delivery Start
+        try:
+            if entry_material_delivery_start.get().strip() != "":
+                scenario['material_delivery_start'] = int(entry_material_delivery_start.get())
+        except ValueError:
+            print("Invalid character. Please enter a valid number.")
 
-        print(scenario['t0'])
+        # Material Delivery End
+        try:
+            if entry_material_delivery_end.get().strip() != "":
+                scenario['material_delivery_end'] = int(entry_material_delivery_end.get())
+        except ValueError:
+            print("Invalid character. Please enter a valid number.")
 
-        '''scenario['acft_delivery_start'] = pd.to_datetime(
-            input("Please insert Aircraft Delivery Start (format: DD/MM/YYYY): \n")
-            , format='%d/%m/%Y', errors='coerce')'''
+        # --------- Procurement Length ---------
+        # Atribuição dos valores Default no try/except caso o usuário não preencha nada
+
+        # --- PR Release and Approval VSS ---
+        try:
+            if entry_pr_release_approval_vss.get().strip() != "":
+                scenario['pr_release_approval_vss'] = int(entry_pr_release_approval_vss.get())
+            else:
+                scenario['pr_release_approval_vss'] = 5
+        except ValueError:
+            print("Invalid character. Please enter a valid number.")
+
+        # --- PO Commercial Condition ---
+        try:
+            if entry_po_commercial_condition.get().strip() != "":
+                scenario['po_commercial_condition'] = int(entry_po_commercial_condition.get())
+            else:
+                scenario['po_commercial_condition'] = 30
+        except ValueError:
+            print("Invalid character. Please enter a valid number.")
+
+        # --- PO Conversion ---
+        try:
+            if entry_po_conversion.get().strip() != "":
+                scenario['po_conversion'] = int(entry_po_conversion.get())
+            else:
+                scenario['po_conversion'] = 30
+        except ValueError:
+            print("Invalid character. Please enter a valid number.")
+
+        # --- Export License ---
+        try:
+            if entry_export_license.get().strip() != "":
+                scenario['export_license'] = int(entry_export_license.get())
+            else:
+                scenario['export_license'] = 0
+        except ValueError:
+            print("Invalid character. Please enter a valid number.")
+
+        # --- Buffer ---
+        try:
+            if entry_buffer.get().strip() != "":
+                scenario['buffer'] = int(entry_buffer.get())
+            else:
+                scenario['buffer'] = 60
+        except ValueError:
+            print("Invalid character. Please enter a valid number.")
+
+        # --- Outbound Logistic ---
+        try:
+            if entry_outbound_logistic.get().strip() != "":
+                scenario['outbound_logistic'] = int(entry_outbound_logistic.get())
+            else:
+                scenario['outbound_logistic'] = 30
+        except ValueError:
+            print("Invalid character. Please enter a valid number.")
+
+        # Incluindo o cenário na lista de Dicts global, e fechando a tela
+        scenarios_list.append(scenario)
+        scenario_window.destroy()
+
+        # Chamando a função para gerar o gráfico de Build-Up
+        generate_buildup_chart(bup_scope)
 
     # Botão OK
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
@@ -344,8 +419,14 @@ def create_scenario_test(scenario_window) -> None:
                            ).place(relx=0.3, rely=0.92, anchor=ctk.CENTER)
 
     # Botão Cancelar
-    btn_cancel = ctk.CTkButton(scenario_window, text='Cancel',
+    btn_cancel = ctk.CTkButton(scenario_window, text='Cancel', command=scenario_window.destroy,
                                font=ctk.CTkFont('open sans', size=12, weight='bold'),
                                bg_color="#ebebeb", fg_color="#ff0000", hover_color="#af0003",
                                width=100, height=30, corner_radius=30
                                ).place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
+
+
+def generate_buildup_chart(bup_scope):
+
+    # Lista para armazenar as combinações de Cenários e Escopo
+    combinations = []

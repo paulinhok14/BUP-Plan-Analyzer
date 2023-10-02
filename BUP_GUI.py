@@ -8,6 +8,7 @@ from pandastable import Table, TableModel  # Para exibição de df pandas em obj
 
 import bup_plan_analyzer as bup  # Arquivo-fonte com as funções do programa
 
+
 logo_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\logo.png'
 title_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\titulo_bup_analyzer.png'
 img_open_file_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\browse_icon_transp.png'
@@ -150,7 +151,7 @@ def create_new_window(title: str):  # Função para criar nova janela
         scenario_window.grab_set()
 
         # Função que cria os elementos e interage com a Lista de Scenarios
-        bup.create_scenario_test(scenario_window)
+        bup.create_scenario_test(scenario_window, bup_scope)
 
     # Botão Create Scenario
     btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
