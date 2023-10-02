@@ -409,7 +409,7 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
         scenario_window.destroy()
 
         # Chamando a função para gerar o gráfico de Build-Up
-        generate_buildup_chart(bup_scope)
+        generate_buildup_chart(bup_scope, scenarios_list)
 
     # Botão OK
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
@@ -426,7 +426,22 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
                                ).place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
 
 
-def generate_buildup_chart(bup_scope):
+def generate_buildup_chart(bup_scope, scenarios):
 
     # Lista para armazenar as combinações de Cenários e Escopo
     combinations = []
+
+    for _, row in bup_scope.iterrows():
+        # Percorrendo cada elemento da lista de dicionários (cada elemento um Cenário em scenarios_list)
+        for index, scenario in enumerate(scenarios):
+            # Combinando os valores do dataframe (escopo) com os valores do dicionário (cenário)
+            comb = {**row, 'Scenario': index, **scenario}
+            combinations.append(comb)
+
+    # Criando um novo dataframe com as combinações de Escopo e Cenários juntos
+    df_scope_with_cenarios = pd.DataFrame(combinations).sort_values(by='Scenario').reset_index()
+    df_scope_with_cenarios['avg_month_diff'] = ((df_scope_with_cenarios['material_delivery_end']
+                                                 - df_scope_with_cenarios['material_delivery_start']) / 2).astype(int)
+
+    # MATERIAL DELIVERY END E DELIVERY START TEM QUE GARANTIR QUE EXISTAM (E  COM NUMEROS) PRA ESSA MEDIA
+    # ACONTECER
