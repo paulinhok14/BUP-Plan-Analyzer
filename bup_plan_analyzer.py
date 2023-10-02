@@ -205,6 +205,10 @@ def create_scenario(scenario_window) -> None:
 
 def create_scenario_test(scenario_window) -> None:
 
+    global scenarios_list
+
+    scenario = {}
+
     # ----------------- CONTRACTUAL CONDITIONS -----------------
 
     # Frame interno Contractual Conditions
@@ -215,7 +219,7 @@ def create_scenario_test(scenario_window) -> None:
     lbl_contractual_conditions = ctk.CTkLabel(contractual_conditions_frame, text="Contractual Conditions",
                                               font=ctk.CTkFont('open sans', size=14, weight='bold')
                                               )
-    lbl_contractual_conditions.grid(row=0, columnspan=2, sticky="n", pady=(10, 0))
+    lbl_contractual_conditions.grid(row=0, columnspan=2, sticky="n", pady=(10, 10))
 
     # --- t0 ---
     lbl_t0 = ctk.CTkLabel(contractual_conditions_frame, text="T0 Date (*)",
@@ -263,5 +267,85 @@ def create_scenario_test(scenario_window) -> None:
     lbl_procurement_length = ctk.CTkLabel(procurement_length_frame, text="Procurement Length",
                                           font=ctk.CTkFont('open sans', size=14, weight='bold')
                                           )
-    lbl_procurement_length.grid(row=0, columnspan=2, sticky="n", pady=(10, 0))
+    lbl_procurement_length.grid(row=0, columnspan=2, sticky="n", pady=(10, 10))
 
+    # --- PR Release and Approval VSS ---
+    lbl_pr_release_approval_vss = ctk.CTkLabel(procurement_length_frame, text="PR Release & Approval VSS (days)",
+                                             font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                               )
+    lbl_pr_release_approval_vss.grid(row=1, column=0, sticky="w", padx=12)
+    entry_pr_release_approval_vss = ctk.CTkEntry(procurement_length_frame, width=200,
+                                               placeholder_text="Default: 5 days")
+    entry_pr_release_approval_vss.grid(row=2, column=0, padx=10, sticky="w")
+
+    # --- PO Commercial Condition ---
+    lbl_po_commercial_condition = ctk.CTkLabel(procurement_length_frame, text="PO Commercial Condition (days)",
+                                               font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                               )
+    lbl_po_commercial_condition.grid(row=1, column=1, padx=12, sticky="e")
+    entry_po_commercial_condition = ctk.CTkEntry(procurement_length_frame, width=200,
+                                                 placeholder_text="Default: 30 days")
+    entry_po_commercial_condition.grid(row=2, column=1, padx=10, sticky="e")
+
+    # --- PO Conversion ---
+    lbl_po_conversion = ctk.CTkLabel(procurement_length_frame, text="PO Conversion (days)",
+                                     font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                     )
+    lbl_po_conversion.grid(row=3, column=0, sticky="w", padx=12)
+    entry_po_conversion = ctk.CTkEntry(procurement_length_frame, width=200,
+                                       placeholder_text="Default: 30 days")
+    entry_po_conversion.grid(row=4, column=0, padx=10, sticky="w")
+
+    # --- Export License ---
+    lbl_export_license = ctk.CTkLabel(procurement_length_frame, text="Export License [Defense Only]",
+                                      font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                      )
+    lbl_export_license.grid(row=3, column=1, padx=12, sticky="e")
+    entry_export_license = ctk.CTkEntry(procurement_length_frame, width=200,
+                                        placeholder_text="Default: 0 days")
+    entry_export_license.grid(row=4, column=1, padx=10, sticky="e")
+
+    # --- Buffer ---
+    lbl_buffer = ctk.CTkLabel(procurement_length_frame, text="Buffer (days)",
+                              font=ctk.CTkFont('open sans', size=11, weight='bold')
+                              )
+    lbl_buffer.grid(row=5, column=0, sticky="w", padx=12)
+    entry_buffer = ctk.CTkEntry(procurement_length_frame, width=200,
+                                placeholder_text="Default: 60 days")
+    entry_buffer.grid(row=6, column=0, padx=10, sticky="w", pady=(0, 20))
+
+    # --- Outbound Logistic ---
+    lbl_outbound_logistic = ctk.CTkLabel(procurement_length_frame, text="Outbound Logistic (days)",
+                                         font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                         )
+    lbl_outbound_logistic.grid(row=5, column=1, padx=12, sticky="e")
+    entry_outbound_logistic = ctk.CTkEntry(procurement_length_frame, width=200,
+                                placeholder_text="Default: 30 days")
+    entry_outbound_logistic.grid(row=6, column=1, padx=10, sticky="e", pady=(0, 20))
+
+    # ----------------- BOTÕES DE INTERAÇÃO -----------------
+
+    # Função para retornar os valores digitados pelo usuário nos Entry, com tratativa para Defaults
+    def get_entry_values():
+        scenario['t0'] = pd.to_datetime(entry_t0.get(), format='%d/%m/%Y',
+                                        errors='coerce')
+
+        print(scenario['t0'])
+
+        '''scenario['acft_delivery_start'] = pd.to_datetime(
+            input("Please insert Aircraft Delivery Start (format: DD/MM/YYYY): \n")
+            , format='%d/%m/%Y', errors='coerce')'''
+
+    # Botão OK
+    btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
+                           font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                           bg_color="#ebebeb", fg_color="#009898", hover_color="#006464",
+                           width=100, height=30, corner_radius=30
+                           ).place(relx=0.3, rely=0.92, anchor=ctk.CENTER)
+
+    # Botão Cancelar
+    btn_cancel = ctk.CTkButton(scenario_window, text='Cancel',
+                               font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                               bg_color="#ebebeb", fg_color="#ff0000", hover_color="#af0003",
+                               width=100, height=30, corner_radius=30
+                               ).place(relx=0.7, rely=0.92, anchor=ctk.CENTER)

@@ -138,7 +138,7 @@ def create_new_window(title: str):  # Função para criar nova janela
 
         # Geometria da Nova Tela
         sw_width = 480
-        sw_height = 610
+        sw_height = 550
         total_window_width = scenario_window.winfo_screenwidth()  # Width of the screen
         total_window_height = new_window.winfo_screenheight()  # Height of the screen
         # Calcula o X e Y inicial a posicionar a tela
