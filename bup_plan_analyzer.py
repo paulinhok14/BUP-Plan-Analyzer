@@ -3,6 +3,7 @@ import warnings
 import matplotlib.pyplot as plt
 from PIL import Image
 import customtkinter as ctk
+from tkinter import messagebox
 
 
 warnings.filterwarnings("ignore")
@@ -329,23 +330,42 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
     def get_entry_values():
 
         # --------- Contractual Conditions ---------
-        scenario['t0'] = pd.to_datetime(entry_t0.get(), format='%d/%m/%Y',
-                                        errors='coerce')
-        scenario['acft_delivery_start'] = pd.to_datetime(entry_acft_delivery_start.get()
-                                                         , format='%d/%m/%Y', errors='coerce')
+
+        # t0
+        # Verifica se o valor é uma data válida antes de atribuir à variável
+        date_t0_value = pd.to_datetime(entry_t0.get(), format='%d/%m/%Y', errors='coerce')
+        if not pd.isna(date_t0_value):
+            scenario['t0'] = date_t0_value
+        else:
+            messagebox.showerror("Error",
+                                 "Invalid date. Please enter a valid date format for T0.")
+            return
+
+        # Aircraft Delivery Start
+        # Verifica se o valor é uma data válida antes de atribuir à variável
+        date_acft_delivery_value = pd.to_datetime(entry_acft_delivery_start.get(), format='%d/%m/%Y', errors='coerce')
+        if not pd.isna(date_acft_delivery_value):
+            scenario['acft_delivery_start'] = date_acft_delivery_value
+        else:
+            messagebox.showerror("Error",
+                                 "Invalid date. Please enter a valid date format for Aircraft Delivery Start.")
+            return
+
         # Material Delivery Start
         try:
-            if entry_material_delivery_start.get().strip() != "":
-                scenario['material_delivery_start'] = int(entry_material_delivery_start.get())
+            scenario['material_delivery_start'] = int(entry_material_delivery_start.get())
         except ValueError:
-            print("Invalid character. Please enter a valid number.")
+            messagebox.showerror("Error",
+                                 "Invalid character. Please enter a valid number for Material Delivery Start.")
+            return
 
         # Material Delivery End
         try:
-            if entry_material_delivery_end.get().strip() != "":
-                scenario['material_delivery_end'] = int(entry_material_delivery_end.get())
+            scenario['material_delivery_end'] = int(entry_material_delivery_end.get())
         except ValueError:
-            print("Invalid character. Please enter a valid number.")
+            messagebox.showerror("Error",
+                                 "Invalid character. Please enter a valid number for Material Delivery End.")
+            return
 
         # --------- Procurement Length ---------
         # Atribuição dos valores Default no try/except caso o usuário não preencha nada
@@ -357,7 +377,9 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
             else:
                 scenario['pr_release_approval_vss'] = 5
         except ValueError:
-            print("Invalid character. Please enter a valid number.")
+            messagebox.showerror("Error",
+                                 "Invalid character. Please enter a valid number for PR Release and Approval VSS.")
+            return
 
         # --- PO Commercial Condition ---
         try:
@@ -366,7 +388,9 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
             else:
                 scenario['po_commercial_condition'] = 30
         except ValueError:
-            print("Invalid character. Please enter a valid number.")
+            messagebox.showerror("Error",
+                                 "Invalid character. Please enter a valid number for PO Commercial Condition.")
+            return
 
         # --- PO Conversion ---
         try:
@@ -375,7 +399,9 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
             else:
                 scenario['po_conversion'] = 30
         except ValueError:
-            print("Invalid character. Please enter a valid number.")
+            messagebox.showerror("Error",
+                                 "Invalid character. Please enter a valid number for PO Conversion.")
+            return
 
         # --- Export License ---
         try:
@@ -384,7 +410,9 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
             else:
                 scenario['export_license'] = 0
         except ValueError:
-            print("Invalid character. Please enter a valid number.")
+            messagebox.showerror("Error",
+                                 "Invalid character. Please enter a valid number for Export License.")
+            return
 
         # --- Buffer ---
         try:
@@ -393,7 +421,9 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
             else:
                 scenario['buffer'] = 60
         except ValueError:
-            print("Invalid character. Please enter a valid number.")
+            messagebox.showerror("Error",
+                                 "Invalid character. Please enter a valid number for Buffer.")
+            return
 
         # --- Outbound Logistic ---
         try:
@@ -402,7 +432,9 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
             else:
                 scenario['outbound_logistic'] = 30
         except ValueError:
-            print("Invalid character. Please enter a valid number.")
+            messagebox.showerror("Error",
+                                 "Invalid character. Please enter a valid number for Outbound Logistic.")
+            return
 
         # Incluindo o cenário na lista de Dicts global, e fechando a tela
         scenarios_list.append(scenario)
