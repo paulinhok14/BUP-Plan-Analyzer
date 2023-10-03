@@ -209,6 +209,46 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
 
     scenario = {}
 
+    # Se a lista de Cenários contiver algum já cadastrado, é oferecido ao usuário a opção de utilizar os valores
+    # de Contractual Conditions do primeiro cenário, alterando apenas os parâmetros de Procurement Length
+
+    if not scenarios_list:
+
+        # Função para abrir a caixa de Diálogo questionando ao usuário
+        def open_confirm_dialog():
+            confirm_window = ctk.CTkToplevel(scenario_window)
+            confirm_window.title("Warning")
+            confirm_window.geometry("400x170")
+            confirm_window.resizable(width=False, height=False)
+
+            # Geometria da Tela de Diálogo
+            cw_width = 400
+            cw_height = 170
+            conf_window_width = confirm_window.winfo_screenwidth()  # Width of the screen
+            conf_window_height = confirm_window.winfo_screenheight()  # Height of the screen
+            # Calcula o X e Y inicial a posicionar a tela
+            cw_x = (conf_window_width / 2) - (cw_width / 2)
+            cw_y = (conf_window_height / 2) - (cw_height / 2)
+            confirm_window.geometry('%dx%d+%d+%d' % (cw_width, cw_height, cw_x, cw_y))
+
+
+            lbl_question = ctk.CTkLabel(confirm_window, text="There is already a registered Scenario. Do you want to"
+                                                             "use previously Contractual Conditions information?",
+                                        font=ctk.CTkFont('open sans', size=14, weight='bold'),
+                                        width=300
+                                        )
+            lbl_question.pack()
+
+            #)
+
+
+
+
+
+
+        # Abrindo a caixa de diálogo caso já tenha um Scenario cadastrado
+        open_confirm_dialog()
+
     # ----------------- CONTRACTUAL CONDITIONS -----------------
 
     # Frame interno Contractual Conditions
