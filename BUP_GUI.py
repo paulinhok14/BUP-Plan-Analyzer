@@ -161,6 +161,9 @@ def create_new_window(title: str):  # Função para criar nova janela
                                   width=200, height=30, corner_radius=30
                                         ).place(relx=0.5, rely=0.95, anchor=ctk.CENTER)
 
+    # Minimiza tela principal
+    main_screen.iconify()
+
 
 # Ícone botão Search File CTKImage
 img_open_file = ctk.CTkImage(light_image=Image.open(img_open_file_path),

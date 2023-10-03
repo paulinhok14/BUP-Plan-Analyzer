@@ -186,7 +186,6 @@ def create_scenario(scenario_window) -> None:
         entry_export_license = ctk.CTkEntry(scenario_window, width=350,
                                            placeholder_text="Default: 0 days").pack()
 
-
         # ----------------- BOTÕES DE INTERAÇÃO -----------------
 
         # Botão OK
@@ -474,6 +473,3 @@ def generate_buildup_chart(bup_scope, scenarios):
     df_scope_with_cenarios = pd.DataFrame(combinations).sort_values(by='Scenario').reset_index()
     df_scope_with_cenarios['avg_month_diff'] = ((df_scope_with_cenarios['material_delivery_end']
                                                  - df_scope_with_cenarios['material_delivery_start']) / 2).astype(int)
-
-    # MATERIAL DELIVERY END E DELIVERY START TEM QUE GARANTIR QUE EXISTAM (E  COM NUMEROS) PRA ESSA MEDIA
-    # ACONTECER
