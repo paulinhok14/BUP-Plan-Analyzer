@@ -5,7 +5,6 @@ from PIL import Image
 import customtkinter as ctk
 from tkinter import messagebox
 
-
 warnings.filterwarnings("ignore")
 
 # Lista de Scenarios
@@ -14,7 +13,6 @@ scenarios_list = []
 
 # Função para ler o arquivo e informações complementares
 def read_scope_file(file_full_path: str):
-
     # Colunas a serem lidas no arquivo (essenciais)
     colunas = ['PN', 'ECODE', 'QTY']
 
@@ -103,13 +101,11 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
 
 # Função para criação dos Scenarios
 def create_scenario(scenario_window) -> None:
-
     global scenarios_list
 
     scenario = {}
 
     if not scenarios_list:
-
         # Caso não tenha nenhum elemento na lista, segue o procedimento normal para cadastro.
 
         enabled_contractual_conditions_entries = False
@@ -131,7 +127,7 @@ def create_scenario(scenario_window) -> None:
 
         # Aircraft Delivery Start
         lbl_acft_delivery_start = ctk.CTkLabel(scenario_window, text="Aircraft Delivery Start (*)",
-                                            font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                               font=ctk.CTkFont('open sans', size=11, weight='bold')
                                                )
         lbl_acft_delivery_start.pack(anchor="w", padx=35)
         entry_acft_delivery_start = ctk.CTkEntry(scenario_window, width=350,
@@ -140,17 +136,17 @@ def create_scenario(scenario_window) -> None:
 
         # Material Delivery Start
         lbl_material_delivery_start = ctk.CTkLabel(scenario_window, text="Material Delivery Start (*)",
-                                            font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                                   font=ctk.CTkFont('open sans', size=11, weight='bold')
                                                    ).pack(anchor="w", padx=35)
         entry_material_delivery_start = ctk.CTkEntry(scenario_window, width=350,
-                                                 placeholder_text="Format: DD/MM/YYYY").pack()
+                                                     placeholder_text="Format: DD/MM/YYYY").pack()
 
         # Material Delivery End
         lbl_material_delivery_end = ctk.CTkLabel(scenario_window, text="Material Delivery End (*)",
-                                            font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                                 font=ctk.CTkFont('open sans', size=11, weight='bold')
                                                  ).pack(anchor="w", padx=35)
         entry_material_delivery_end = ctk.CTkEntry(scenario_window, width=350,
-                                                 placeholder_text="Format: DD/MM/YYYY").pack()
+                                                   placeholder_text="Format: DD/MM/YYYY").pack()
 
         # ----------------- PROCUREMENT LENGTH -----------------
 
@@ -160,10 +156,10 @@ def create_scenario(scenario_window) -> None:
 
         # PR Release and Approval VSS
         lbl_pr_release_approval_vss = ctk.CTkLabel(scenario_window, text="PR Release and Approval VSS (in days)",
-                                                 font=ctk.CTkFont('open sans', size=11, weight='bold')
-                                                 ).pack(anchor="w", padx=35)
+                                                   font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                                   ).pack(anchor="w", padx=35)
         entry_pr_release_approval_vss = ctk.CTkEntry(scenario_window, width=350,
-                                                   placeholder_text="Default: 5 days").pack()
+                                                     placeholder_text="Default: 5 days").pack()
 
         # PO Commercial Condition
         lbl_po_commercial_condition = ctk.CTkLabel(scenario_window, text="PO Commercial Condition (in days)",
@@ -181,19 +177,19 @@ def create_scenario(scenario_window) -> None:
 
         # Export License
         lbl_export_license = ctk.CTkLabel(scenario_window, text="Export License (in days) [For Controlled Items Only.]",
-                                         font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                          font=ctk.CTkFont('open sans', size=11, weight='bold')
                                           ).pack(anchor="w", padx=35)
         entry_export_license = ctk.CTkEntry(scenario_window, width=350,
-                                           placeholder_text="Default: 0 days").pack()
+                                            placeholder_text="Default: 0 days").pack()
 
         # ----------------- BOTÕES DE INTERAÇÃO -----------------
 
         # Botão OK
         btn_ok = ctk.CTkButton(scenario_window, text='OK',
-                            font=ctk.CTkFont('open sans', size=12, weight='bold'),
-                            bg_color="#ebebeb", fg_color="#009898", hover_color="#006464",
-                            width=60, height=30, corner_radius=30
-                            ).place(relx=0.3, rely=0.95, anchor=ctk.CENTER)
+                               font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                               bg_color="#ebebeb", fg_color="#009898", hover_color="#006464",
+                               width=60, height=30, corner_radius=30
+                               ).place(relx=0.3, rely=0.95, anchor=ctk.CENTER)
 
         # Botão Cancelar
         btn_cancel = ctk.CTkButton(scenario_window, text='Cancel',
@@ -213,12 +209,10 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
     # de Contractual Conditions do primeiro cenário, alterando apenas os parâmetros de Procurement Length
 
     if not scenarios_list:
-
         # Função para abrir a caixa de Diálogo questionando ao usuário
         def open_confirm_dialog():
             confirm_window = ctk.CTkToplevel(scenario_window)
-            confirm_window.title("Warning")
-            confirm_window.geometry("400x170")
+            confirm_window.title("Warning!")
             confirm_window.resizable(width=False, height=False)
 
             # Geometria da Tela de Diálogo
@@ -227,24 +221,37 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
             conf_window_width = confirm_window.winfo_screenwidth()  # Width of the screen
             conf_window_height = confirm_window.winfo_screenheight()  # Height of the screen
             # Calcula o X e Y inicial a posicionar a tela
-            cw_x = (conf_window_width / 2) - (cw_width / 2)
-            cw_y = (conf_window_height / 2) - (cw_height / 2)
+            cw_x = int((conf_window_width / 2) - (cw_width / 2))
+            cw_y = int((conf_window_height / 2) - (cw_height / 2))
             confirm_window.geometry('%dx%d+%d+%d' % (cw_width, cw_height, cw_x, cw_y))
 
+            # Setando(captando) o foco para as janelas, de forma subsequente
+            confirm_window.grab_set()
 
-            lbl_question = ctk.CTkLabel(confirm_window, text="There is already a registered Scenario. Do you want to"
+            # Elementos da Tela de Diálogo
+
+            lbl_question = ctk.CTkLabel(confirm_window, text="There is already a registered Scenario. Do you want to "
                                                              "use previously Contractual Conditions information?",
-                                        font=ctk.CTkFont('open sans', size=14, weight='bold'),
-                                        width=300
+                                        font=ctk.CTkFont('open sans', size=13, weight='bold'),
+                                        width=300, wraplength=350
                                         )
-            lbl_question.pack()
+            lbl_question.pack(pady=(20, 0))
 
-            #)
+            # Botão YES
+            btn_yes = ctk.CTkButton(confirm_window, text='Yes',
+                                   font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                                   bg_color="#ebebeb", fg_color="#009898", hover_color="#006464",
+                                   width=100, height=30, corner_radius=30, cursor="hand2"
+                                    )
+            btn_yes.place(relx=0.3, rely=0.8, anchor=ctk.CENTER)
 
-
-
-
-
+            # Botão NO
+            btn_no = ctk.CTkButton(confirm_window, text='No', command=lambda: (confirm_window.destroy(), scenario_window.lift()),
+                                   font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                                   bg_color="#ebebeb", fg_color="#ff0000", hover_color="#af0003",
+                                   width=100, height=30, corner_radius=30, cursor="hand2"
+                                   )
+            btn_no.place(relx=0.7, rely=0.8, anchor=ctk.CENTER)
 
         # Abrindo a caixa de diálogo caso já tenha um Scenario cadastrado
         open_confirm_dialog()
@@ -290,11 +297,11 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
 
     # --- Material Delivery End ---
     lbl_material_delivery_end = ctk.CTkLabel(contractual_conditions_frame, text="Material Delivery End (*)",
-                                            font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                             font=ctk.CTkFont('open sans', size=11, weight='bold')
                                              )
     lbl_material_delivery_end.grid(row=3, column=1, sticky="e", padx=12)
     entry_material_delivery_end = ctk.CTkEntry(contractual_conditions_frame, width=200,
-                                            placeholder_text="Nº of months (ex: 43 for T+43)")
+                                               placeholder_text="Nº of months (ex: 43 for T+43)")
     entry_material_delivery_end.grid(row=4, column=1, padx=10, sticky="e", pady=(0, 20))
 
     # ----------------- PROCUREMENT LENGTH -----------------
@@ -311,11 +318,11 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
 
     # --- PR Release and Approval VSS ---
     lbl_pr_release_approval_vss = ctk.CTkLabel(procurement_length_frame, text="PR Release & Approval VSS (days)",
-                                             font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                               font=ctk.CTkFont('open sans', size=11, weight='bold')
                                                )
     lbl_pr_release_approval_vss.grid(row=1, column=0, sticky="w", padx=12)
     entry_pr_release_approval_vss = ctk.CTkEntry(procurement_length_frame, width=200,
-                                               placeholder_text="Default: 5 days")
+                                                 placeholder_text="Default: 5 days")
     entry_pr_release_approval_vss.grid(row=2, column=0, padx=10, sticky="w")
 
     # --- PO Commercial Condition ---
@@ -360,7 +367,7 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
                                          )
     lbl_outbound_logistic.grid(row=5, column=1, padx=12, sticky="e")
     entry_outbound_logistic = ctk.CTkEntry(procurement_length_frame, width=200,
-                                placeholder_text="Default: 30 days")
+                                           placeholder_text="Default: 30 days")
     entry_outbound_logistic.grid(row=6, column=1, padx=10, sticky="e", pady=(0, 20))
 
     # ----------------- BOTÕES DE INTERAÇÃO -----------------
@@ -486,19 +493,18 @@ def create_scenario_test(scenario_window, bup_scope) -> None:
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
                            font=ctk.CTkFont('open sans', size=12, weight='bold'),
                            bg_color="#ebebeb", fg_color="#009898", hover_color="#006464",
-                           width=100, height=30, corner_radius=30
+                           width=100, height=30, corner_radius=30, cursor="hand2"
                            ).place(relx=0.3, rely=0.92, anchor=ctk.CENTER)
 
     # Botão Cancelar
     btn_cancel = ctk.CTkButton(scenario_window, text='Cancel', command=scenario_window.destroy,
                                font=ctk.CTkFont('open sans', size=12, weight='bold'),
                                bg_color="#ebebeb", fg_color="#ff0000", hover_color="#af0003",
-                               width=100, height=30, corner_radius=30
+                               width=100, height=30, corner_radius=30, cursor="hand2"
                                ).place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
 
 
 def generate_buildup_chart(bup_scope, scenarios):
-
     # Lista para armazenar as combinações de Cenários e Escopo
     combinations = []
 

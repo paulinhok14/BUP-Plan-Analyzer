@@ -176,7 +176,7 @@ btnSearchFile = ctk.CTkButton(master=main_screen, text='Search Scope File',
                               font=ctk.CTkFont('open sans', size=13, weight='bold'),
                               bg_color="#242424", fg_color="#009898", hover_color="#006464",
                               width=250, height=45, corner_radius=30,
-                              image=img_open_file, compound="right"
+                              image=img_open_file, compound="right", cursor="hand2"
                               ).place(relx=0.5, rely=0.82, anchor=ctk.CENTER)
 
 # Logo objeto CTkImage
