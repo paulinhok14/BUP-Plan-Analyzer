@@ -338,41 +338,63 @@ def create_scenario(scenario_window, bup_scope) -> None:
 
         # --------- Contractual Conditions ---------
 
+        # Nestas condições, primeiro há uma verificação se o usuário optou por usar informações já cadastradas
+
         # t0
-        # Verifica se o valor é uma data válida antes de atribuir à variável
-        date_t0_value = pd.to_datetime(entry_t0.get(), format='%d/%m/%Y', errors='coerce')
-        if not pd.isna(date_t0_value):
-            scenario['t0'] = date_t0_value
+
+        if t0_previous_value is None:
+
+            # Verifica se o valor é uma data válida antes de atribuir à variável
+            date_t0_value = pd.to_datetime(entry_t0.get(), format='%d/%m/%Y', errors='coerce')
+            if not pd.isna(date_t0_value):
+                scenario['t0'] = date_t0_value
+            else:
+                messagebox.showerror("Error",
+                                     "Invalid date. Please enter a valid date format for T0.")
+                return
         else:
-            messagebox.showerror("Error",
-                                 "Invalid date. Please enter a valid date format for T0.")
-            return
+            scenario['t0'] = pd.to_datetime(t0_previous_value.get(), format='%d/%m/%Y', errors='coerce')
 
         # Aircraft Delivery Start
-        # Verifica se o valor é uma data válida antes de atribuir à variável
-        date_acft_delivery_value = pd.to_datetime(entry_acft_delivery_start.get(), format='%d/%m/%Y', errors='coerce')
-        if not pd.isna(date_acft_delivery_value):
-            scenario['acft_delivery_start'] = date_acft_delivery_value
+
+        if acft_delivery_start_previous_value is None:
+
+            # Verifica se o valor é uma data válida antes de atribuir à variável
+            date_acft_delivery_value = pd.to_datetime(entry_acft_delivery_start.get(), format='%d/%m/%Y', errors='coerce')
+            if not pd.isna(date_acft_delivery_value):
+                scenario['acft_delivery_start'] = date_acft_delivery_value
+            else:
+                messagebox.showerror("Error",
+                                     "Invalid date. Please enter a valid date format for Aircraft Delivery Start.")
+                return
         else:
-            messagebox.showerror("Error",
-                                 "Invalid date. Please enter a valid date format for Aircraft Delivery Start.")
-            return
+            scenario['acft_delivery_start'] = pd.to_datetime(acft_delivery_start_previous_value.get(), format='%d/%m/%Y', errors='coerce')
 
         # Material Delivery Start
-        try:
-            scenario['material_delivery_start'] = int(entry_material_delivery_start.get())
-        except ValueError:
-            messagebox.showerror("Error",
-                                 "Invalid character. Please enter a valid number for Material Delivery Start.")
-            return
+
+        if material_delivery_start_previous_value is None:
+
+            try:
+                scenario['material_delivery_start'] = int(entry_material_delivery_start.get())
+            except ValueError:
+                messagebox.showerror("Error",
+                                     "Invalid character. Please enter a valid number for Material Delivery Start.")
+                return
+        else:
+            scenario['material_delivery_start'] = int(material_delivery_start_previous_value.get())
 
         # Material Delivery End
-        try:
-            scenario['material_delivery_end'] = int(entry_material_delivery_end.get())
-        except ValueError:
-            messagebox.showerror("Error",
-                                 "Invalid character. Please enter a valid number for Material Delivery End.")
-            return
+
+        if material_delivery_end_previous_value is None:
+
+            try:
+                scenario['material_delivery_end'] = int(entry_material_delivery_end.get())
+            except ValueError:
+                messagebox.showerror("Error",
+                                     "Invalid character. Please enter a valid number for Material Delivery End.")
+                return
+        else:
+            scenario['material_delivery_end'] = int(material_delivery_end_previous_value.get())
 
         # --------- Procurement Length ---------
         # Atribuição dos valores Default no try/except caso o usuário não preencha nada
