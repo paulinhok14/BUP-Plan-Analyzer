@@ -151,7 +151,7 @@ def create_new_window(title: str):  # Função para criar nova janela
         scenario_window.grab_set()
 
         # Função que cria os elementos e interage com a Lista de Scenarios
-        bup.create_scenario_test(scenario_window, bup_scope)
+        bup.create_scenario(scenario_window, bup_scope)
 
     # Botão Create Scenario
     btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
