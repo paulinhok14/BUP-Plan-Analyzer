@@ -1,5 +1,3 @@
-import tkinter
-
 import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
@@ -488,6 +486,9 @@ def create_scenario(scenario_window, bup_scope) -> None:
 
 
 def generate_buildup_chart(bup_scope, scenarios):
+
+    # --------------- PREPARAÇÃO DOS DADOS ---------------
+
     # Lista para armazenar as combinações de Cenários e Escopo
     combinations = []
 
@@ -499,6 +500,72 @@ def generate_buildup_chart(bup_scope, scenarios):
             combinations.append(comb)
 
     # Criando um novo dataframe com as combinações de Escopo e Cenários juntos
-    df_scope_with_cenarios = pd.DataFrame(combinations).sort_values(by='Scenario').reset_index()
-    df_scope_with_cenarios['avg_month_diff'] = ((df_scope_with_cenarios['material_delivery_end']
-                                                 - df_scope_with_cenarios['material_delivery_start']) / 2).astype(int)
+    df_scope_with_scenarios = pd.DataFrame(combinations).sort_values(by='Scenario').reset_index(drop=True)
+    df_scope_with_scenarios['avg_month_diff'] = ((df_scope_with_scenarios['material_delivery_end']
+                                                 - df_scope_with_scenarios['material_delivery_start']) / 2).astype(int)
+
+    # Procurement Length - OBS: Chegará um momento que terei que criar aqui a lógica para Export License
+    df_scope_with_scenarios['PN Procurement Length'] = df_scope_with_scenarios[['Leadtime', 'pr_release_approval_vss',
+                                                                                'po_commercial_condition',
+                                                                                'po_conversion', 'export_license',
+                                                                                'buffer', 'outbound_logistic']].sum(axis=1)
+
+    # Gerando a data média (do intervalo de entrega dos materiais baseada no t0).
+    df_scope_with_scenarios['avg_date_between_materials_deadline'] = df_scope_with_scenarios.apply(
+        lambda linha: linha['t0'] + pd.DateOffset(months=linha['material_delivery_start']) +
+        pd.DateOffset(months=linha['avg_month_diff']), axis=1)
+
+    # Criando colunas de Data para as 2 que vem como inteiro baseadas no t0
+    df_scope_with_scenarios['material_delivery_start_date'] = df_scope_with_scenarios.apply(
+        lambda linha: linha['t0'] + pd.DateOffset(months=linha['material_delivery_start'])
+        , axis=1)
+
+    df_scope_with_scenarios['material_delivery_end_date'] = df_scope_with_scenarios.apply(
+        lambda linha: linha['t0'] + pd.DateOffset(months=linha['material_delivery_end'])
+        , axis=1)
+
+    # Calculando a data que deveria ser emitida a compra do material, considerando Procurement Length e Delivery Date
+    df_scope_with_scenarios['PN Order Date'] = df_scope_with_scenarios.apply(
+        lambda linha: linha['avg_date_between_materials_deadline'] - pd.DateOffset(days=linha['PN Procurement Length'])
+        , axis=1)
+
+    # Pegando a Maior e Menor Data entre todas as datas possíveis, para delimitar o eixo X do gráfico
+    date_columns = ['t0', 'acft_delivery_start', 'material_delivery_start_date', 'material_delivery_end_date',
+                    'PN Order Date']
+
+    # O primeiro min/max retorna a menor/maior data por coluna e no final temos então uma lista de mínimos/máximos.
+    # O segundo pega o menor da lista criada.
+    min_date = df_scope_with_scenarios[date_columns].min().min()
+    max_date = df_scope_with_scenarios[date_columns].max().max()
+
+    date_range = pd.date_range(start=min_date, end=max_date, freq='M')
+    df_dates = pd.DataFrame({'Date': date_range.strftime('%m/%Y')})
+
+    # # Para cada Scenario, criando um df separado com todas as datas e respectivas ordens.
+    # for index, scenario in enumerate(scenarios):
+    #     print(index)
+    #     print(scenario)
+
+    # Criando tabela com a contagem agrupada de itens comprados por mês, para cada Scenario
+    grouped_counts = df_scope_with_scenarios.groupby([df_scope_with_scenarios['PN Order Date'].dt.to_period('M'), 'Scenario']).size().reset_index(
+        name='Ordered Qty')
+    # Formatando a Data YYYY-MM da tabela atual para o modelo de apresentação: MM/YYYY
+    grouped_counts['PN Order Date'] = grouped_counts['PN Order Date'].dt.strftime('%m/%Y')
+
+    # Passando a informação de Ordered Qty agrupada por mês e por Scenario para o DF com o Range de datas
+    final_df_scenarios = df_dates.merge(grouped_counts, left_on='Date', right_on='PN Order Date', how='left')
+    final_df_scenarios['Scenario'] = final_df_scenarios['Scenario'].fillna(-1)
+    final_df_scenarios['Scenario'] = final_df_scenarios['Scenario'].astype(int)
+    final_df_scenarios['Ordered Qty'] = final_df_scenarios['Ordered Qty'].fillna(0)
+
+    print(final_df_scenarios)
+
+
+    #df_scope_with_scenarios.to_excel("scope with scenarios.xlsx")
+
+    # Criando um DF para cada Scenario
+
+
+
+
+    # --------------- GERAÇÃO DO GRÁFICO ---------------
