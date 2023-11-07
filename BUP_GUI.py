@@ -132,6 +132,7 @@ def create_new_window(title: str):  # Função para criar nova janela
     def open_form_add_new_scenario():
         # Criando janela
         scenario_window = ctk.CTkToplevel(tbvmenu.tab("Scenarios"))
+        bup_chart_window = tbvmenu.tab("Scenarios")
 
         # Configurações da nova tela
         scenario_window.title("Add New Scenario")
@@ -151,11 +152,11 @@ def create_new_window(title: str):  # Função para criar nova janela
         scenario_window.grab_set()
 
         # Função que cria os elementos e interage com a Lista de Scenarios
-        bup.create_scenario(scenario_window, bup_scope)
+        bup.create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_scenario)
 
     # Botão Create Scenario
     btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
-                                  command=lambda: (lbl_pending_scenario.place_forget(), open_form_add_new_scenario()),
+                                  command=lambda: (open_form_add_new_scenario()),
                                   font=ctk.CTkFont('open sans', size=12, weight='bold'),
                                   bg_color="#dbdbdb", fg_color="#009898", hover_color="#006464",
                                   width=200, height=30, corner_radius=30

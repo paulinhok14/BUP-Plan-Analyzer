@@ -11,6 +11,9 @@ warnings.filterwarnings("ignore")
 # Lista de Scenarios
 scenarios_list = []
 
+excel_icon_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\excel_transparent.png'
+application_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\''
+
 # Declarando as variáveis que irão armazenar temporariamente os valores prévios de Cenários já cadastrados,
 # para caso o usuário queira reaproveitar os parâmetros contratuais do Cenário.
 t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value\
@@ -105,10 +108,43 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
     return histogram_image, highest_leadimes
 
 
-def create_scenario(scenario_window, bup_scope) -> None:
+def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_scenario) -> None:
     global scenarios_list
 
     scenario = {}
+
+    # Variável CTk que irá armazenar a contagem de Scenarios. Será util para implementar um tracking com callback
+    # para exibição ou ocultamento de componentes
+    var_scenarios_count = ctk.IntVar()
+
+    # Imagem com o ícone Excel
+    excel_icon = ctk.CTkImage(light_image=Image.open(excel_icon_path),
+                      dark_image=Image.open(excel_icon_path),
+                      size=(30, 30))
+
+    # Função executada ao exportar Dados
+    def export_data():
+        messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + application_path))
+
+    # Botão de exportar dados
+    btn_export_data = ctk.CTkButton(bup_chart_window, text="Export to Excel",
+                                    font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                    image=excel_icon, compound="top", fg_color="transparent",
+                                    text_color="#000000", hover=False, border_spacing=1,
+                                    command=export_data)
+
+    # Função que irá ser chamada para avaliar a variável de controle e Exibir/Ocultar botão de Exportar Dados
+    def export_data_button(scenarios_count):
+
+        if scenarios_count.get() == 1:
+            # Exibir o botão de Exportar para Excel e ocultar a mensagem de Criação de Scenario
+            btn_export_data.place(relx=0.93, rely=0.93, anchor=ctk.CENTER)
+            lbl_pending_scenario.place_forget()
+        else:
+            pass
+
+    # Fazendo o tracing da variável e chamando a função toda vez que a variável for alterada
+    var_scenarios_count.trace_add("write", callback=lambda *args: export_data_button(var_scenarios_count))
 
     # Se a lista de Cenários contiver algum já cadastrado, é oferecido ao usuário a opção de utilizar os valores
     # de Contractual Conditions do primeiro cenário, alterando apenas os parâmetros de Procurement Length
@@ -467,6 +503,9 @@ def create_scenario(scenario_window, bup_scope) -> None:
         scenarios_list.append(scenario)
         scenario_window.destroy()
 
+        # Somando 1 à IntVar com a contagem de Scenarios
+        var_scenarios_count.set(var_scenarios_count.get() + 1)
+
         # Chamando a função para gerar o gráfico de Build-Up
         generate_buildup_chart(bup_scope, scenarios_list)
 
@@ -541,11 +580,6 @@ def generate_buildup_chart(bup_scope, scenarios):
     date_range = pd.date_range(start=min_date, end=max_date, freq='M')
     df_dates = pd.DataFrame({'Date': date_range.strftime('%m/%Y')})
 
-    # # Para cada Scenario, criando um df separado com todas as datas e respectivas ordens.
-    # for index, scenario in enumerate(scenarios):
-    #     print(index)
-    #     print(scenario)
-
     # Criando tabela com a contagem agrupada de itens comprados por mês, para cada Scenario
     grouped_counts = df_scope_with_scenarios.groupby([df_scope_with_scenarios['PN Order Date'].dt.to_period('M'), 'Scenario']).size().reset_index(
         name='Ordered Qty')
@@ -554,9 +588,22 @@ def generate_buildup_chart(bup_scope, scenarios):
 
     # Passando a informação de Ordered Qty agrupada por mês e por Scenario para o DF com o Range de datas
     final_df_scenarios = df_dates.merge(grouped_counts, left_on='Date', right_on='PN Order Date', how='left')
-    final_df_scenarios['Scenario'] = final_df_scenarios['Scenario'].fillna(-1)
-    final_df_scenarios['Scenario'] = final_df_scenarios['Scenario'].astype(int)
+    final_df_scenarios['Scenario'] = final_df_scenarios['Scenario'].fillna(-1).astype(int)
     final_df_scenarios['Ordered Qty'] = final_df_scenarios['Ordered Qty'].fillna(0)
+
+    # Para cada scenario, calculando a Quantidade Acumulada para plotar
+    for scenario in final_df_scenarios['Scenario'].unique():
+        # Filtrando o df para o Scenario atual
+        scenario_df = final_df_scenarios[final_df_scenarios['Scenario'] == scenario]
+
+        # # Calculando a quantidade acumulada
+        # scenario_df['Accumulated Qty'] = scenario_df['Ordered Qty'].cumsum()
+        #
+        # # Atualizando o df final com a coluna de Quantidade Acumulada
+        # final_df_scenarios.update(scenario_df)
+
+        # Calculando a quantidade acumulada
+        final_df_scenarios.loc[scenario_df.index, 'Accumulated Qty'] = scenario_df['Ordered Qty'].cumsum()
 
     print(final_df_scenarios)
 
