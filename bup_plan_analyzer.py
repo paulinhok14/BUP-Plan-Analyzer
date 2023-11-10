@@ -510,7 +510,7 @@ def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_sc
         var_scenarios_count.set(var_scenarios_count.get() + 1)
 
         # Chamando a função para gerar o gráfico de Build-Up. O retorno da função é o gráfico na figura (objeto Image)
-        bup_chart = generate_buildup_chart(bup_scope, scenarios_list)
+        bup_chart = generate_efficient_curve_buildup_chart(bup_scope, scenarios_list)
 
         # Carregando para um objeto Image do CTk
         img_bup_chart = ctk.CTkImage(bup_chart,
@@ -536,7 +536,7 @@ def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_sc
                                ).place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
 
 
-def generate_buildup_chart(bup_scope, scenarios):
+def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
 
     # --------------- PREPARAÇÃO DOS DADOS ---------------
 
@@ -636,7 +636,7 @@ def generate_buildup_chart(bup_scope, scenarios):
     # --------------- GERAÇÃO DO GRÁFICO ---------------
 
     # Lista com as cores, para que cada Scenario tenha uma cor específica e facilite a diferenciação
-    colors_array = ['blue', 'orange', 'black', 'green']
+    colors_array = ['blue', 'orange', 'black', 'green', 'purple']
 
     # Tamanho da imagem
     width, height = 580, 380
@@ -646,7 +646,7 @@ def generate_buildup_chart(bup_scope, scenarios):
 
     # Plotando a linha para cada Scenario do dicionário
     for index, (scenario_name, scenario_df) in enumerate(scenario_dataframes.items()):
-        eixos.plot(scenario_df['Date'], scenario_df['Accumulated Qty'], label=scenario_name, color=colors_array[index])
+        eixos.plot(scenario_df['Date'], scenario_df['Accumulated Qty'], label=f'Scen. {index}', color=colors_array[index])
         # Configurando o eixo
         plt.xticks(scenario_df.index[::3], scenario_df['Date'][::3], rotation=45, ha='right')
 
@@ -654,13 +654,13 @@ def generate_buildup_chart(bup_scope, scenarios):
         t0_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 't0'].values[0])
         t0_date = t0_date.strftime('%m/%Y')
         # Adicionando uma linha vertical em t0
-        eixos.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0 - {scenario_name}')
+        eixos.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0: Scen. {index}')
 
         # Obtendo a data acft_delivery_start para o Scenario atual e convertendo para o formato MM/YYYY
         acft_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'acft_delivery_start'].values[0])
         acft_delivery_start_date = acft_delivery_start_date.strftime('%m/%Y')
         # Adicionando uma linha vertical em acft_delivery_start
-        eixos.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index], label=f'Acft Dlvry Start - {scenario_name}')
+        eixos.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index], label=f'Acft Delivery Start: Scen. {index}')
 
         # Adicionando uma faixa de entrega dos materiais entre as data Início e Fim
         material_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'material_delivery_start_date'].values[0])
@@ -672,14 +672,14 @@ def generate_buildup_chart(bup_scope, scenarios):
 
     # Configuração do Gráfico
     eixos.set_ylabel('Materials Ordered Qty (Accumulated)')
-    eixos.set_title('Build-Up Forecast')
+    eixos.set_title('Efficient Curve: Build-Up Forecast')
     eixos.grid(True)
 
     # Ajustando espaçamento dos eixos para não cortar os rótulos
     plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
 
     # Legenda
-    # eixos.legend(loc='upper right')
+    eixos.legend(loc='upper left', fontsize=7, framealpha=0.8)
 
     # --------------- TRANSFORMANDO EM UMA IMAGEM PARA SER EXIBIDA ---------------
 
