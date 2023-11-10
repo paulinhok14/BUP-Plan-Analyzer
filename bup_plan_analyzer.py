@@ -2,17 +2,20 @@ import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
 from PIL import Image
+from io import BytesIO
+import os
 import customtkinter as ctk
 from tkinter import messagebox
-from datetime import datetime
 
 warnings.filterwarnings("ignore")
+
+active_user = os.getlogin()
 
 # Lista de Scenarios
 scenarios_list = []
 
 excel_icon_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\excel_transparent.png'
-application_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\''
+export_output_path = fr'C:\Users\{active_user}\Downloads\bup_scenarios_data.xlsx'
 
 # Declarando as variáveis que irão armazenar temporariamente os valores prévios de Cenários já cadastrados,
 # para caso o usuário queira reaproveitar os parâmetros contratuais do Cenário.
@@ -124,7 +127,7 @@ def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_sc
 
     # Função executada ao exportar Dados
     def export_data():
-        messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + application_path))
+        messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + export_output_path))
 
     # Botão de exportar dados
     btn_export_data = ctk.CTkButton(bup_chart_window, text="Export to Excel",
@@ -506,8 +509,17 @@ def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_sc
         # Somando 1 à IntVar com a contagem de Scenarios
         var_scenarios_count.set(var_scenarios_count.get() + 1)
 
-        # Chamando a função para gerar o gráfico de Build-Up
-        generate_buildup_chart(bup_scope, scenarios_list)
+        # Chamando a função para gerar o gráfico de Build-Up. O retorno da função é o gráfico na figura (objeto Image)
+        bup_chart = generate_buildup_chart(bup_scope, scenarios_list)
+
+        # Carregando para um objeto Image do CTk
+        img_bup_chart = ctk.CTkImage(bup_chart,
+                                    dark_image=bup_chart,
+                                    size=(580, 380))
+
+        # Gráfico de Build-Up - inputando CTkImage no Label e posicionando na tela
+        ctk.CTkLabel(bup_chart_window, image=img_bup_chart,
+                     text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
     # Botão OK
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
@@ -573,9 +585,10 @@ def generate_buildup_chart(bup_scope, scenarios):
                     'PN Order Date']
 
     # O primeiro min/max retorna a menor/maior data por coluna e no final temos então uma lista de mínimos/máximos.
-    # O segundo pega o menor da lista criada.
-    min_date = df_scope_with_scenarios[date_columns].min().min()
-    max_date = df_scope_with_scenarios[date_columns].max().max()
+    # O segundo pega o menor da lista criada. Adiciono um mês em cada extremo para não coincidir as linhas verticais
+    # dos parâmetros com o limite do eixo do gráfico
+    min_date = df_scope_with_scenarios[date_columns].min().min() - pd.DateOffset(months=1)
+    max_date = df_scope_with_scenarios[date_columns].max().max() + pd.DateOffset(months=1)
 
     date_range = pd.date_range(start=min_date, end=max_date, freq='M')
     df_dates = pd.DataFrame({'Date': date_range.strftime('%m/%Y')})
@@ -596,23 +609,88 @@ def generate_buildup_chart(bup_scope, scenarios):
         # Filtrando o df para o Scenario atual
         scenario_df = final_df_scenarios[final_df_scenarios['Scenario'] == scenario]
 
-        # # Calculando a quantidade acumulada
-        # scenario_df['Accumulated Qty'] = scenario_df['Ordered Qty'].cumsum()
-        #
-        # # Atualizando o df final com a coluna de Quantidade Acumulada
-        # final_df_scenarios.update(scenario_df)
-
         # Calculando a quantidade acumulada
         final_df_scenarios.loc[scenario_df.index, 'Accumulated Qty'] = scenario_df['Ordered Qty'].cumsum()
 
-    print(final_df_scenarios)
+    # ATÉ AQUI TÁ OK
+    # final_df_scenarios.to_excel("scope with scenarios.xlsx")
 
-
-    #df_scope_with_scenarios.to_excel("scope with scenarios.xlsx")
+    # Criando um dicionário para armazenar os DataFrames de cenários
+    scenario_dataframes = {}
 
     # Criando um DF para cada Scenario
+    for scenario in final_df_scenarios['Scenario'].unique():
+        if scenario != -1:  # Scenario -1 é apenas indicativo de nulidade, não é um cenário real
+            tmp_filtered_scenario_final_df = final_df_scenarios[final_df_scenarios['Scenario'] == scenario]
+            scenario_df = df_dates.merge(tmp_filtered_scenario_final_df[['Date', 'Scenario', 'Ordered Qty', 'Accumulated Qty']],
+                                         left_on='Date', right_on='Date', how='left')
+            scenario_df['Scenario'] = scenario_df['Scenario'].fillna(scenario).astype(int)
+            scenario_df['Ordered Qty'] = scenario_df['Ordered Qty'].fillna(0)
 
+            # Preenchendo os meses vazios para Accumulated Qty com base no último registro
+            scenario_df['Accumulated Qty'].fillna(method='ffill', inplace=True)
 
-
+            # Armazenando o DataFrame no dicionário com o nome do cenário
+            scenario_dataframes[f'Scenario_{int(scenario)}'] = scenario_df
 
     # --------------- GERAÇÃO DO GRÁFICO ---------------
+
+    # Lista com as cores, para que cada Scenario tenha uma cor específica e facilite a diferenciação
+    colors_array = ['blue', 'orange', 'black', 'green']
+
+    # Tamanho da imagem
+    width, height = 580, 380
+
+    # Criando uma figura e eixos para inserir o gráfico
+    figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
+
+    # Plotando a linha para cada Scenario do dicionário
+    for index, (scenario_name, scenario_df) in enumerate(scenario_dataframes.items()):
+        eixos.plot(scenario_df['Date'], scenario_df['Accumulated Qty'], label=scenario_name, color=colors_array[index])
+        # Configurando o eixo
+        plt.xticks(scenario_df.index[::3], scenario_df['Date'][::3], rotation=45, ha='right')
+
+        # Obtendo a data t0 para o Scenario atual e convertendo para o formato MM/YYYY
+        t0_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 't0'].values[0])
+        t0_date = t0_date.strftime('%m/%Y')
+        # Adicionando uma linha vertical em t0
+        eixos.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0 - {scenario_name}')
+
+        # Obtendo a data acft_delivery_start para o Scenario atual e convertendo para o formato MM/YYYY
+        acft_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'acft_delivery_start'].values[0])
+        acft_delivery_start_date = acft_delivery_start_date.strftime('%m/%Y')
+        # Adicionando uma linha vertical em acft_delivery_start
+        eixos.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index], label=f'Acft Dlvry Start - {scenario_name}')
+
+        # Adicionando uma faixa de entrega dos materiais entre as data Início e Fim
+        material_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'material_delivery_start_date'].values[0])
+        material_delivery_start_date = material_delivery_start_date.strftime('%m/%Y')
+        material_delivery_end_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'material_delivery_end_date'].values[0])
+        material_delivery_end_date = material_delivery_end_date.strftime('%m/%Y')
+
+        eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
+
+    # Configuração do Gráfico
+    eixos.set_ylabel('Materials Ordered Qty (Accumulated)')
+    eixos.set_title('Build-Up Forecast')
+    eixos.grid(True)
+
+    # Ajustando espaçamento dos eixos para não cortar os rótulos
+    plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
+
+    # Legenda
+    # eixos.legend(loc='upper right')
+
+    # --------------- TRANSFORMANDO EM UMA IMAGEM PARA SER EXIBIDA ---------------
+
+    # Salvando a figura matplotlib em um objeto BytesIO (memória), para não ter que salvar em um arquivo de imagem
+    tmp_img_bup_chart = BytesIO()
+    figura.savefig(tmp_img_bup_chart, format='png', transparent=True)
+    tmp_img_bup_chart.seek(0)
+
+    # Carregando a imagem do gráfico para um objeto Image que irá ser retornado pela função
+    bup_chart = Image.open(tmp_img_bup_chart)
+
+    return bup_chart
+
+

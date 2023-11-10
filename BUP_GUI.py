@@ -203,4 +203,4 @@ lblMainTitle = ctk.CTkLabel(main_screen, image=image_title,
 # main_screen.iconify() e forget(), deiconify()
 main_screen.mainloop()  # Loop de execução Tela Principal
 
-# rodar dps que tiver ativado venv: pip freeze > requirements.txt
+# Rodar dps que tiver ativado venv: pip freeze > requirements.txt
