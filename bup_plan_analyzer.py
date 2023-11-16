@@ -1,6 +1,7 @@
 import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 from PIL import Image
 from io import BytesIO
 import os
@@ -26,7 +27,13 @@ t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_p
 # Função para ler o arquivo e informações complementares
 def read_scope_file(file_full_path: str):
     # Colunas a serem lidas no arquivo (essenciais)
-    colunas = ['PN', 'ECODE', 'QTY']
+    colunas = ['PN', 'ECODE', 'QTY', 'EIS']
+    # colunas = ['PN', 'ECODE', 'QTY']
+
+    # Fonte das informações complementares
+    # leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
+    leadtime_source = r'C:\Users\prsarau\Documents\Arquivos de Trabalho\(Diego Sodre) Build-Up Plan Analyzer\marcsa.txt'
+    ecode_data_path = r'C:\Users\prsarau\Documents\Arquivos de Trabalho\(Diego Sodre) Build-Up Plan Analyzer\DB_Ecode-Data.txt'
 
     # Leitura da tabela e Filtros
     scope = pd.read_excel(file_full_path, usecols=colunas)
@@ -34,44 +41,93 @@ def read_scope_file(file_full_path: str):
 
     # Formatação
     scope_filtered.loc[:, 'ECODE'] = scope_filtered['ECODE'].astype(int)
+    scope_filtered['EIS'] = scope_filtered['EIS'].fillna('')
 
-    # Busca de informações complementares (Leadtime, ECCN, etc)
-    # leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
-    leadtime_source = r'C:\Users\prsarau\Documents\Arquivos de Trabalho\(Diego Sodre) Build-Up Plan Analyzer\marcsa.txt'
+    # -------------- Busca de informações complementares (Leadtime, ECCN, Acq Cost, Reparabilidade, etc) -------------
 
-    # Colunas a serem lidas
-    columns = ['Material', ' PEP']
-
+    # Colunas a serem lidas fonte SAP
+    sap_source_columns = ['Material', ' PEP']
     # Lendo a base de Leadtimes
-    leadtimes = pd.read_csv(leadtime_source, usecols=columns, encoding='latin', skiprows=3, sep='|', low_memory=False)
-
+    leadtimes = pd.read_csv(leadtime_source, usecols=sap_source_columns, encoding='latin', skiprows=3, sep='|', low_memory=False)
     # Removendo nulos
     leadtimes = leadtimes.dropna()
-
     # Renomeando colunas
     leadtimes.rename(columns={'Material': 'ECODE', ' PEP': 'LEADTIME'}, inplace=True)
-
     # Vinculando o Leadtime aos Materiais
     bup_scope = scope_filtered.merge(leadtimes, on='ECODE', how='left')
+
+    # Colunas a serem lidas Ecode Data
+    ecode_data_columns = ['ECODE', 'ACQCOST', 'TIPOMAT']
+
+    # Pegando para cada Ecode o índice do registro que tem o maior Acq Cost (premissa p/ duplicados)
+    ecode_data = pd.read_csv(ecode_data_path, usecols=ecode_data_columns)
+    ecode_data_max_acqcost = ecode_data.groupby('ECODE')['ACQCOST'].idxmax()
+    ecode_data_filtered = ecode_data.loc[ecode_data_max_acqcost].reset_index(drop=True)
+
+    # Garantindo que TIPOMAT seja numérico e com 2 casas decimais
+    ecode_data_filtered['TIPOMAT'] = pd.to_numeric(ecode_data_filtered['TIPOMAT'], errors='coerce')
+
+    # Fazendo a regra do Tipo de Material (Repairable/Expendable)
+    ecode_data_filtered['TIPOMAT'] = ecode_data_filtered['TIPOMAT'].apply(
+        lambda x: 'Repairable' if x in [2, 6] else 'Expendable'
+    )
 
     # Convertendo as colunas numéricas de float para int
     bup_scope['ECODE'] = bup_scope['ECODE'].astype(int)
     bup_scope['QTY'] = bup_scope['QTY'].astype(int)
     bup_scope['LEADTIME'] = bup_scope['LEADTIME'].astype(int)
+    # Garantindo que Acq Cost seja flutuante
+    ecode_data_filtered['ACQCOST'] = ecode_data_filtered['ACQCOST'].str.replace(',', '.').astype(float)
+
+    # Fazendo join das informações do Ecode Data
+    bup_scope = bup_scope.merge(ecode_data_filtered, how='left', on='ECODE')
 
     # Ordenando pelo Leadtime descending
     bup_scope = bup_scope.sort_values('LEADTIME', ascending=False)
 
     # Renomeando as colunas
-    bup_scope['Ecode'] = bup_scope['ECODE']
-    bup_scope['Qty'] = bup_scope['QTY']
-    bup_scope['Leadtime'] = bup_scope['LEADTIME']
-
-    del bup_scope['ECODE']
-    del bup_scope['QTY']
-    del bup_scope['LEADTIME']
+    bup_scope.rename(columns={'ECODE': 'Ecode', 'QTY': 'Qty', 'LEADTIME': 'Leadtime',
+                              'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost', 'TIPOMAT': 'Material Type'}, inplace=True)
 
     return bup_scope
+
+
+def generate_dispersion_chart(bup_scope):
+    # Função para formatar os valores do eixo y em milhares
+    def format_acq_cost(value, _):
+        return f'US$ {value / 1000:.0f}k'
+
+    # Tamanho da imagem
+    width, height = 600, 220
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100))
+    expendable_items = bup_scope[bup_scope['Material Type'] == 'Expendable']
+    repairable_items = bup_scope[bup_scope['Material Type'] == 'Repairable']
+
+    # Plotando os pontos Expendable
+    ax.scatter(expendable_items['Leadtime'], expendable_items['Acq Cost'], color='orange', label='Expendables')
+    # Plotando os pontos Repairable
+    ax.scatter(repairable_items['Leadtime'], repairable_items['Acq Cost'], color='purple', label='Repairables')
+
+    # Adicionando rótulos e legendas
+    ax.set_xlabel('Leadtime')
+    ax.set_ylabel('Acq Cost')
+    ax.set_title('Dispersion Acq Cost x Leadtime', fontsize=10)
+    ax.legend(fontsize=9, framealpha=0.6)
+    plt.grid(True)
+    # Configurando o formato personalizado para o eixo y
+    ax.yaxis.set_major_formatter(FuncFormatter(format_acq_cost))
+
+    # --------------- TRANSFORMANDO EM UMA IMAGEM PARA SER EXIBIDA ---------------
+
+    # Salvando a figura matplotlib em um objeto BytesIO (memória), para não ter que salvar em um arquivo de imagem
+    tmp_img_dispersion_chart = BytesIO()
+    fig.savefig(tmp_img_dispersion_chart, format='png', transparent=True)
+    tmp_img_dispersion_chart.seek(0)
+
+    # Carregando a imagem do gráfico para um objeto Image que irá ser retornado pela função
+    dispersion_chart = Image.open(tmp_img_dispersion_chart)
+
+    return dispersion_chart
 
 
 def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e os maiores Leadtimes
@@ -79,8 +135,11 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
     # DF com os maiores Leadtimes
     highest_leadimes = bup_scope.nlargest(3, 'Leadtime').to_string(index=False)
 
+    # Tamanho da imagem
+    width, height = 600, 220
+
     # Criando uma figura e eixos para inserir o gráfico
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100))
     fig.patch.set_facecolor("None")
 
     # Criando Histograma, e salvando as informações em variáveis de controle
@@ -89,7 +148,9 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
     # Configuração do Histograma
     ax.set_xlabel('Leadtime (in days)')
     ax.set_ylabel('Materials Count')
-    ax.set_title('Leadtime Histogram')
+    ax.set_title('Leadtime Histogram', fontsize=10)
+    # Ajustando o limite do eixo y ( a maior barra estava escapando)
+    ax.set_ylim(0, max(n) + 50)  # Adicionando uma margem para acomodar a contagem no topo
 
     # Inserindo a contagem em cada barra
     for count, bar in zip(n, patches):
@@ -106,7 +167,7 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
     # Carregando para um objeto Image
     histogram_image = ctk.CTkImage(Image.open('histogram.png'),
                                    dark_image=Image.open('histogram.png'),
-                                   size=(660, 330))
+                                   size=(600, 220))
 
     return histogram_image, highest_leadimes
 

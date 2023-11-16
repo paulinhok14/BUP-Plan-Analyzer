@@ -1,10 +1,8 @@
 from tkinter import filedialog  # Para abrir arquivo no Explorar
 import customtkinter as ctk
-import tkinter as tk
 from PIL import Image
 import os
-from tkinter import ttk
-from pandastable import Table, TableModel  # Para exibição de df pandas em objeto tinker
+from tksheet import Sheet
 
 import bup_plan_analyzer as bup  # Arquivo-fonte com as funções do programa
 
@@ -40,9 +38,18 @@ def select_file():  # Função para selecionar o arquivo do Escopo
 
 
 def create_new_window(title: str):  # Função para criar nova janela
+    # Configura o label de aviso da execução
+    lbl_loading.configure(text="Please wait while complementary data is fetched...")
+
     # Lendo o arquivo de Escopo antes de criar a tela
+    # Selecionar arquivo de escopo
     full_file_path = select_file()
+
+    # Executa a função de ler os arquivos complementares e organizar o DataFrame
     bup_scope = bup.read_scope_file(full_file_path)
+
+    # Reconfigura o label para texto vazio
+    lbl_loading.configure(text="")
 
     # Criando janela
     new_window = ctk.CTkToplevel(main_screen)
@@ -66,37 +73,41 @@ def create_new_window(title: str):  # Função para criar nova janela
     main_screen.iconify()
 
     # TabView - Elementos da tela secundária: Abas
-    tbvmenu = ctk.CTkTabview(new_window, width=650, height=520, corner_radius=25,
+    tbvmenu = ctk.CTkTabview(new_window, width=650, height=520, corner_radius=20,
                              segmented_button_fg_color="#009898", segmented_button_unselected_color="#009898",
                              segmented_button_selected_color="#006464")
 
     tbvmenu.pack()
     tbvmenu.add("Scope")
-    tbvmenu.add("Leadtime Histogram")
+    tbvmenu.add("Leadtime Analysis")
     tbvmenu.add("Scenarios")
 
-    # Aba 1 - Exibição da Tabela (TreeView)
+    # # Aba 1 - Exibição da Tabela (TreeView)
+    #
+    # # Criando e posicionando Scrollbar
+    # scrollbar = ttk.Scrollbar(tbvmenu.tab("Scope"))
+    # scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    #
+    # treeview_bup_scope = ttk.Treeview(tbvmenu.tab("Scope"), yscrollcommand=scrollbar.set,
+    #                                   columns=list(bup_scope.columns), show="headings",
+    #                                   height=19)
+    #
+    # scrollbar.config(command=treeview_bup_scope.yview)
+    #
+    # # Nomeando as colunas
+    # for coluna in list(bup_scope.columns):
+    #     treeview_bup_scope.column(coluna, minwidth=140, width=140, anchor="center")
+    #     treeview_bup_scope.heading(coluna, text=coluna)
+    #
+    # # Inserindo as linhas na tabela
+    # for index, linha in bup_scope.iterrows():
+    #     treeview_bup_scope.insert("", "end", values=(linha[0], linha[1], linha[2], linha[3]))
+    #
+    # treeview_bup_scope.pack()
 
-    # Criando e posicionando Scrollbar
-    scrollbar = ttk.Scrollbar(tbvmenu.tab("Scope"))
-    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-    treeview_bup_scope = ttk.Treeview(tbvmenu.tab("Scope"), yscrollcommand=scrollbar.set,
-                                      columns=list(bup_scope.columns), show="headings",
-                                      height=19)
-
-    scrollbar.config(command=treeview_bup_scope.yview)
-
-    # Nomeando as colunas
-    for coluna in list(bup_scope.columns):
-        treeview_bup_scope.column(coluna, minwidth=140, width=140, anchor="center")
-        treeview_bup_scope.heading(coluna, text=coluna)
-
-    # Inserindo as linhas na tabela
-    for index, linha in bup_scope.iterrows():
-        treeview_bup_scope.insert("", "end", values=(linha[0], linha[1], linha[2], linha[3]))
-
-    treeview_bup_scope.pack()
+    # Criando objeto Sheet para exibir dataframe
+    sheet = Sheet(tbvmenu.tab("Scope"), data=bup_scope.values.tolist(), headers=bup_scope.columns.tolist())
+    sheet.pack(fill="both", expand=True)
 
     # Label com as informações: nome do arquivo e quantidade de registros
     lbl_file_name = ctk.CTkLabel(tbvmenu.tab("Scope"), text="File: " + os.path.basename(full_file_path),
@@ -107,18 +118,26 @@ def create_new_window(title: str):  # Função para criar nova janela
                                   font=ctk.CTkFont('open sans', size=10, weight='bold'))
     lbl_rows_count.pack(side="right", padx=10)
 
-    # Aba 2 - Histograma de Leadtimes
+    # Aba 2 - Análise de Leadtimes
+
+    # Gerando o gráfico de dispersão Acq Cost x Leadtime
+    dispersion_chart = bup.generate_dispersion_chart(bup_scope)
+
+    # Carregando para um objeto Image do CTk
+    img_dispersion_chart = ctk.CTkImage(dispersion_chart,
+                                 dark_image=dispersion_chart,
+                                 size=(600, 220))
+
+    # Gráfico de Dispersão - inputando no label e posicionando na tela
+    ctk.CTkLabel(tbvmenu.tab("Leadtime Analysis"), image=img_dispersion_chart,
+                 text="").pack(pady=(0, 10), anchor="e")
 
     # Gerando o Histograma e salvando a imagem do gráfico
     histogram_image, highest_leadimes = bup.generate_histogram(bup_scope)
 
-    # Label com os maiores Leadtimes
-    ctk.CTkLabel(tbvmenu.tab("Leadtime Histogram"),
-                 text=highest_leadimes).pack()
-
     # Gráfico de Histograma - inputando no Label e posicionando na tela
-    ctk.CTkLabel(tbvmenu.tab("Leadtime Histogram"), image=histogram_image,
-                 text="").place(relx=0.5, rely=0.6, anchor=ctk.CENTER)
+    ctk.CTkLabel(tbvmenu.tab("Leadtime Analysis"), image=histogram_image,
+                 text="").pack()
 
     # Aba 3 - Scenarios
 
@@ -171,6 +190,7 @@ img_open_file = ctk.CTkImage(light_image=Image.open(img_open_file_path),
                              dark_image=Image.open(img_open_file_path),
                              size=(20, 20))
 
+
 # Botão Search File
 btnSearchFile = ctk.CTkButton(master=main_screen, text='Search Scope File',
                               command=lambda: (create_new_window("Build-Up Plan Analyzer")),
@@ -179,6 +199,11 @@ btnSearchFile = ctk.CTkButton(master=main_screen, text='Search Scope File',
                               width=250, height=45, corner_radius=30,
                               image=img_open_file, compound="right", cursor="hand2"
                               ).place(relx=0.5, rely=0.82, anchor=ctk.CENTER)
+
+# Label de carregamento - será exibido enquanto o arquivo e informações correlatas estiverem sendo lidos
+lbl_loading = ctk.CTkLabel(master=main_screen, text='', fg_color='#242424', bg_color='#242424',
+                           font=ctk.CTkFont('open sans', size=13, weight='bold'), text_color='#ffff00')
+lbl_loading.place(relx=0.5, rely=0.7, anchor=ctk.CENTER)
 
 # Logo objeto CTkImage
 image_logo = ctk.CTkImage(light_image=Image.open(logo_path),
