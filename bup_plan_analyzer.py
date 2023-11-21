@@ -57,18 +57,34 @@ def read_scope_file(file_full_path: str):
     bup_scope = scope_filtered.merge(leadtimes, on='ECODE', how='left')
 
     # Colunas a serem lidas Ecode Data
-    ecode_data_columns = ['ECODE', 'ACQCOST', 'TIPOMAT']
+    ecode_data_columns = ['ECODE', 'ACQCOST', 'SPC', 'SPC_COM', 'SPC_EXE']
 
     # Pegando para cada Ecode o índice do registro que tem o maior Acq Cost (premissa p/ duplicados)
     ecode_data = pd.read_csv(ecode_data_path, usecols=ecode_data_columns)
     ecode_data_max_acqcost = ecode_data.groupby('ECODE')['ACQCOST'].idxmax()
     ecode_data_filtered = ecode_data.loc[ecode_data_max_acqcost].reset_index(drop=True)
 
-    # Garantindo que TIPOMAT seja numérico e com 2 casas decimais
-    ecode_data_filtered['TIPOMAT'] = pd.to_numeric(ecode_data_filtered['TIPOMAT'], errors='coerce')
+    # ------------ REGRA SPC - será utilizado o código com mais ocorrências dentre as 3 (EXE, COM, DEF) ---------------
+
+    # Garantindo que os campos de SPC sejam numéricos
+    ecode_data['SPC'] = pd.to_numeric(ecode_data['SPC'], errors='coerce')
+    ecode_data['SPC_COM'] = pd.to_numeric(ecode_data['SPC_COM'], errors='coerce')
+    ecode_data['SPC_EXE'] = pd.to_numeric(ecode_data['SPC_EXE'], errors='coerce')
+
+    # Combinando as colunas SPC, SPC_COM e SPC_EXE em uma única série
+    spc_values = pd.concat([ecode_data['SPC'], ecode_data['SPC_COM'], ecode_data['SPC_EXE']], axis=0, ignore_index=True)
+
+    # Para cada Ecode, encontrando o valor com o maior número de ocorrências
+    max_spc_values = spc_values.groupby(ecode_data['ECODE']).agg(
+        lambda x: x.value_counts().idxmax() if not x.empty and x.count() > 0 else None
+    )
+
+    # Resetando o índice e renomeando a coluna
+    max_spc_values = max_spc_values.reset_index(name='SPC_NEW')
+    max_spc_values['SPC_NEW'] = max_spc_values['SPC_NEW'].fillna(0).astype(int)
 
     # Fazendo a regra do Tipo de Material (Repairable/Expendable)
-    ecode_data_filtered['TIPOMAT'] = ecode_data_filtered['TIPOMAT'].apply(
+    max_spc_values['SPC_NEW'] = max_spc_values['SPC_NEW'].apply(
         lambda x: 'Repairable' if x in [2, 6] else 'Expendable'
     )
 
@@ -80,15 +96,19 @@ def read_scope_file(file_full_path: str):
     ecode_data_filtered['ACQCOST'] = ecode_data_filtered['ACQCOST'].str.replace(',', '.').astype(float)
 
     # Fazendo join das informações do Ecode Data
-    bup_scope = bup_scope.merge(ecode_data_filtered, how='left', on='ECODE')
+    # Acq Cost
+    bup_scope = bup_scope.merge(ecode_data_filtered[['ECODE', 'ACQCOST']], how='left', on='ECODE')
+    # SPC
+    bup_scope = bup_scope.merge(max_spc_values[['ECODE', 'SPC_NEW']], how='left', on='ECODE')
 
     # Ordenando pelo Leadtime descending
     bup_scope = bup_scope.sort_values('LEADTIME', ascending=False)
 
     # Renomeando as colunas
     bup_scope.rename(columns={'ECODE': 'Ecode', 'QTY': 'Qty', 'LEADTIME': 'Leadtime',
-                              'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost', 'TIPOMAT': 'Material Type'}, inplace=True)
+                              'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost', 'SPC_NEW': 'SPC'}, inplace=True)
 
+    print(bup_scope)
     return bup_scope
 
 
@@ -100,8 +120,8 @@ def generate_dispersion_chart(bup_scope):
     # Tamanho da imagem
     width, height = 600, 220
     fig, ax = plt.subplots(figsize=(width / 100, height / 100))
-    expendable_items = bup_scope[bup_scope['Material Type'] == 'Expendable']
-    repairable_items = bup_scope[bup_scope['Material Type'] == 'Repairable']
+    expendable_items = bup_scope[bup_scope['SPC'] == 'Expendable']
+    repairable_items = bup_scope[bup_scope['SPC'] == 'Repairable']
 
     # Plotando os pontos Expendable
     ax.scatter(expendable_items['Leadtime'], expendable_items['Acq Cost'], color='orange', label='Expendables')
@@ -195,7 +215,7 @@ def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_sc
                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                     image=excel_icon, compound="top", fg_color="transparent",
                                     text_color="#000000", hover=False, border_spacing=1,
-                                    command=export_data)
+                                    command=export_data())
 
     # Função que irá ser chamada para avaliar a variável de controle e Exibir/Ocultar botão de Exportar Dados
     def export_data_button(scenarios_count):
