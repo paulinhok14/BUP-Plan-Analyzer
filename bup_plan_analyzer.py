@@ -108,7 +108,6 @@ def read_scope_file(file_full_path: str):
     bup_scope.rename(columns={'ECODE': 'Ecode', 'QTY': 'Qty', 'LEADTIME': 'Leadtime',
                               'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost', 'SPC_NEW': 'SPC'}, inplace=True)
 
-    print(bup_scope)
     return bup_scope
 
 
@@ -208,14 +207,19 @@ def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_sc
 
     # Função executada ao exportar Dados
     def export_data():
-        messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + export_output_path))
+        try:
+            bup_scope.to_excel(export_output_path, index=False)
+            messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + export_output_path))
+        except Exception as ex:
+            messagebox.showinfo(title="Error!", message=str(ex) + "\n\n Please make sure that the Excel file is "
+                                                                  "closed and you have access to the Downloads folder.")
 
     # Botão de exportar dados
     btn_export_data = ctk.CTkButton(bup_chart_window, text="Export to Excel",
                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                     image=excel_icon, compound="top", fg_color="transparent",
                                     text_color="#000000", hover=False, border_spacing=1,
-                                    command=export_data())
+                                    command=export_data)
 
     # Função que irá ser chamada para avaliar a variável de controle e Exibir/Ocultar botão de Exportar Dados
     def export_data_button(scenarios_count):
