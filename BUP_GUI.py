@@ -82,29 +82,6 @@ def create_new_window(title: str):  # Função para criar nova janela
     tbvmenu.add("Leadtime Analysis")
     tbvmenu.add("Scenarios")
 
-    # # Aba 1 - Exibição da Tabela (TreeView)
-    #
-    # # Criando e posicionando Scrollbar
-    # scrollbar = ttk.Scrollbar(tbvmenu.tab("Scope"))
-    # scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-    #
-    # treeview_bup_scope = ttk.Treeview(tbvmenu.tab("Scope"), yscrollcommand=scrollbar.set,
-    #                                   columns=list(bup_scope.columns), show="headings",
-    #                                   height=19)
-    #
-    # scrollbar.config(command=treeview_bup_scope.yview)
-    #
-    # # Nomeando as colunas
-    # for coluna in list(bup_scope.columns):
-    #     treeview_bup_scope.column(coluna, minwidth=140, width=140, anchor="center")
-    #     treeview_bup_scope.heading(coluna, text=coluna)
-    #
-    # # Inserindo as linhas na tabela
-    # for index, linha in bup_scope.iterrows():
-    #     treeview_bup_scope.insert("", "end", values=(linha[0], linha[1], linha[2], linha[3]))
-    #
-    # treeview_bup_scope.pack()
-
     # Criando objeto Sheet para exibir dataframe
     sheet = Sheet(tbvmenu.tab("Scope"), data=bup_scope.values.tolist(), headers=bup_scope.columns.tolist())
     sheet.pack(fill="both", expand=True)
@@ -141,10 +118,19 @@ def create_new_window(title: str):  # Função para criar nova janela
 
     # Aba 3 - Scenarios
 
+    # TabView - Segregação entre gráfico Efficient Curve & Hipothetical Curve
+    tbv_curve_charts = ctk.CTkTabview(tbvmenu.tab("Scenarios"), width=620, height=490, corner_radius=15,
+                             segmented_button_fg_color="#009898", segmented_button_unselected_color="#009898",
+                             segmented_button_selected_color="#006464")
+    tbv_curve_charts.pack()
+    tbv_curve_charts.add("Efficient Curve")
+    tbv_curve_charts.add("Hypothetical Curve")
+
     # Label com a instrução de criar um Scenario
     lbl_pending_scenario = ctk.CTkLabel(tbvmenu.tab("Scenarios"),
                                         text="Please create a Scenario in order to generate Build-Up chart.",
-                                        font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'))
+                                        font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'),
+                                        fg_color='#cfcfcf')
     lbl_pending_scenario.place(rely=0.5, relx=0.07)
 
     # Função que cria a tela para Adicionar um Novo Scenario
@@ -177,7 +163,8 @@ def create_new_window(title: str):  # Função para criar nova janela
     btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
                                   command=lambda: (open_form_add_new_scenario()),
                                   font=ctk.CTkFont('open sans', size=12, weight='bold'),
-                                  bg_color="#dbdbdb", fg_color="#009898", hover_color="#006464",
+                                  #bg_color="#dbdbdb", fg_color="#009898", hover_color="#006464",
+                                bg_color="#cfcfcf", fg_color="#009898", hover_color="#006464",
                                   width=200, height=30, corner_radius=30
                                         ).place(relx=0.5, rely=0.95, anchor=ctk.CENTER)
 
