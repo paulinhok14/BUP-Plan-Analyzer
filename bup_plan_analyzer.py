@@ -27,8 +27,7 @@ t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_p
 # Função para ler o arquivo e informações complementares
 def read_scope_file(file_full_path: str):
     # Colunas a serem lidas no arquivo (essenciais)
-    colunas = ['PN', 'ECODE', 'QTY', 'EIS']
-    # colunas = ['PN', 'ECODE', 'QTY']
+    colunas = ['PN', 'ECODE', 'QTY', 'EIS', 'SPC']
 
     # Fonte das informações complementares
     # leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
@@ -57,34 +56,15 @@ def read_scope_file(file_full_path: str):
     bup_scope = scope_filtered.merge(leadtimes, on='ECODE', how='left')
 
     # Colunas a serem lidas Ecode Data
-    ecode_data_columns = ['ECODE', 'ACQCOST', 'SPC', 'SPC_COM', 'SPC_EXE']
+    ecode_data_columns = ['ECODE', 'ACQCOST']
 
     # Pegando para cada Ecode o índice do registro que tem o maior Acq Cost (premissa p/ duplicados)
-    ecode_data = pd.read_csv(ecode_data_path, usecols=ecode_data_columns)
+    ecode_data = pd.read_csv(ecode_data_path, usecols=ecode_data_columns).drop_duplicates()
     ecode_data_max_acqcost = ecode_data.groupby('ECODE')['ACQCOST'].idxmax()
     ecode_data_filtered = ecode_data.loc[ecode_data_max_acqcost].reset_index(drop=True)
 
-    # ------------ REGRA SPC - será utilizado o código com mais ocorrências dentre as 3 (EXE, COM, DEF) ---------------
-
-    # Garantindo que os campos de SPC sejam numéricos
-    ecode_data['SPC'] = pd.to_numeric(ecode_data['SPC'], errors='coerce')
-    ecode_data['SPC_COM'] = pd.to_numeric(ecode_data['SPC_COM'], errors='coerce')
-    ecode_data['SPC_EXE'] = pd.to_numeric(ecode_data['SPC_EXE'], errors='coerce')
-
-    # Combinando as colunas SPC, SPC_COM e SPC_EXE em uma única série
-    spc_values = pd.concat([ecode_data['SPC'], ecode_data['SPC_COM'], ecode_data['SPC_EXE']], axis=0, ignore_index=True)
-
-    # Para cada Ecode, encontrando o valor com o maior número de ocorrências
-    max_spc_values = spc_values.groupby(ecode_data['ECODE']).agg(
-        lambda x: x.value_counts().idxmax() if not x.empty and x.count() > 0 else None
-    )
-
-    # Resetando o índice e renomeando a coluna
-    max_spc_values = max_spc_values.reset_index(name='SPC_NEW')
-    max_spc_values['SPC_NEW'] = max_spc_values['SPC_NEW'].fillna(0).astype(int)
-
     # Fazendo a regra do Tipo de Material (Repairable/Expendable)
-    max_spc_values['SPC_NEW'] = max_spc_values['SPC_NEW'].apply(
+    bup_scope['SPC'] = bup_scope['SPC'].apply(
         lambda x: 'Repairable' if x in [2, 6] else 'Expendable'
     )
 
@@ -98,15 +78,13 @@ def read_scope_file(file_full_path: str):
     # Fazendo join das informações do Ecode Data
     # Acq Cost
     bup_scope = bup_scope.merge(ecode_data_filtered[['ECODE', 'ACQCOST']], how='left', on='ECODE')
-    # SPC
-    bup_scope = bup_scope.merge(max_spc_values[['ECODE', 'SPC_NEW']], how='left', on='ECODE')
 
     # Ordenando pelo Leadtime descending
     bup_scope = bup_scope.sort_values('LEADTIME', ascending=False)
 
     # Renomeando as colunas
     bup_scope.rename(columns={'ECODE': 'Ecode', 'QTY': 'Qty', 'LEADTIME': 'Leadtime',
-                              'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost', 'SPC_NEW': 'SPC'}, inplace=True)
+                              'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost'}, inplace=True)
 
     return bup_scope
 
