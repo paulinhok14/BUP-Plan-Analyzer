@@ -80,7 +80,7 @@ def read_scope_file(file_full_path: str):
     bup_scope = bup_scope.merge(ecode_data_filtered[['ECODE', 'ACQCOST']], how='left', on='ECODE')
 
     # Ordenando pelo Leadtime descending
-    bup_scope = bup_scope.sort_values('LEADTIME', ascending=False)
+    bup_scope = bup_scope.sort_values('LEADTIME', ascending=False).reset_index(drop=True)
 
     # Renomeando as colunas
     bup_scope.rename(columns={'ECODE': 'Ecode', 'QTY': 'Qty', 'LEADTIME': 'Leadtime',
@@ -169,7 +169,7 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
     return histogram_image, highest_leadimes
 
 
-def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_scenario) -> None:
+def create_scenario(scenario_window, bup_scope, efficient_curve_window, lbl_pending_scenario) -> None:
     global scenarios_list
 
     scenario = {}
@@ -193,7 +193,7 @@ def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_sc
                                                                   "closed and you have access to the Downloads folder.")
 
     # Botão de exportar dados
-    btn_export_data = ctk.CTkButton(bup_chart_window, text="Export to Excel",
+    btn_export_data = ctk.CTkButton(efficient_curve_window, text="Export to Excel",
                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                     image=excel_icon, compound="top", fg_color="transparent",
                                     text_color="#000000", hover=False, border_spacing=1,
@@ -204,7 +204,7 @@ def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_sc
 
         if scenarios_count.get() == 1:
             # Exibir o botão de Exportar para Excel e ocultar a mensagem de Criação de Scenario
-            btn_export_data.place(relx=0.93, rely=0.93, anchor=ctk.CENTER)
+            btn_export_data.place(relx=0.92, rely=0.94, anchor=ctk.CENTER)
             lbl_pending_scenario.place_forget()
         else:
             pass
@@ -572,17 +572,21 @@ def create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_sc
         # Somando 1 à IntVar com a contagem de Scenarios
         var_scenarios_count.set(var_scenarios_count.get() + 1)
 
-        # Chamando a função para gerar o gráfico de Build-Up. O retorno da função é o gráfico na figura (objeto Image)
-        bup_chart = generate_efficient_curve_buildup_chart(bup_scope, scenarios_list)
+        # Chamando a função para gerar o gráfico de Efficient Build-Up. O retorno da função é o gráfico na figura (objeto Image)
+        bup_efficient_chart = generate_efficient_curve_buildup_chart(bup_scope, scenarios_list)
 
         # Carregando para um objeto Image do CTk
-        img_bup_chart = ctk.CTkImage(bup_chart,
-                                    dark_image=bup_chart,
+        img_bup_efficient_chart = ctk.CTkImage(bup_efficient_chart,
+                                    dark_image=bup_efficient_chart,
                                     size=(580, 380))
 
         # Gráfico de Build-Up - inputando CTkImage no Label e posicionando na tela
-        ctk.CTkLabel(bup_chart_window, image=img_bup_chart,
+        ctk.CTkLabel(efficient_curve_window, image=img_bup_efficient_chart,
                      text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
+
+        # Chamando a função para gerar o gráfico de Hypothetical Build-Up.
+        # bup_hypothetical_chart = generate_hypothetical_curve_buildup_chart(bup_scope, scenarios_list)
+        generate_hypothetical_curve_buildup_chart(bup_scope, scenarios_list)
 
     # Botão OK
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
@@ -675,7 +679,6 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         # Calculando a quantidade acumulada
         final_df_scenarios.loc[scenario_df.index, 'Accumulated Qty'] = scenario_df['Ordered Qty'].cumsum()
 
-    # ATÉ AQUI TÁ OK
     # final_df_scenarios.to_excel("scope with scenarios.xlsx")
 
     # Criando um dicionário para armazenar os DataFrames de cenários
@@ -754,6 +757,47 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     # Carregando a imagem do gráfico para um objeto Image que irá ser retornado pela função
     bup_chart = Image.open(tmp_img_bup_chart)
 
+    print("df_scope_with_scenarios: \n")
+    print(df_scope_with_scenarios)
+    print("\n")
+    print("scenario_dataframes: \n")
+    print(scenario_dataframes)
+    df_scope_with_scenarios.to_excel("scope with scenarios.xlsx")
+
+
     return bup_chart
 
 
+def generate_hypothetical_curve_buildup_chart(bup_scope, scenarios):
+    """
+    Function that creates the Hypothetycal Curve BuildUp Chart.
+    :param bup_scope: Dataframe with Scope and Scenarios info.
+    :param scenarios: 
+    :return: Returns an Image object
+    """
+
+    # --------------- GERAÇÃO DO GRÁFICO ---------------
+
+    # Lista com as cores, para que cada Scenario tenha uma cor específica e facilite a diferenciação
+    colors_array = ['blue', 'orange', 'black', 'green', 'purple']
+
+    # Tamanho da imagem
+    width, height = 580, 380
+
+    # Criando uma figura e eixos para inserir o gráfico
+    figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
+
+    # Configuração do Gráfico
+    eixos.set_ylabel('Materials Ordered Qty (Accumulated)')
+    eixos.set_title('Hypothetical Curve: Build-Up Forecast')
+    eixos.grid(True)
+
+    # Ajustando espaçamento dos eixos para não cortar os rótulos
+    plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
+
+    # Legenda
+    eixos.legend(loc='upper left', fontsize=7, framealpha=0.8)
+
+    # print(bup_scope)
+    # print("-----")
+    # print(scenarios)

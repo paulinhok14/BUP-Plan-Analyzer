@@ -23,7 +23,7 @@ main_screen.iconbitmap("bup_icon.ico")
 
 # Geometria da tela Principal - Centralizando
 ms_width = 700
-ms_height = 550
+ms_height = 600
 screen_width = main_screen.winfo_screenwidth()  # Width of the screen
 screen_height = main_screen.winfo_screenheight()  # Height of the screen
 # Calcula o X e Y inicial a posicionar a tela
@@ -61,7 +61,7 @@ def create_new_window(title: str):  # Função para criar nova janela
 
     # Geometria da Nova Tela
     nw_width = 700
-    nw_height = 550
+    nw_height = 600
     window_width = new_window.winfo_screenwidth()  # Width of the screen
     window_height = new_window.winfo_screenheight()  # Height of the screen
     # Calcula o X e Y inicial a posicionar a tela
@@ -73,7 +73,7 @@ def create_new_window(title: str):  # Função para criar nova janela
     main_screen.iconify()
 
     # TabView - Elementos da tela secundária: Abas
-    tbvmenu = ctk.CTkTabview(new_window, width=650, height=520, corner_radius=20,
+    tbvmenu = ctk.CTkTabview(new_window, width=650, height=570, corner_radius=20,
                              segmented_button_fg_color="#009898", segmented_button_unselected_color="#009898",
                              segmented_button_selected_color="#006464")
 
@@ -81,6 +81,15 @@ def create_new_window(title: str):  # Função para criar nova janela
     tbvmenu.add("Scope")
     tbvmenu.add("Leadtime Analysis")
     tbvmenu.add("Scenarios")
+
+    # Aba 1 - Scope
+    bup_cost = "List Value: US$ " + str("{:.2f}".format(
+        bup_scope.apply(lambda linha: linha['Acq Cost'] * linha['Qty'], axis=1).sum() / 1000000
+    )) + " MM"
+
+    label_cost = ctk.CTkLabel(tbvmenu.tab("Scope"), text=bup_cost,
+                              font=ctk.CTkFont('open sans', size=14, weight='bold'))
+    label_cost.pack(anchor="e")
 
     # Criando objeto Sheet para exibir dataframe
     sheet = Sheet(tbvmenu.tab("Scope"), data=bup_scope.values.tolist(), headers=bup_scope.columns.tolist())
@@ -107,7 +116,7 @@ def create_new_window(title: str):  # Função para criar nova janela
 
     # Gráfico de Dispersão - inputando no label e posicionando na tela
     ctk.CTkLabel(tbvmenu.tab("Leadtime Analysis"), image=img_dispersion_chart,
-                 text="").pack(pady=(0, 10), anchor="e")
+                 text="").pack(pady=20, anchor="e")
 
     # Gerando o Histograma e salvando a imagem do gráfico
     histogram_image, highest_leadimes = bup.generate_histogram(bup_scope)
@@ -137,7 +146,8 @@ def create_new_window(title: str):  # Função para criar nova janela
     def open_form_add_new_scenario():
         # Criando janela
         scenario_window = ctk.CTkToplevel(tbvmenu.tab("Scenarios"))
-        bup_chart_window = tbvmenu.tab("Scenarios")
+        # bup_chart_window = tbvmenu.tab("Scenarios")
+        efficient_curve_window = tbv_curve_charts.tab("Efficient Curve")
 
         # Configurações da nova tela
         scenario_window.title("Add New Scenario")
@@ -157,16 +167,15 @@ def create_new_window(title: str):  # Função para criar nova janela
         scenario_window.grab_set()
 
         # Função que cria os elementos e interage com a Lista de Scenarios
-        bup.create_scenario(scenario_window, bup_scope, bup_chart_window, lbl_pending_scenario)
+        bup.create_scenario(scenario_window, bup_scope, efficient_curve_window, lbl_pending_scenario)
 
     # Botão Create Scenario
     btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
                                   command=lambda: (open_form_add_new_scenario()),
                                   font=ctk.CTkFont('open sans', size=12, weight='bold'),
-                                  #bg_color="#dbdbdb", fg_color="#009898", hover_color="#006464",
-                                bg_color="#cfcfcf", fg_color="#009898", hover_color="#006464",
+                                  bg_color="#cfcfcf", fg_color="#009898", hover_color="#006464",
                                   width=200, height=30, corner_radius=30
-                                        ).place(relx=0.5, rely=0.95, anchor=ctk.CENTER)
+                                        ).place(relx=0.5, rely=0.93, anchor=ctk.CENTER)
 
     # Minimiza tela principal
     main_screen.iconify()
