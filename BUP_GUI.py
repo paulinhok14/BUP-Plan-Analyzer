@@ -146,8 +146,8 @@ def create_new_window(title: str):  # Função para criar nova janela
     def open_form_add_new_scenario():
         # Criando janela
         scenario_window = ctk.CTkToplevel(tbvmenu.tab("Scenarios"))
-        # bup_chart_window = tbvmenu.tab("Scenarios")
         efficient_curve_window = tbv_curve_charts.tab("Efficient Curve")
+        hypothetical_curve_window = tbv_curve_charts.tab("Hypothetical Curve")
 
         # Configurações da nova tela
         scenario_window.title("Add New Scenario")
@@ -167,7 +167,7 @@ def create_new_window(title: str):  # Função para criar nova janela
         scenario_window.grab_set()
 
         # Função que cria os elementos e interage com a Lista de Scenarios
-        bup.create_scenario(scenario_window, bup_scope, efficient_curve_window, lbl_pending_scenario)
+        bup.create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothetical_curve_window, lbl_pending_scenario)
 
     # Botão Create Scenario
     btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',

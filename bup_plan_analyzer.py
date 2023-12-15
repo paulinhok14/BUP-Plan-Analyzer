@@ -169,7 +169,7 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
     return histogram_image, highest_leadimes
 
 
-def create_scenario(scenario_window, bup_scope, efficient_curve_window, lbl_pending_scenario) -> None:
+def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothetical_curve_window, lbl_pending_scenario) -> None:
     global scenarios_list
 
     scenario = {}
@@ -572,21 +572,33 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, lbl_pend
         # Somando 1 à IntVar com a contagem de Scenarios
         var_scenarios_count.set(var_scenarios_count.get() + 1)
 
-        # Chamando a função para gerar o gráfico de Efficient Build-Up. O retorno da função é o gráfico na figura (objeto Image)
-        bup_efficient_chart = generate_efficient_curve_buildup_chart(bup_scope, scenarios_list)
+        # ----------- Chamada da Função de Geração do Gráfico -----------
+
+        # Chamando a função para gerar o gráfico de Efficient Build-Up. O retorno da função é o gráfico na figura (objeto Image),
+        # Além dos DataFrames/Variáveis construídos na função, como retorno a serem usados no gráfico Hipotético
+        bup_efficient_chart, df_scope_with_scenarios, scenario_dataframes = \
+            generate_efficient_curve_buildup_chart(bup_scope, scenarios_list)
 
         # Carregando para um objeto Image do CTk
         img_bup_efficient_chart = ctk.CTkImage(bup_efficient_chart,
                                     dark_image=bup_efficient_chart,
                                     size=(580, 380))
 
-        # Gráfico de Build-Up - inputando CTkImage no Label e posicionando na tela
+        # Gráfico de Build-Up Efficient Curve - inputando CTkImage no Label e posicionando na tela
         ctk.CTkLabel(efficient_curve_window, image=img_bup_efficient_chart,
                      text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
         # Chamando a função para gerar o gráfico de Hypothetical Build-Up.
-        # bup_hypothetical_chart = generate_hypothetical_curve_buildup_chart(bup_scope, scenarios_list)
-        generate_hypothetical_curve_buildup_chart(bup_scope, scenarios_list)
+        bup_hypothetical_chart = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes)
+
+        # Carregando para um objeto Image do CTk
+        img_bup_hypothetical_chart = ctk.CTkImage(bup_hypothetical_chart,
+                                    dark_image=bup_hypothetical_chart,
+                                    size=(580, 380))
+
+        # Gráfico de Build-Up Hypothetical Curve - inputando CTkImage no Label e posicionando na tela
+        ctk.CTkLabel(hypothetical_curve_window, image=img_bup_hypothetical_chart,
+                    text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
     # Botão OK
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
@@ -679,8 +691,6 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         # Calculando a quantidade acumulada
         final_df_scenarios.loc[scenario_df.index, 'Accumulated Qty'] = scenario_df['Ordered Qty'].cumsum()
 
-    # final_df_scenarios.to_excel("scope with scenarios.xlsx")
-
     # Criando um dicionário para armazenar os DataFrames de cenários
     scenario_dataframes = {}
 
@@ -757,21 +767,14 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     # Carregando a imagem do gráfico para um objeto Image que irá ser retornado pela função
     bup_chart = Image.open(tmp_img_bup_chart)
 
-    print("df_scope_with_scenarios: \n")
-    print(df_scope_with_scenarios)
-    print("\n")
-    print("scenario_dataframes: \n")
-    print(scenario_dataframes)
-    df_scope_with_scenarios.to_excel("scope with scenarios.xlsx")
-
-    return bup_chart
+    return bup_chart, df_scope_with_scenarios, scenario_dataframes
 
 
-def generate_hypothetical_curve_buildup_chart(bup_scope, scenarios):
+def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes):
     """
     Function that creates the Hypothetycal Curve BuildUp Chart.
-    :param bup_scope: Dataframe with Scope and Scenarios info.
-    :param scenarios: 
+    :param scenario_dataframes: Dictionary with all scenarios dataframes.
+    :param df_scope_with_scenarios: Created DataFrame on Efficient Curve Build-Up construction. Combinations Scope/Scenarios.
     :return: Returns an Image object
     """
 
@@ -785,6 +788,9 @@ def generate_hypothetical_curve_buildup_chart(bup_scope, scenarios):
 
     # Criando uma figura e eixos para inserir o gráfico
     figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
+
+    df_scope_with_scenarios.to_excel("df_scope_with_scenarios.xlsx")
+    print(scenario_dataframes)
 
     # Plotando a linha para cada Scenario do dicionário
     for index, (scenario_name, scenario_df) in enumerate(scenario_dataframes.items()):
@@ -830,3 +836,15 @@ def generate_hypothetical_curve_buildup_chart(bup_scope, scenarios):
 
     # Legenda
     eixos.legend(loc='upper left', fontsize=7, framealpha=0.8)
+
+    # --------------- TRANSFORMANDO EM UMA IMAGEM PARA SER EXIBIDA ---------------
+
+    # Salvando a figura matplotlib em um objeto BytesIO (memória), para não ter que salvar em um arquivo de imagem
+    tmp_img_hypothetical_chart = BytesIO()
+    figura.savefig(tmp_img_hypothetical_chart, format='png', transparent=True)
+    tmp_img_hypothetical_chart.seek(0)
+
+    # Carregando a imagem do gráfico para um objeto Image que irá ser retornado pela função
+    bup_hypothetical_chart = Image.open(tmp_img_hypothetical_chart)
+
+    return bup_hypothetical_chart
