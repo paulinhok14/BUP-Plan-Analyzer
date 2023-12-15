@@ -764,7 +764,6 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     print(scenario_dataframes)
     df_scope_with_scenarios.to_excel("scope with scenarios.xlsx")
 
-
     return bup_chart
 
 
