@@ -320,43 +320,52 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
     lbl_contractual_conditions = ctk.CTkLabel(contractual_conditions_frame, text="Contractual Conditions",
                                               font=ctk.CTkFont('open sans', size=14, weight='bold')
                                               )
-    lbl_contractual_conditions.grid(row=0, columnspan=2, sticky="n", pady=(10, 10))
+    lbl_contractual_conditions.grid(row=0, column=0, columnspan=4, sticky="n", pady=(10, 10))
 
     # --- t0 ---
     lbl_t0 = ctk.CTkLabel(contractual_conditions_frame, text="T0 Date (*)",
                           font=ctk.CTkFont('open sans', size=11, weight="bold")
                           )
-    lbl_t0.grid(row=1, column=0, sticky="w", padx=12)
-    entry_t0 = ctk.CTkEntry(contractual_conditions_frame, width=200,
+    lbl_t0.grid(row=1, column=0, sticky="w", padx=(12, 0))
+    entry_t0 = ctk.CTkEntry(contractual_conditions_frame, width=150,
                             placeholder_text="Format: DD/MM/YYYY")
-    entry_t0.grid(row=2, column=0, padx=10, sticky="w")
+    entry_t0.grid(row=2, column=0, padx=(10, 0), sticky="w")
+
+    # --- Hypothetical Planning Start Date (an integer added to t0, in months, Ex: 3 for t0+3) ---
+    lbl_hyp_pln_start = ctk.CTkLabel(contractual_conditions_frame, text="t0+X",
+                          font=ctk.CTkFont('open sans', size=11, weight="bold")
+                                     )
+    lbl_hyp_pln_start.grid(row=1, column=1, sticky="w")
+    entry_hyp_pln_start = ctk.CTkEntry(contractual_conditions_frame, width=35,
+                            placeholder_text="3")
+    entry_hyp_pln_start.grid(row=2, column=1, sticky="w")
 
     # --- Aircraft Delivery Start ---
     lbl_acft_delivery_start = ctk.CTkLabel(contractual_conditions_frame, text="Aircraft Delivery Start (*)",
                                            font=ctk.CTkFont('open sans', size=11, weight='bold')
                                            )
-    lbl_acft_delivery_start.grid(row=1, column=1, padx=12, sticky="e")
+    lbl_acft_delivery_start.grid(row=1, column=2, columnspan=2, padx=(0, 12), sticky="e")
     entry_acft_delivery_start = ctk.CTkEntry(contractual_conditions_frame, width=200,
                                              placeholder_text="Format: DD/MM/YYYY")
-    entry_acft_delivery_start.grid(row=2, column=1, padx=10, sticky="e")
+    entry_acft_delivery_start.grid(row=2, column=2, columnspan=2, padx=(0, 10), sticky="e")
 
     # --- Material Delivery Start ---
     lbl_material_delivery_start = ctk.CTkLabel(contractual_conditions_frame, text="Material Delivery Start (*)",
                                                font=ctk.CTkFont('open sans', size=11, weight='bold')
                                                )
-    lbl_material_delivery_start.grid(row=3, column=0, sticky="w", padx=12)
+    lbl_material_delivery_start.grid(row=3, column=0, columnspan=2, sticky="w", padx=12)
     entry_material_delivery_start = ctk.CTkEntry(contractual_conditions_frame, width=200,
                                                  placeholder_text="Nº of months (ex: 38 for T+38)")
-    entry_material_delivery_start.grid(row=4, column=0, padx=10, sticky="w", pady=(0, 20))
+    entry_material_delivery_start.grid(row=4, column=0, columnspan=2, padx=10, sticky="w", pady=(0, 20))
 
     # --- Material Delivery End ---
     lbl_material_delivery_end = ctk.CTkLabel(contractual_conditions_frame, text="Material Delivery End (*)",
                                              font=ctk.CTkFont('open sans', size=11, weight='bold')
                                              )
-    lbl_material_delivery_end.grid(row=3, column=1, sticky="e", padx=12)
+    lbl_material_delivery_end.grid(row=3, column=2, columnspan=2, sticky="e", padx=12)
     entry_material_delivery_end = ctk.CTkEntry(contractual_conditions_frame, width=200,
                                                placeholder_text="Nº of months (ex: 43 for T+43)")
-    entry_material_delivery_end.grid(row=4, column=1, padx=10, sticky="e", pady=(0, 20))
+    entry_material_delivery_end.grid(row=4, column=2, columnspan=2, padx=10, sticky="e", pady=(0, 20))
 
     # ----------------- PROCUREMENT LENGTH -----------------
 
