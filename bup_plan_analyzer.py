@@ -20,8 +20,8 @@ export_output_path = fr'C:\Users\{active_user}\Downloads\bup_scenarios_data.xlsx
 
 # Declarando as variáveis que irão armazenar temporariamente os valores prévios de Cenários já cadastrados,
 # para caso o usuário queira reaproveitar os parâmetros contratuais do Cenário.
-t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value\
-    , material_delivery_end_previous_value = None, None, None, None
+t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value\
+    , material_delivery_end_previous_value = None, None, None, None, None
 
 
 # Função para ler o arquivo e informações complementares
@@ -247,7 +247,7 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
             # Função que, ao clicar no botão YES, ele usa os valores do primeiro Scenario cadastrado e desabilita os Entry
             def use_previous_scenario_values():
                 # Usando de forma global as variáveis de controle para armazenar os valores previamente cadastrados
-                global t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
+                global t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
                     , material_delivery_end_previous_value
 
                 t0_previous_value = ctk.StringVar(value=
@@ -255,6 +255,11 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                                                   )
                 entry_t0.configure(textvariable=t0_previous_value)
                 entry_t0.configure(state="disabled")
+
+                hyp_t0_previous_value = ctk.StringVar(value=
+                                                      scenarios_list[0]['hyp_t0_start'])
+                entry_hyp_pln_start.configure(textvariable=hyp_t0_previous_value)
+                entry_hyp_pln_start.configure(state="disabled")
 
                 acft_delivery_start_previous_value = ctk.StringVar(
                     value=scenarios_list[0]['acft_delivery_start'].strftime("%d/%m/%Y")
@@ -277,11 +282,11 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                 """
 
                 # Usando de forma global as variáveis
-                global t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
+                global t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
                     , material_delivery_end_previous_value
 
-                t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
-                    , material_delivery_end_previous_value = None, None, None, None
+                t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
+                    , material_delivery_end_previous_value = None, None, None, None, None
 
             # Botão YES
             btn_yes = ctk.CTkButton(confirm_window, text='Yes', command=lambda: (
@@ -327,7 +332,7 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                           font=ctk.CTkFont('open sans', size=11, weight="bold")
                           )
     lbl_t0.grid(row=1, column=0, sticky="w", padx=(12, 0))
-    entry_t0 = ctk.CTkEntry(contractual_conditions_frame, width=150,
+    entry_t0 = ctk.CTkEntry(contractual_conditions_frame, width=160,
                             placeholder_text="Format: DD/MM/YYYY")
     entry_t0.grid(row=2, column=0, padx=(10, 0), sticky="w")
 
@@ -463,6 +468,23 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                 return
         else:
             scenario['t0'] = pd.to_datetime(t0_previous_value.get(), format='%d/%m/%Y', errors='coerce')
+
+        # t0 + X: Integer (default: 3) que será somado ao t0 para indicar data hipotética de início das compras de materiais
+
+        if hyp_t0_previous_value is None:
+
+            try:
+                if entry_hyp_pln_start.get().strip() != "":
+                    scenario['hyp_t0_start'] = int(entry_hyp_pln_start.get())
+                else:
+                    scenario['hyp_t0_start'] = int(3)  # Default: 3
+            except ValueError:
+                messagebox.showerror("Error",
+                                     "Invalid character. Please enter a valid number (months, in integer) for Hypothetical T0 Start (t0+x).")
+                return
+
+        else:
+            scenario['hyp_t0_start'] = int(hyp_t0_previous_value.get())
 
         # Aircraft Delivery Start
 
@@ -668,9 +690,18 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         lambda linha: linha['avg_date_between_materials_deadline'] - pd.DateOffset(days=linha['PN Procurement Length'])
         , axis=1)
 
+    # Criando a coluna com a data hipotética de início das compras de material, já pensando no gráfico Hipotético
+    df_scope_with_scenarios['PN Order Date Hypothetical'] = df_scope_with_scenarios.apply(
+        lambda linha: linha['t0'] + pd.DateOffset(months=linha['hyp_t0_start'])
+        , axis=1)
+    # Criando a coluna de data em que será entregue o material, para gráfico Hipotético
+    df_scope_with_scenarios['Delivery Date Hypothetical'] = df_scope_with_scenarios.apply(
+        lambda linha: linha['PN Order Date Hypothetical'] + pd.DateOffset(days=linha['PN Procurement Length'])
+        , axis=1)
+
     # Pegando a Maior e Menor Data entre todas as datas possíveis, para delimitar o eixo X do gráfico
     date_columns = ['t0', 'acft_delivery_start', 'material_delivery_start_date', 'material_delivery_end_date',
-                    'PN Order Date']
+                    'PN Order Date', 'PN Order Date Hypothetical']
 
     # O primeiro min/max retorna a menor/maior data por coluna e no final temos então uma lista de mínimos/máximos.
     # O segundo pega o menor da lista criada. Adiciono um mês em cada extremo para não coincidir as linhas verticais
@@ -681,16 +712,31 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     date_range = pd.date_range(start=min_date, end=max_date, freq='M')
     df_dates = pd.DataFrame({'Date': date_range.strftime('%m/%Y')})
 
+    # ------- Tabela para Criação dos gráficos --------
+    # -- Efficient Curve
     # Criando tabela com a contagem agrupada de itens comprados por mês, para cada Scenario
-    grouped_counts = df_scope_with_scenarios.groupby([df_scope_with_scenarios['PN Order Date'].dt.to_period('M'), 'Scenario']).size().reset_index(
+    grouped_counts_eff = df_scope_with_scenarios.groupby([df_scope_with_scenarios['PN Order Date'].dt.to_period('M'), 'Scenario']).size().reset_index(
         name='Ordered Qty')
-    # Formatando a Data YYYY-MM da tabela atual para o modelo de apresentação: MM/YYYY
-    grouped_counts['PN Order Date'] = grouped_counts['PN Order Date'].dt.strftime('%m/%Y')
+    grouped_counts_eff['PN Order Date'] = grouped_counts_eff['PN Order Date'].dt.strftime('%m/%Y')
+    # -- Hypothetical Curve
+    # Criando também os campos de Delivered Qty (Hipotético)
+    grouped_counts_hyp = df_scope_with_scenarios.groupby([df_scope_with_scenarios['Delivery Date Hypothetical'].dt.to_period('M'),
+                                                          'Scenario']).size().reset_index(name='Delivered Qty Hyp')
+    grouped_counts_hyp['Delivery Date Hypothetical'] = grouped_counts_hyp['Delivery Date Hypothetical'].dt.strftime('%m/%Y')
+    # -- Consolidando
+    grouped_counts = grouped_counts_eff.merge(grouped_counts_hyp,
+                                              left_on=['PN Order Date', 'Scenario'],
+                                              right_on=['Delivery Date Hypothetical', 'Scenario'],
+                                              how='outer')
+    # -- Ajustando o DataFrame final
+    grouped_counts['Date'] = grouped_counts['PN Order Date'].fillna(grouped_counts['Delivery Date Hypothetical'])
+    grouped_counts = grouped_counts.drop(['PN Order Date', 'Delivery Date Hypothetical'], axis=1)
 
-    # Passando a informação de Ordered Qty agrupada por mês e por Scenario para o DF com o Range de datas
-    final_df_scenarios = df_dates.merge(grouped_counts, left_on='Date', right_on='PN Order Date', how='left')
+    # Passando a informação de Ordered Qty e Delivered Qty agrupada por mês e por Scenario para o DF com o Range de datas
+    final_df_scenarios = df_dates.merge(grouped_counts, left_on='Date', right_on='Date', how='left')
     final_df_scenarios['Scenario'] = final_df_scenarios['Scenario'].fillna(-1).astype(int)
     final_df_scenarios['Ordered Qty'] = final_df_scenarios['Ordered Qty'].fillna(0)
+    final_df_scenarios['Delivered Qty Hyp'] = final_df_scenarios['Delivered Qty Hyp'].fillna(0)
 
     # Para cada scenario, calculando a Quantidade Acumulada para plotar
     for scenario in final_df_scenarios['Scenario'].unique():
@@ -698,22 +744,30 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         scenario_df = final_df_scenarios[final_df_scenarios['Scenario'] == scenario]
 
         # Calculando a quantidade acumulada
-        final_df_scenarios.loc[scenario_df.index, 'Accumulated Qty'] = scenario_df['Ordered Qty'].cumsum()
+        final_df_scenarios.loc[scenario_df.index, 'Accum. Ordered Qty (Eff)'] = scenario_df['Ordered Qty'].cumsum()
+        final_df_scenarios.loc[scenario_df.index, 'Accum. Delivered Qty (Hyp)'] = scenario_df['Delivered Qty Hyp'].cumsum()
 
     # Criando um dicionário para armazenar os DataFrames de cenários
     scenario_dataframes = {}
+
+    final_df_scenarios.to_excel('final_df_scenarios.xlsx')
 
     # Criando um DF para cada Scenario
     for scenario in final_df_scenarios['Scenario'].unique():
         if scenario != -1:  # Scenario -1 é apenas indicativo de nulidade, não é um cenário real
             tmp_filtered_scenario_final_df = final_df_scenarios[final_df_scenarios['Scenario'] == scenario]
-            scenario_df = df_dates.merge(tmp_filtered_scenario_final_df[['Date', 'Scenario', 'Ordered Qty', 'Accumulated Qty']],
+            scenario_df = df_dates.merge(tmp_filtered_scenario_final_df[
+                                             ['Date', 'Scenario', 'Ordered Qty', 'Delivered Qty Hyp',
+                                              'Accum. Ordered Qty (Eff)', 'Accum. Delivered Qty (Hyp)']],
                                          left_on='Date', right_on='Date', how='left')
+            # Preenchendo nulos
             scenario_df['Scenario'] = scenario_df['Scenario'].fillna(scenario).astype(int)
             scenario_df['Ordered Qty'] = scenario_df['Ordered Qty'].fillna(0)
+            scenario_df['Delivered Qty Hyp'] = scenario_df['Delivered Qty Hyp'].fillna(0)
 
-            # Preenchendo os meses vazios para Accumulated Qty com base no último registro
-            scenario_df['Accumulated Qty'].fillna(method='ffill', inplace=True)
+            # Preenchendo os meses vazios para Accumulated Qty (tanto Eff quanto Hyp) com base no último registro
+            scenario_df['Accum. Ordered Qty (Eff)'].fillna(method='ffill', inplace=True)
+            scenario_df['Accum. Delivered Qty (Hyp)'].fillna(method='ffill', inplace=True)
 
             # Armazenando o DataFrame no dicionário com o nome do cenário
             scenario_dataframes[f'Scenario_{int(scenario)}'] = scenario_df
@@ -731,7 +785,7 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
 
     # Plotando a linha para cada Scenario do dicionário
     for index, (scenario_name, scenario_df) in enumerate(scenario_dataframes.items()):
-        eixos.plot(scenario_df['Date'], scenario_df['Accumulated Qty'], label=f'Scen. {index}', color=colors_array[index])
+        eixos.plot(scenario_df['Date'], scenario_df['Accum. Ordered Qty (Eff)'], label=f'Scen. {index}', color=colors_array[index])
         # Configurando o eixo
         plt.xticks(scenario_df.index[::3], scenario_df['Date'][::3], rotation=45, ha='right')
 
@@ -798,12 +852,9 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
     # Criando uma figura e eixos para inserir o gráfico
     figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
 
-    df_scope_with_scenarios.to_excel("df_scope_with_scenarios.xlsx")
-    print(scenario_dataframes)
-
     # Plotando a linha para cada Scenario do dicionário
     for index, (scenario_name, scenario_df) in enumerate(scenario_dataframes.items()):
-        eixos.plot(scenario_df['Date'], scenario_df['Accumulated Qty'], label=f'Scen. {index}',
+        eixos.plot(scenario_df['Date'], scenario_df['Accum. Delivered Qty (Hyp)'], label=f'Scen. {index}',
                    color=colors_array[index])
         # Configurando o eixo
         plt.xticks(scenario_df.index[::3], scenario_df['Date'][::3], rotation=45, ha='right')
@@ -836,7 +887,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
         eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
 
     # Configuração do Gráfico
-    eixos.set_ylabel('Materials Ordered Qty (Accumulated)')
+    eixos.set_ylabel('Materials Delivered Qty (Accumulated)')
     eixos.set_title('Hypothetical Curve: Build-Up Forecast')
     eixos.grid(True)
 
