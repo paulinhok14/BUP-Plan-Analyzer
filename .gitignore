@@ -5,3 +5,10 @@ venv/
 # Python compiled file and optimizated file
 *.pyc
 *.pyo
+
+# Files from Pyinstaller
+dist/
+build/
+
+# Executable path
+BUP Plan Analyzer/

@@ -15,7 +15,7 @@ active_user = os.getlogin()
 # Lista de Scenarios
 scenarios_list = []
 
-excel_icon_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\excel_transparent.png'
+excel_icon_path = r'excel_transparent.png'
 export_output_path = fr'C:\Users\{active_user}\Downloads\bup_scenarios_data.xlsx'
 
 # Declarando as variáveis que irão armazenar temporariamente os valores prévios de Cenários já cadastrados,
@@ -31,8 +31,9 @@ def read_scope_file(file_full_path: str):
 
     # Fonte das informações complementares
     # leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
-    leadtime_source = r'C:\Users\prsarau\Documents\Arquivos de Trabalho\(Diego Sodre) Build-Up Plan Analyzer\marcsa.txt'
-    ecode_data_path = r'C:\Users\prsarau\Documents\Arquivos de Trabalho\(Diego Sodre) Build-Up Plan Analyzer\DB_Ecode-Data.txt'
+    leadtime_source = r'marcsa.txt'
+    # ecode_data_path = r'\\egmap20038\Databases\DB_Ecode-Data.txt'
+    ecode_data_path = r'DB_Ecode-Data.txt'
 
     # Leitura da tabela e Filtros
     scope = pd.read_excel(file_full_path, usecols=colunas)

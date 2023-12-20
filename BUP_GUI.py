@@ -7,9 +7,9 @@ from tksheet import Sheet
 import bup_plan_analyzer as bup  # Arquivo-fonte com as funções do programa
 
 
-logo_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\logo.png'
-title_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\titulo_bup_analyzer.png'
-img_open_file_path = r'C:\Users\prsarau\PycharmProjects\BUP Plan Analyzer\browse_icon_transp.png'
+logo_path = r'logo.png'
+title_path = r'titulo_bup_analyzer.png'
+img_open_file_path = r'browse_icon_transp.png'
 
 
 main_screen = ctk.CTk()  # Tela Principal
