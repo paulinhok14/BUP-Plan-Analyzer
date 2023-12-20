@@ -886,6 +886,12 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
 
         eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
 
+        # Adicionando uma anotação no ponto em que o Build-Up é concluído (todos os itens entregues)
+        index_max_acc_qty = scenario_df['Accum. Delivered Qty (Hyp)'].idxmax()
+        x_max = scenario_df.loc[index_max_acc_qty, 'Date']
+        y_max = scenario_df.loc[index_max_acc_qty, 'Accum. Delivered Qty (Hyp)']
+        plt.scatter(x_max, y_max, color=colors_array[index], marker='o', label=f'BUP Conclusion: Scen. {index}')
+
     # Configuração do Gráfico
     eixos.set_ylabel('Materials Delivered Qty (Accumulated)')
     eixos.set_title('Hypothetical Curve: Build-Up Forecast')
