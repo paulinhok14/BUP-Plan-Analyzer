@@ -751,8 +751,6 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     # Criando um dicionário para armazenar os DataFrames de cenários
     scenario_dataframes = {}
 
-    final_df_scenarios.to_excel('final_df_scenarios.xlsx')
-
     # Criando um DF para cada Scenario
     for scenario in final_df_scenarios['Scenario'].unique():
         if scenario != -1:  # Scenario -1 é apenas indicativo de nulidade, não é um cenário real
@@ -891,7 +889,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
         index_max_acc_qty = scenario_df['Accum. Delivered Qty (Hyp)'].idxmax()
         x_max = scenario_df.loc[index_max_acc_qty, 'Date']
         y_max = scenario_df.loc[index_max_acc_qty, 'Accum. Delivered Qty (Hyp)']
-        plt.scatter(x_max, y_max, color=colors_array[index], marker='o', label=f'BUP Conclusion: Scen. {index}')
+        plt.scatter(x_max, y_max, color=colors_array[index], marker='o', label=f'BUP Conclusion: {x_max}')
 
     # Configuração do Gráfico
     eixos.set_ylabel('Materials Delivered Qty (Accumulated)')

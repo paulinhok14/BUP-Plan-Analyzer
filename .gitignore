@@ -1,5 +1,5 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/*
+__pycache__/
 venv/
 
 # Python compiled file and optimizated file
@@ -12,3 +12,7 @@ build/
 
 # Executable path
 BUP Plan Analyzer/
+
+# Complementary files (data source)
+DB_Ecode-Data.txt
+marcsa.txt
