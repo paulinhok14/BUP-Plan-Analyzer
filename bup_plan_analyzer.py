@@ -72,7 +72,7 @@ def read_scope_file(file_full_path: str):
     # Convertendo as colunas numéricas de float para int
     bup_scope['ECODE'] = bup_scope['ECODE'].astype(int)
     bup_scope['QTY'] = bup_scope['QTY'].astype(int)
-    bup_scope['LEADTIME'] = bup_scope['LEADTIME'].astype(int)
+    bup_scope['LEADTIME'] = bup_scope['LEADTIME'].fillna(127).astype(int)  # Leadtime default 127
     # Garantindo que Acq Cost seja flutuante
     ecode_data_filtered['ACQCOST'] = ecode_data_filtered['ACQCOST'].str.replace(',', '.').astype(float)
 
