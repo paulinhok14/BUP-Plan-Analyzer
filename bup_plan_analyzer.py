@@ -159,12 +159,18 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
             'size': 9
         })
 
-    # Salvando a figura com fundo transparente, para depois carregá-la.
-    fig.savefig('histogram.png', transparent=True)
+    # --- Salvando a imagem do gráfico em BytesIO() (memória) para não precisar salvar arquivo ---
 
-    # Carregando para um objeto Image
-    histogram_image = ctk.CTkImage(Image.open('histogram.png'),
-                                   dark_image=Image.open('histogram.png'),
+    tmp_img_histogram_chart = BytesIO()
+    fig.savefig(tmp_img_histogram_chart, format='png', transparent=True)
+    tmp_img_histogram_chart.seek(0)
+
+    # Mantendo a imagem em um objeto Image
+    histogram_chart = Image.open(tmp_img_histogram_chart)
+
+    # Carregando para um objeto CTk Image
+    histogram_image = ctk.CTkImage(histogram_chart,
+                                   dark_image=histogram_chart,
                                    size=(600, 220))
 
     return histogram_image, highest_leadimes
