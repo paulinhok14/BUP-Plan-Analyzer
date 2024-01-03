@@ -7,6 +7,8 @@ from io import BytesIO
 import os
 import customtkinter as ctk
 from tkinter import messagebox
+import time
+import logging
 
 warnings.filterwarnings("ignore")
 
@@ -24,8 +26,29 @@ t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, ma
     , material_delivery_end_previous_value = None, None, None, None, None
 
 
-# Função para ler o arquivo e informações complementares
+# Log Configs
+open('execution_info.log', 'w').close()  # Clean log file before system execution
+log_format = "%(asctime)s: %(levelname)s: %(message)s"
+logging.basicConfig(level=logging.INFO,
+                    filename='execution_info.log',
+                    format=log_format)
+
+
+# Decorator function that calculates how long each function of the system takes to execute
+def function_timer(func):
+    def wrapper(*args):
+        start_time = time.time()
+        result = func(*args)
+        exec_time = time.time() - start_time
+        logging.info(f"Function '{func.__name__}' took {round(exec_time, 2)} seconds to run.")
+        return result
+    return wrapper
+
+
+@function_timer
 def read_scope_file(file_full_path: str):
+    # Function that reads scope file and complementary info
+
     # Colunas a serem lidas no arquivo (essenciais)
     colunas = ['PN', 'ECODE', 'QTY', 'EIS', 'SPC']
 
@@ -90,6 +113,7 @@ def read_scope_file(file_full_path: str):
     return bup_scope
 
 
+@function_timer
 def generate_dispersion_chart(bup_scope):
     # Função para formatar os valores do eixo y em milhares
     def format_acq_cost(value, _):
@@ -128,6 +152,7 @@ def generate_dispersion_chart(bup_scope):
     return dispersion_chart
 
 
+@function_timer
 def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e os maiores Leadtimes
 
     # DF com os maiores Leadtimes
@@ -176,6 +201,7 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
     return histogram_image, highest_leadimes
 
 
+@function_timer
 def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothetical_curve_window, lbl_pending_scenario) -> None:
     global scenarios_list
 
@@ -653,6 +679,7 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                                ).place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
 
 
+@function_timer
 def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
 
     # --------------- PREPARAÇÃO DOS DADOS ---------------
@@ -838,6 +865,7 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     return bup_chart, df_scope_with_scenarios, scenario_dataframes
 
 
+@function_timer
 def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes):
     """
     Function that creates the Hypothetycal Curve BuildUp Chart.
