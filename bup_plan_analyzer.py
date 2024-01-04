@@ -131,57 +131,57 @@ def generate_dispersion_chart(bup_scope):
     expendable_items = bup_scope[bup_scope['SPC'] == 'Expendable']
     repairable_items = bup_scope[bup_scope['SPC'] == 'Repairable']
 
-    # Plotando os pontos Expendable
+    # Plotting Expendable items
     ax.scatter(expendable_items['Leadtime'], expendable_items['Acq Cost'], color='orange', label='Expendables')
-    # Plotando os pontos Repairable
+    # Plotting Repairable items
     ax.scatter(repairable_items['Leadtime'], repairable_items['Acq Cost'], color='purple', label='Repairables')
 
-    # Adicionando rótulos e legendas
+    # Adding labels and legends
     ax.set_xlabel('Leadtime')
     ax.set_ylabel('Acq Cost')
     ax.set_title('Dispersion Acq Cost x Leadtime', fontsize=10)
     ax.legend(fontsize=9, framealpha=0.6)
     plt.grid(True)
-    # Configurando o formato personalizado para o eixo y
+    # Setting personalized format to y-axis
     ax.yaxis.set_major_formatter(FuncFormatter(format_acq_cost))
 
-    # --------------- TRANSFORMANDO EM UMA IMAGEM PARA SER EXIBIDA ---------------
+    # --------------- Turning it into an Image to be displayed  ---------------
 
-    # Salvando a figura matplotlib em um objeto BytesIO (memória), para não ter que salvar em um arquivo de imagem
+    # Saving the matplotlib figure to a BytesIO object (memory), so as not to have to save to an image file
     tmp_img_dispersion_chart = BytesIO()
     fig.savefig(tmp_img_dispersion_chart, format='png', transparent=True)
     tmp_img_dispersion_chart.seek(0)
 
-    # Carregando a imagem do gráfico para um objeto Image que irá ser retornado pela função
+    # Loading the chart image into an Image object that will be returned by the function
     dispersion_chart = Image.open(tmp_img_dispersion_chart)
 
     return dispersion_chart
 
 
 @function_timer
-def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e os maiores Leadtimes
+def generate_histogram(bup_scope):  # Generates the Histogram. Returns a Figure and the largest Leadtimes
 
-    # DF com os maiores Leadtimes
+    # DataFrame with highest Leadtimes
     highest_leadimes = bup_scope.nlargest(3, 'Leadtime').to_string(index=False)
 
-    # Tamanho da imagem
+    # Image size
     width, height = 600, 220
 
-    # Criando uma figura e eixos para inserir o gráfico
+    # Creating figure and axes to insert the chart
     fig, ax = plt.subplots(figsize=(width / 100, height / 100))
     fig.patch.set_facecolor("None")
 
-    # Criando Histograma, e salvando as informações em variáveis de controle
+    # Creating Histogram and saving the information in control variables
     n, bins, patches = ax.hist(bup_scope['Leadtime'], bins=20, edgecolor='k', linewidth=0.7, alpha=0.9)
 
-    # Configuração do Histograma
+    # Histogram settings
     ax.set_xlabel('Leadtime (in days)')
     ax.set_ylabel('Materials Count')
     ax.set_title('Leadtime Histogram', fontsize=10)
-    # Ajustando o limite do eixo y ( a maior barra estava escapando)
-    ax.set_ylim(0, max(n) + 50)  # Adicionando uma margem para acomodar a contagem no topo
+    # Adjusting the y-axis limit (the largest bar was transcending the upper limit)
+    ax.set_ylim(0, max(n) + 50)  # Adding a margin to accommodate the count at the top of the bar
 
-    # Inserindo a contagem em cada barra
+    # Inserting the count into each bar
     for count, bar in zip(n, patches):
         x = bar.get_x() + bar.get_width() / 2
         y = bar.get_height()
@@ -190,16 +190,15 @@ def generate_histogram(bup_scope):  # Gera o Histograma e retorna uma Figura e o
             'size': 9
         })
 
-    # --- Salvando a imagem do gráfico em BytesIO() (memória) para não precisar salvar arquivo ---
-
+    # --- Saving the chart image in BytesIO() (memory) so it is not necessary to save as a file ---
     tmp_img_histogram_chart = BytesIO()
     fig.savefig(tmp_img_histogram_chart, format='png', transparent=True)
     tmp_img_histogram_chart.seek(0)
 
-    # Mantendo a imagem em um objeto Image
+    # Keeping the image in an Image object
     histogram_chart = Image.open(tmp_img_histogram_chart)
 
-    # Carregando para um objeto CTk Image
+    # Loading into a CTk Image object
     histogram_image = ctk.CTkImage(histogram_chart,
                                    dark_image=histogram_chart,
                                    size=(600, 220))
