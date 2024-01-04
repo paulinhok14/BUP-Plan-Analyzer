@@ -14,14 +14,14 @@ warnings.filterwarnings("ignore")
 
 active_user = os.getlogin()
 
-# Lista de Scenarios
+# Scenarios list
 scenarios_list = []
 
 excel_icon_path = r'excel_transparent.png'
 export_output_path = fr'C:\Users\{active_user}\Downloads\bup_scenarios_data.xlsx'
 
-# Declarando as variáveis que irão armazenar temporariamente os valores prévios de Cenários já cadastrados,
-# para caso o usuário queira reaproveitar os parâmetros contratuais do Cenário.
+# Declaring the variables that will temporarily store the previous values of already registered Scenarios,
+# in case the user wants to reuse the Contractual parameters of the Scenario.
 t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value\
     , material_delivery_end_previous_value = None, None, None, None, None
 
@@ -33,6 +33,9 @@ logging.basicConfig(level=logging.INFO,
                     filename='execution_info.log',
                     format=log_format)
 
+# Setting matplotlib log level higher in order to ignore INFO logs on file
+plt.set_loglevel('WARNING')
+
 
 # Decorator function that calculates how long each function of the system takes to execute
 def function_timer(func):
@@ -41,6 +44,7 @@ def function_timer(func):
         result = func(*args)
         exec_time = time.time() - start_time
         logging.info(f"Function '{func.__name__}' took {round(exec_time, 2)} seconds to run.")
+        # Insert line for closing file afterwards. It is being blocked by python
         return result
     return wrapper
 
@@ -49,64 +53,64 @@ def function_timer(func):
 def read_scope_file(file_full_path: str):
     # Function that reads scope file and complementary info
 
-    # Colunas a serem lidas no arquivo (essenciais)
+    # Columns to read from the Scope file (essential)
     colunas = ['PN', 'ECODE', 'QTY', 'EIS', 'SPC']
 
-    # Fonte das informações complementares
+    # Complementary info Source
     # leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
     leadtime_source = r'marcsa.txt'
     # ecode_data_path = r'\\egmap20038\Databases\DB_Ecode-Data.txt'
     ecode_data_path = r'DB_Ecode-Data.txt'
 
-    # Leitura da tabela e Filtros
+    # File reading and filters
     scope = pd.read_excel(file_full_path, usecols=colunas)
     scope_filtered = scope.query("QTY > 0").copy()
 
-    # Formatação
+    # Formatting
     scope_filtered.loc[:, 'ECODE'] = scope_filtered['ECODE'].astype(int)
     scope_filtered['EIS'] = scope_filtered['EIS'].fillna('')
 
-    # -------------- Busca de informações complementares (Leadtime, ECCN, Acq Cost, Reparabilidade, etc) -------------
+    # -------------- Fetch for complementary info (Leadtime, ECCN, Acq Cost, Repairability, etc) -------------
 
-    # Colunas a serem lidas fonte SAP
+    # Columns to read from SAP
     sap_source_columns = ['Material', ' PEP']
-    # Lendo a base de Leadtimes
+    # Reading leadtime database (SAP)
     leadtimes = pd.read_csv(leadtime_source, usecols=sap_source_columns, encoding='latin', skiprows=3, sep='|', low_memory=False)
-    # Removendo nulos
+    # Removing nulls
     leadtimes = leadtimes.dropna()
-    # Renomeando colunas
+    # Renaming columns
     leadtimes.rename(columns={'Material': 'ECODE', ' PEP': 'LEADTIME'}, inplace=True)
-    # Vinculando o Leadtime aos Materiais
+    # Joining leadtimes to materials
     bup_scope = scope_filtered.merge(leadtimes, on='ECODE', how='left')
 
-    # Colunas a serem lidas Ecode Data
+    # Columns to read Ecode Data
     ecode_data_columns = ['ECODE', 'ACQCOST']
 
-    # Pegando para cada Ecode o índice do registro que tem o maior Acq Cost (premissa p/ duplicados)
+    # Getting for each Ecode the index of the record that has the highest Acq Cost (premise for duplicates)
     ecode_data = pd.read_csv(ecode_data_path, usecols=ecode_data_columns).drop_duplicates()
     ecode_data_max_acqcost = ecode_data.groupby('ECODE')['ACQCOST'].idxmax()
     ecode_data_filtered = ecode_data.loc[ecode_data_max_acqcost].reset_index(drop=True)
 
-    # Fazendo a regra do Tipo de Material (Repairable/Expendable)
+    # Making Material Type rule (Repairable/Expendable)
     bup_scope['SPC'] = bup_scope['SPC'].apply(
         lambda x: 'Repairable' if x in [2, 6] else 'Expendable'
     )
 
-    # Convertendo as colunas numéricas de float para int
+    # Converting numeric columns from float to int
     bup_scope['ECODE'] = bup_scope['ECODE'].astype(int)
     bup_scope['QTY'] = bup_scope['QTY'].astype(int)
     bup_scope['LEADTIME'] = bup_scope['LEADTIME'].fillna(127).astype(int)  # Leadtime default 127
-    # Garantindo que Acq Cost seja flutuante
+    # Ensuring that Acq Cost is floating
     ecode_data_filtered['ACQCOST'] = ecode_data_filtered['ACQCOST'].str.replace(',', '.').astype(float)
 
-    # Fazendo join das informações do Ecode Data
+    # Joining Ecode Data info
     # Acq Cost
     bup_scope = bup_scope.merge(ecode_data_filtered[['ECODE', 'ACQCOST']], how='left', on='ECODE')
 
-    # Ordenando pelo Leadtime descending
+    # Ordering by Leadtime descending
     bup_scope = bup_scope.sort_values('LEADTIME', ascending=False).reset_index(drop=True)
 
-    # Renomeando as colunas
+    # Renaming columns
     bup_scope.rename(columns={'ECODE': 'Ecode', 'QTY': 'Qty', 'LEADTIME': 'Leadtime',
                               'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost'}, inplace=True)
 
@@ -115,11 +119,13 @@ def read_scope_file(file_full_path: str):
 
 @function_timer
 def generate_dispersion_chart(bup_scope):
-    # Função para formatar os valores do eixo y em milhares
+    # This function receives 'bup_scope' paramter as a pandas DataFrame and creates the chart.
+
+    # Function to format y-axis values in thousands
     def format_acq_cost(value, _):
         return f'US$ {value / 1000:.0f}k'
 
-    # Tamanho da imagem
+    # Image Size
     width, height = 600, 220
     fig, ax = plt.subplots(figsize=(width / 100, height / 100))
     expendable_items = bup_scope[bup_scope['SPC'] == 'Expendable']

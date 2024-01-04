@@ -1,10 +1,10 @@
-from tkinter import filedialog  # Para abrir arquivo no Explorar
+from tkinter import filedialog  # In order to open file with Explorer
 import customtkinter as ctk
 from PIL import Image
 import os
 from tksheet import Sheet
 
-import bup_plan_analyzer as bup  # Arquivo-fonte com as funções do programa
+import bup_plan_analyzer as bup  # Source file with program functions
 
 logo_path = r'logo.png'
 title_path = r'titulo_bup_analyzer.png'
