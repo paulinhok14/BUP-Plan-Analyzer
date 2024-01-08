@@ -17,7 +17,7 @@ active_user = os.getlogin()
 # Scenarios list
 scenarios_list = []
 
-excel_icon_path = r'excel_transparent.png'
+excel_icon_path = r'src\images\excel_transparent.png'
 export_output_path = fr'C:\Users\{active_user}\Downloads\bup_scenarios_data.xlsx'
 
 # Declaring the variables that will temporarily store the previous values of already registered Scenarios,

@@ -6,9 +6,10 @@ from tksheet import Sheet
 
 import bup_plan_analyzer as bup  # Source file with program functions
 
-logo_path = r'logo.png'
-title_path = r'titulo_bup_analyzer.png'
-img_open_file_path = r'browse_icon_transp.png'
+logo_path = r'src\images\logo.png'
+title_path = r'src\images\titulo_bup_analyzer.png'
+img_open_file_path = r'src\images\browse_icon_transp.png'
+main_screen_icon = r'src\images\bup_icon.ico'
 
 
 def main():
@@ -19,7 +20,7 @@ def main():
     main_screen.title("Build-Up Plan Analyzer")
     main_screen.resizable(width=False, height=False)
     main_screen._set_appearance_mode("dark")
-    main_screen.iconbitmap("bup_icon.ico")
+    main_screen.iconbitmap(main_screen_icon)
 
     # Main Scren geometry - Centralizing
     ms_width = 700
@@ -55,7 +56,7 @@ def main():
         # New window settings
         new_window.title(title)
         new_window.resizable(width=False, height=False)
-        new_window.iconbitmap("bup_icon.ico")
+        new_window.iconbitmap(main_screen_icon)
 
         # New window geometry
         nw_width = 700
