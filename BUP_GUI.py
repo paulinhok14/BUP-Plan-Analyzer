@@ -16,16 +16,12 @@ def main():
 
     main_screen = ctk.CTk()  # Main Screen
 
-    # Function that will handle window closing event
-    def on_closing_main():
-        main_screen.quit()
-
     # Main Screen settings
     main_screen.title("Build-Up Plan Analyzer")
     main_screen.resizable(width=False, height=False)
     main_screen._set_appearance_mode("dark")
     main_screen.iconbitmap(main_screen_icon)
-    main_screen.protocol("WM_DELETE_WINDOW", on_closing_main)
+    main_screen.protocol("WM_DELETE_WINDOW", lambda: main_screen.quit())
 
     # Main Scren geometry - Centralizing
     ms_width = 700
@@ -142,11 +138,12 @@ def main():
         tbv_curve_charts.add("Hypothetical Curve")
 
         # Label with the instruction to create a Scenario
+        # lbl_pending_scenario = ctk.CTkLabel(tbv_curve_charts.tab("Efficient Curve"),
         lbl_pending_scenario = ctk.CTkLabel(tbvmenu.tab("Scenarios"),
                                             text="Please create a Scenario in order to generate Build-Up chart.",
                                             font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'),
                                             fg_color='#cfcfcf')
-        lbl_pending_scenario.place(rely=0.5, relx=0.07)
+        lbl_pending_scenario.place(rely=0.5, relx=0.5, anchor=ctk.CENTER)
 
         # Function that creates the window to Add a New Scenario
         def open_form_add_new_scenario():
