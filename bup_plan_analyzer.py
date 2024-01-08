@@ -212,16 +212,16 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
 
     scenario = {}
 
-    # Variável CTk que irá armazenar a contagem de Scenarios. Será util para implementar um tracking com callback
-    # para exibição ou ocultamento de componentes
+    # CTk variable that will store the Scenario count. It will be useful to implement tracking with callback
+    # function monitoring it. To show or hide components
     var_scenarios_count = ctk.IntVar()
 
-    # Imagem com o ícone Excel
+    # Image with Excel icon
     excel_icon = ctk.CTkImage(light_image=Image.open(excel_icon_path),
                       dark_image=Image.open(excel_icon_path),
                       size=(30, 30))
 
-    # Função executada ao exportar Dados
+    # Function performed when exporting Data
     def export_data():
         try:
             bup_scope.to_excel(export_output_path, index=False)
@@ -230,14 +230,14 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
             messagebox.showinfo(title="Error!", message=str(ex) + "\n\n Please make sure that the Excel file is "
                                                                   "closed and you have access to the Downloads folder.")
 
-    # Botão de exportar dados
+    # Export data button
     btn_export_data = ctk.CTkButton(efficient_curve_window, text="Export to Excel",
                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                     image=excel_icon, compound="top", fg_color="transparent",
                                     text_color="#000000", hover=False, border_spacing=1,
                                     command=export_data)
 
-    # Função que irá ser chamada para avaliar a variável de controle e Exibir/Ocultar botão de Exportar Dados
+    # Function that will be called to evaluate the control variable and Show/Hide Export Data button
     def export_data_button(scenarios_count):
 
         if scenarios_count.get() == 1:
@@ -247,34 +247,33 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
         else:
             pass
 
-    # Fazendo o tracing da variável e chamando a função toda vez que a variável for alterada
+    # Tracing the variable and calling the function every time the variable changes
     var_scenarios_count.trace_add("write", callback=lambda *args: export_data_button(var_scenarios_count))
 
-    # Se a lista de Cenários contiver algum já cadastrado, é oferecido ao usuário a opção de utilizar os valores
-    # de Contractual Conditions do primeiro cenário, alterando apenas os parâmetros de Procurement Length
+    # If the Scenarios list contains at least 1 already registered, the user is offered the option of using the
+    # values of Contractual Conditions from the first scenario, changing only the Procurement Length parameters
 
     if scenarios_list:
-        # Função para abrir a caixa de Diálogo questionando ao usuário
+        # Function to open the Dialog box offering for the user the possibility of reuse
         def open_confirm_dialog():
             confirm_window = ctk.CTkToplevel(scenario_window)
             confirm_window.title("Warning!")
             confirm_window.resizable(width=False, height=False)
 
-            # Geometria da Tela de Diálogo
+            # Dialog Box Geometry
             cw_width = 400
             cw_height = 170
             conf_window_width = confirm_window.winfo_screenwidth()  # Width of the screen
             conf_window_height = confirm_window.winfo_screenheight()  # Height of the screen
-            # Calcula o X e Y inicial a posicionar a tela
+            # Calculates the initial X and Y to position the screen
             cw_x = int((conf_window_width / 2) - (cw_width / 2))
             cw_y = int((conf_window_height / 2) - (cw_height / 2))
             confirm_window.geometry('%dx%d+%d+%d' % (cw_width, cw_height, cw_x, cw_y))
 
-            # Setando(captando) o foco para as janelas, de forma subsequente
+            # Setting (capturing) the windows focus
             confirm_window.grab_set()
 
-            # Elementos da Tela de Diálogo
-
+            # Dialog Box Elements
             lbl_question = ctk.CTkLabel(confirm_window, text="There is already a registered Scenario. Do you want to "
                                                              "use previously Contractual Conditions information?",
                                         font=ctk.CTkFont('open sans', size=13, weight='bold'),
@@ -282,9 +281,10 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                                         )
             lbl_question.pack(pady=(20, 0))
 
-            # Função que, ao clicar no botão YES, ele usa os valores do primeiro Scenario cadastrado e desabilita os Entry
+            # Function that, when clicking the YES button, uses the values of the first registered
+            # Scenario and disables the Entries.
             def use_previous_scenario_values():
-                # Usando de forma global as variáveis de controle para armazenar os valores previamente cadastrados
+                # Using control variables globally to store previously registered values
                 global t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
                     , material_delivery_end_previous_value
 
@@ -315,18 +315,18 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                 entry_material_delivery_end.configure(state="disabled")
 
             def nullify_previous_scenario_variables():
-                """ Função que tornam vazias as variáveis de controle que armazenam os cenários pré-cadastrados, pois
-                o usuário optou por não utilizar o cenário ja cadastrado
+                """ Function that makes empty the control variables that store the pre-registered scenarios, as
+                the user chose not to use the already registered scenario
                 """
 
-                # Usando de forma global as variáveis
+                # Using variables globally
                 global t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
                     , material_delivery_end_previous_value
 
                 t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
                     , material_delivery_end_previous_value = None, None, None, None, None
 
-            # Botão YES
+            # YES button
             btn_yes = ctk.CTkButton(confirm_window, text='Yes', command=lambda: (
                 use_previous_scenario_values(),
                 confirm_window.destroy(),
@@ -339,7 +339,7 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                                     )
             btn_yes.place(relx=0.3, rely=0.8, anchor=ctk.CENTER)
 
-            # Botão NO
+            # NO button
             btn_no = ctk.CTkButton(confirm_window, text='No', command=lambda: (confirm_window.destroy(),
                                                                                nullify_previous_scenario_variables(),
                                                                                scenario_window.lift(),
@@ -350,16 +350,16 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                                    )
             btn_no.place(relx=0.7, rely=0.8, anchor=ctk.CENTER)
 
-        # Abrindo a caixa de diálogo caso já tenha um Scenario cadastrado
+        # Opening the dialog box if you already have a Scenario registered
         open_confirm_dialog()
 
     # ----------------- CONTRACTUAL CONDITIONS -----------------
 
-    # Frame interno Contractual Conditions
+    # Internal Frame Contractual Conditions
     contractual_conditions_frame = ctk.CTkFrame(scenario_window, width=440, corner_radius=20)
     contractual_conditions_frame.pack(pady=(15, 0), expand=False)
 
-    # Label título Contractual Conditions
+    # Label title Contractual Conditions
     lbl_contractual_conditions = ctk.CTkLabel(contractual_conditions_frame, text="Contractual Conditions",
                                               font=ctk.CTkFont('open sans', size=14, weight='bold')
                                               )
@@ -412,11 +412,11 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
 
     # ----------------- PROCUREMENT LENGTH -----------------
 
-    # Frame interno Procurement Length
+    # Internal frame Procurement Length
     procurement_length_frame = ctk.CTkFrame(scenario_window, width=440, corner_radius=20)
     procurement_length_frame.pack(pady=(15, 0), expand=False)
 
-    # Label título Procurement Length
+    # Label title Procurement Length
     lbl_procurement_length = ctk.CTkLabel(procurement_length_frame, text="Procurement Length",
                                           font=ctk.CTkFont('open sans', size=14, weight='bold')
                                           )
@@ -476,27 +476,26 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                                            placeholder_text="Default: 30 days")
     entry_outbound_logistic.grid(row=6, column=1, padx=10, sticky="e", pady=(0, 20))
 
-    # ----------------- LABEL -----------------
+    # ----------------- Label: (*) Required Information -----------------
 
     lbl_required_infornation = ctk.CTkLabel(scenario_window, text="(*) Required Information",
                                             font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                             text_color="#ff0000")
     lbl_required_infornation.pack(padx=(20, 0), anchor="w")
 
-    # ----------------- BOTÕES DE INTERAÇÃO -----------------
+    # ----------------- Interaction Buttons -----------------
 
-    # Função para retornar os valores digitados pelo usuário nos Entry, com tratativa para Defaults
+    # Function to return the values entered by user in the Entry, handling Defaults
     def get_entry_values():
 
         # --------- Contractual Conditions ---------
 
-        # Nestas condições, primeiro há uma verificação se o usuário optou por usar informações já cadastradas
+        # In these conditions, there is first a check whether the user has chosen to use information already registered
 
         # t0
-
         if t0_previous_value is None:
 
-            # Verifica se o valor é uma data válida antes de atribuir à variável
+            # Checks if the value is a valid date before assigning to the variable
             date_t0_value = pd.to_datetime(entry_t0.get(), format='%d/%m/%Y', errors='coerce')
             if not pd.isna(date_t0_value):
                 scenario['t0'] = date_t0_value
@@ -507,8 +506,7 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
         else:
             scenario['t0'] = pd.to_datetime(t0_previous_value.get(), format='%d/%m/%Y', errors='coerce')
 
-        # t0 + X: Integer (default: 3) que será somado ao t0 para indicar data hipotética de início das compras de materiais
-
+        # t0+X: Int (default: 3) which will be added to t0 to indicate a hypothetical starting date for purchasing materials
         if hyp_t0_previous_value is None:
 
             try:
@@ -525,10 +523,9 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
             scenario['hyp_t0_start'] = int(hyp_t0_previous_value.get())
 
         # Aircraft Delivery Start
-
         if acft_delivery_start_previous_value is None:
 
-            # Verifica se o valor é uma data válida antes de atribuir à variável
+            # Checks if the value is a valid date before assigning to the variable
             date_acft_delivery_value = pd.to_datetime(entry_acft_delivery_start.get(), format='%d/%m/%Y', errors='coerce')
             if not pd.isna(date_acft_delivery_value):
                 scenario['acft_delivery_start'] = date_acft_delivery_value
@@ -540,7 +537,6 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
             scenario['acft_delivery_start'] = pd.to_datetime(acft_delivery_start_previous_value.get(), format='%d/%m/%Y', errors='coerce')
 
         # Material Delivery Start
-
         if material_delivery_start_previous_value is None:
 
             try:
@@ -553,7 +549,6 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
             scenario['material_delivery_start'] = int(material_delivery_start_previous_value.get())
 
         # Material Delivery End
-
         if material_delivery_end_previous_value is None:
 
             try:
@@ -566,7 +561,7 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
             scenario['material_delivery_end'] = int(material_delivery_end_previous_value.get())
 
         # --------- Procurement Length ---------
-        # Atribuição dos valores Default no try/except caso o usuário não preencha nada
+        # Assignment of Default values in try/except if the user does not fill in anything
 
         # --- PR Release and Approval VSS ---
         try:
@@ -634,49 +629,50 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                                  "Invalid character. Please enter a valid number for Outbound Logistic.")
             return
 
-        # Incluindo o cenário na lista de Dicts global, e fechando a tela
+        # Including the scenario in the global Dicts list and closing the screen
         scenarios_list.append(scenario)
         scenario_window.destroy()
 
-        # Somando 1 à IntVar com a contagem de Scenarios
+        # Adding 1 to IntVar with the Scenarios count
         var_scenarios_count.set(var_scenarios_count.get() + 1)
 
-        # ----------- Chamada da Função de Geração do Gráfico -----------
+        # ----------- Calling the chart generation function -----------
 
-        # Chamando a função para gerar o gráfico de Efficient Build-Up. O retorno da função é o gráfico na figura (objeto Image),
-        # Além dos DataFrames/Variáveis construídos na função, como retorno a serem usados no gráfico Hipotético
+        # Calling the function to generate the Efficient Build-Up chart. The return of the function is the chart in a
+        # figure (Image object), in addition to the DataFrames/Variables created in the function, as a return to be used
+        # in the Hypothetical chart
         bup_efficient_chart, df_scope_with_scenarios, scenario_dataframes = \
             generate_efficient_curve_buildup_chart(bup_scope, scenarios_list)
 
-        # Carregando para um objeto Image do CTk
+        # Loading into a CTk Image object
         img_bup_efficient_chart = ctk.CTkImage(bup_efficient_chart,
                                     dark_image=bup_efficient_chart,
                                     size=(580, 380))
 
-        # Gráfico de Build-Up Efficient Curve - inputando CTkImage no Label e posicionando na tela
+        # Build-Up Efficient Curve Chart - inputting CTkImage in the Label and positioning it on the screen
         ctk.CTkLabel(efficient_curve_window, image=img_bup_efficient_chart,
                      text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
-        # Chamando a função para gerar o gráfico de Hypothetical Build-Up.
+        # Calling the function to generate Hypothetical Build-Up chart.
         bup_hypothetical_chart = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes)
 
-        # Carregando para um objeto Image do CTk
+        # Loading into a CTk Image object
         img_bup_hypothetical_chart = ctk.CTkImage(bup_hypothetical_chart,
                                     dark_image=bup_hypothetical_chart,
                                     size=(580, 380))
 
-        # Gráfico de Build-Up Hypothetical Curve - inputando CTkImage no Label e posicionando na tela
+        # Hypothetical Curve Build-Up Chart - inputting CTkImage in the Label and positioning it on the screen
         ctk.CTkLabel(hypothetical_curve_window, image=img_bup_hypothetical_chart,
                     text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
-    # Botão OK
+    # OK button
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
                            font=ctk.CTkFont('open sans', size=12, weight='bold'),
                            bg_color="#ebebeb", fg_color="#009898", hover_color="#006464",
                            width=100, height=30, corner_radius=30, cursor="hand2"
                            ).place(relx=0.3, rely=0.92, anchor=ctk.CENTER)
 
-    # Botão Cancelar
+    # Cancel button
     btn_cancel = ctk.CTkButton(scenario_window, text='Cancel', command=scenario_window.destroy,
                                font=ctk.CTkFont('open sans', size=12, weight='bold'),
                                bg_color="#ebebeb", fg_color="#ff0000", hover_color="#af0003",
@@ -687,35 +683,35 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
 @function_timer
 def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
 
-    # --------------- PREPARAÇÃO DOS DADOS ---------------
+    # --------------- Data Processing ---------------
 
-    # Lista para armazenar as combinações de Cenários e Escopo
+    # List to store combinations of Scenarios and Scope
     combinations = []
 
     for _, row in bup_scope.iterrows():
-        # Percorrendo cada elemento da lista de dicionários (cada elemento um Cenário em scenarios_list)
+        # Going through each element of the dictionaries list (each element is a Scenario in scenarios_list)
         for index, scenario in enumerate(scenarios):
-            # Combinando os valores do dataframe (escopo) com os valores do dicionário (cenário)
+            # Combining dataframe values (scope) with dictionary values (scenario)
             comb = {**row, 'Scenario': index, **scenario}
             combinations.append(comb)
 
-    # Criando um novo dataframe com as combinações de Escopo e Cenários juntos
+    # Creating a new dataframe with the Scope and Scenario combinations together
     df_scope_with_scenarios = pd.DataFrame(combinations).sort_values(by='Scenario').reset_index(drop=True)
     df_scope_with_scenarios['avg_month_diff'] = ((df_scope_with_scenarios['material_delivery_end']
                                                  - df_scope_with_scenarios['material_delivery_start']) / 2).astype(int)
 
-    # Procurement Length - OBS: Chegará um momento que terei que criar aqui a lógica para Export License
+    # Procurement Length - NOTE: There will come a time when I will have to create the logic for Export License here
     df_scope_with_scenarios['PN Procurement Length'] = df_scope_with_scenarios[['Leadtime', 'pr_release_approval_vss',
                                                                                 'po_commercial_condition',
                                                                                 'po_conversion', 'export_license',
                                                                                 'buffer', 'outbound_logistic']].sum(axis=1)
 
-    # Gerando a data média (do intervalo de entrega dos materiais baseada no t0).
+    # Generating the average date (of the materials delivery interval based on t0).
     df_scope_with_scenarios['avg_date_between_materials_deadline'] = df_scope_with_scenarios.apply(
         lambda linha: linha['t0'] + pd.DateOffset(months=linha['material_delivery_start']) +
         pd.DateOffset(months=linha['avg_month_diff']), axis=1)
 
-    # Criando colunas de Data para as 2 que vem como inteiro baseadas no t0
+    # Creating Date columns for the 2 that come as integers based on t0
     df_scope_with_scenarios['material_delivery_start_date'] = df_scope_with_scenarios.apply(
         lambda linha: linha['t0'] + pd.DateOffset(months=linha['material_delivery_start'])
         , axis=1)
@@ -724,121 +720,122 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         lambda linha: linha['t0'] + pd.DateOffset(months=linha['material_delivery_end'])
         , axis=1)
 
-    # Calculando a data que deveria ser emitida a compra do material, considerando Procurement Length e Delivery Date
+    # Calculating the date in which the material should be purchased, considering Procurement Length and Delivery Date
     df_scope_with_scenarios['PN Order Date'] = df_scope_with_scenarios.apply(
         lambda linha: linha['avg_date_between_materials_deadline'] - pd.DateOffset(days=linha['PN Procurement Length'])
         , axis=1)
 
     # Criando a coluna com a data hipotética de início das compras de material, já pensando no gráfico Hipotético
+    # Creating the column with the hypothetical start date of material purchases
     df_scope_with_scenarios['PN Order Date Hypothetical'] = df_scope_with_scenarios.apply(
         lambda linha: linha['t0'] + pd.DateOffset(months=linha['hyp_t0_start'])
         , axis=1)
-    # Criando a coluna de data em que será entregue o material, para gráfico Hipotético
+    # Creating the date column on which the material will be delivered, for the Hypothetical chart
     df_scope_with_scenarios['Delivery Date Hypothetical'] = df_scope_with_scenarios.apply(
         lambda linha: linha['PN Order Date Hypothetical'] + pd.DateOffset(days=linha['PN Procurement Length'])
         , axis=1)
 
-    # Pegando a Maior e Menor Data entre todas as datas possíveis, para delimitar o eixo X do gráfico
+    # Getting the Maximum and Minimum Date among all possible dates, to delimit the chart's X axis
     date_columns = ['t0', 'acft_delivery_start', 'material_delivery_start_date', 'material_delivery_end_date',
                     'PN Order Date', 'PN Order Date Hypothetical']
 
-    # O primeiro min/max retorna a menor/maior data por coluna e no final temos então uma lista de mínimos/máximos.
-    # O segundo pega o menor da lista criada. Adiciono um mês em cada extremo para não coincidir as linhas verticais
-    # dos parâmetros com o limite do eixo do gráfico
+    # The first min/max returns the min/max date per column and at the end we then have a list of minimums/maximums
+    # The second takes the minimum one from the created list. I add a month at each extreme so that the
+    # parameters vertical lines do not coincide of with chart axis limit line
     min_date = df_scope_with_scenarios[date_columns].min().min() - pd.DateOffset(months=1)
     max_date = df_scope_with_scenarios[date_columns].max().max() + pd.DateOffset(months=1)
 
     date_range = pd.date_range(start=min_date, end=max_date, freq='M')
     df_dates = pd.DataFrame({'Date': date_range.strftime('%m/%Y')})
 
-    # ------- Tabela para Criação dos gráficos --------
+    # ------- Table for Chart generation --------
     # -- Efficient Curve
-    # Criando tabela com a contagem agrupada de itens comprados por mês, para cada Scenario
+    # Creating a table with the grouped count of items purchased per month, for each Scenario
     grouped_counts_eff = df_scope_with_scenarios.groupby([df_scope_with_scenarios['PN Order Date'].dt.to_period('M'), 'Scenario']).size().reset_index(
         name='Ordered Qty')
     grouped_counts_eff['PN Order Date'] = grouped_counts_eff['PN Order Date'].dt.strftime('%m/%Y')
     # -- Hypothetical Curve
-    # Criando também os campos de Delivered Qty (Hipotético)
+    # Also creating the Delivered Qty fields (Hypothetical)
     grouped_counts_hyp = df_scope_with_scenarios.groupby([df_scope_with_scenarios['Delivery Date Hypothetical'].dt.to_period('M'),
                                                           'Scenario']).size().reset_index(name='Delivered Qty Hyp')
     grouped_counts_hyp['Delivery Date Hypothetical'] = grouped_counts_hyp['Delivery Date Hypothetical'].dt.strftime('%m/%Y')
-    # -- Consolidando
+    # -- Consolidating
     grouped_counts = grouped_counts_eff.merge(grouped_counts_hyp,
                                               left_on=['PN Order Date', 'Scenario'],
                                               right_on=['Delivery Date Hypothetical', 'Scenario'],
                                               how='outer')
-    # -- Ajustando o DataFrame final
+    # -- Adjusting the final DataFrame
     grouped_counts['Date'] = grouped_counts['PN Order Date'].fillna(grouped_counts['Delivery Date Hypothetical'])
     grouped_counts = grouped_counts.drop(['PN Order Date', 'Delivery Date Hypothetical'], axis=1)
 
-    # Passando a informação de Ordered Qty e Delivered Qty agrupada por mês e por Scenario para o DF com o Range de datas
+    # Passing the Ordered Qty and Delivered Qty info grouped by month and by Scenario to the DF with the Dates Range
     final_df_scenarios = df_dates.merge(grouped_counts, left_on='Date', right_on='Date', how='left')
     final_df_scenarios['Scenario'] = final_df_scenarios['Scenario'].fillna(-1).astype(int)
     final_df_scenarios['Ordered Qty'] = final_df_scenarios['Ordered Qty'].fillna(0)
     final_df_scenarios['Delivered Qty Hyp'] = final_df_scenarios['Delivered Qty Hyp'].fillna(0)
 
-    # Para cada scenario, calculando a Quantidade Acumulada para plotar
+    # For each scenario, calculating the Accumulated Quantity to plot
     for scenario in final_df_scenarios['Scenario'].unique():
-        # Filtrando o df para o Scenario atual
+        # Filtering the df for the current Scenario
         scenario_df = final_df_scenarios[final_df_scenarios['Scenario'] == scenario]
 
-        # Calculando a quantidade acumulada
+        # Calculating the accumulated quantity
         final_df_scenarios.loc[scenario_df.index, 'Accum. Ordered Qty (Eff)'] = scenario_df['Ordered Qty'].cumsum()
         final_df_scenarios.loc[scenario_df.index, 'Accum. Delivered Qty (Hyp)'] = scenario_df['Delivered Qty Hyp'].cumsum()
 
-    # Criando um dicionário para armazenar os DataFrames de cenários
+    # Creating a dictionary to store scenario DataFrames
     scenario_dataframes = {}
 
-    # Criando um DF para cada Scenario
+    # Creating a DF for each Scenario
     for scenario in final_df_scenarios['Scenario'].unique():
-        if scenario != -1:  # Scenario -1 é apenas indicativo de nulidade, não é um cenário real
+        if scenario != -1:  # Scenario -1 is only indicative of nullity, it is not a real scenario
             tmp_filtered_scenario_final_df = final_df_scenarios[final_df_scenarios['Scenario'] == scenario]
             scenario_df = df_dates.merge(tmp_filtered_scenario_final_df[
                                              ['Date', 'Scenario', 'Ordered Qty', 'Delivered Qty Hyp',
                                               'Accum. Ordered Qty (Eff)', 'Accum. Delivered Qty (Hyp)']],
                                          left_on='Date', right_on='Date', how='left')
-            # Preenchendo nulos
+            # Filling in nulls
             scenario_df['Scenario'] = scenario_df['Scenario'].fillna(scenario).astype(int)
             scenario_df['Ordered Qty'] = scenario_df['Ordered Qty'].fillna(0)
             scenario_df['Delivered Qty Hyp'] = scenario_df['Delivered Qty Hyp'].fillna(0)
 
-            # Preenchendo os meses vazios para Accumulated Qty (tanto Eff quanto Hyp) com base no último registro
+            # Filling empty months for Accumulated Qty (both Eff and Hyp) based on last record
             scenario_df['Accum. Ordered Qty (Eff)'].fillna(method='ffill', inplace=True)
             scenario_df['Accum. Delivered Qty (Hyp)'].fillna(method='ffill', inplace=True)
 
-            # Armazenando o DataFrame no dicionário com o nome do cenário
+            # Storing the DataFrame in the dictionary with the scenario name
             scenario_dataframes[f'Scenario_{int(scenario)}'] = scenario_df
 
-    # --------------- GERAÇÃO DO GRÁFICO ---------------
+    # --------------- Chart Generation ---------------
 
-    # Lista com as cores, para que cada Scenario tenha uma cor específica e facilite a diferenciação
+    # Colors list, so that each Scenario has a specific color and facilitates differentiation
     colors_array = ['blue', 'orange', 'black', 'green', 'purple']
 
-    # Tamanho da imagem
+    # Image size
     width, height = 580, 380
 
-    # Criando uma figura e eixos para inserir o gráfico
+    # Creating a figure and axes to insert the chart
     figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
 
-    # Plotando a linha para cada Scenario do dicionário
+    # Plotting the line for each Scenario in the dictionary
     for index, (scenario_name, scenario_df) in enumerate(scenario_dataframes.items()):
         eixos.plot(scenario_df['Date'], scenario_df['Accum. Ordered Qty (Eff)'], label=f'Scen. {index}', color=colors_array[index])
-        # Configurando o eixo
+        # Configuring the axis
         plt.xticks(scenario_df.index[::3], scenario_df['Date'][::3], rotation=45, ha='right')
 
-        # Obtendo a data t0 para o Scenario atual e convertendo para o formato MM/YYYY
+        # Getting the t0 date for the current Scenario and converting it to MM/YYYY format
         t0_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 't0'].values[0])
         t0_date = t0_date.strftime('%m/%Y')
-        # Adicionando uma linha vertical em t0
+        # Adding a vertical line at t0
         eixos.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0: Scen. {index}')
 
-        # Obtendo a data acft_delivery_start para o Scenario atual e convertendo para o formato MM/YYYY
+        # Getting the acft_delivery_start date for the current Scenario and converting it to MM/YYYY format
         acft_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'acft_delivery_start'].values[0])
         acft_delivery_start_date = acft_delivery_start_date.strftime('%m/%Y')
-        # Adicionando uma linha vertical em acft_delivery_start
+        # Adding a vertical line in acft_delivery_start
         eixos.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index], label=f'Acft Delivery Start: Scen. {index}')
 
-        # Adicionando uma faixa de entrega dos materiais entre as data Início e Fim
+        # Adding a material delivery range between the Start and End dates
         material_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'material_delivery_start_date'].values[0])
         material_delivery_start_date = material_delivery_start_date.strftime('%m/%Y')
         material_delivery_end_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'material_delivery_end_date'].values[0])
@@ -846,25 +843,25 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
 
         eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
 
-    # Configuração do Gráfico
+    # Chart settings
     eixos.set_ylabel('Materials Ordered Qty (Accumulated)')
     eixos.set_title('Efficient Curve: Build-Up Forecast')
     eixos.grid(True)
 
-    # Ajustando espaçamento dos eixos para não cortar os rótulos
+    # Adjusting axis spacing to avoid cutting off labels
     plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
 
-    # Legenda
+    # Legend
     eixos.legend(loc='upper left', fontsize=7, framealpha=0.8)
 
-    # --------------- TRANSFORMANDO EM UMA IMAGEM PARA SER EXIBIDA ---------------
+    # --------------- Turning it into an Image to be displayed ---------------
 
-    # Salvando a figura matplotlib em um objeto BytesIO (memória), para não ter que salvar em um arquivo de imagem
+    # Saving the matplotlib figure to a BytesIO object (memory), so it is not necessary to save it in an image file
     tmp_img_bup_chart = BytesIO()
     figura.savefig(tmp_img_bup_chart, format='png', transparent=True)
     tmp_img_bup_chart.seek(0)
 
-    # Carregando a imagem do gráfico para um objeto Image que irá ser retornado pela função
+    # Loading the chart image into an Image object that will be returned by the function
     bup_chart = Image.open(tmp_img_bup_chart)
 
     return bup_chart, df_scope_with_scenarios, scenario_dataframes
