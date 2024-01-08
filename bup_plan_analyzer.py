@@ -847,6 +847,23 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
 
         eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
 
+        # Adding a note at the point where Build-Up planning should start (date when first order is released)
+        filter_dates_with_order = scenario_df['Ordered Qty'] != 0
+        dates_with_order = scenario_df[filter_dates_with_order]
+        index_first_order = dates_with_order['Ordered Qty'].idxmin()
+        x_first_order = scenario_df.loc[index_first_order, 'Date']
+        y_first_order = scenario_df.loc[index_first_order, 'Accum. Ordered Qty (Eff)']
+        eixos.scatter(x_first_order, y_first_order, color=colors_array[index], marker='o', label=f'Planning Start: {x_first_order}')
+
+        # Adding a caretdown (not labeling) in BUP finish date (avg between End and Start material delivery date)
+        # x_bup_finished = scenario_df.loc[0, 'avg_date_between_materials_deadline']
+        y_bup_finished = scenario_df['Accum. Ordered Qty (Eff)'].max()
+        # Getting the avg_date_between_materials_deadline date for the current Scenario and converting it to MM/YYYY
+        x_bup_finished = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index,
+                                                                    'avg_date_between_materials_deadline']
+                                        .values[0]).strftime('%m/%Y')
+        eixos.scatter(x_bup_finished, y_bup_finished, color=colors_array[index], marker=7, label=None)
+
     # Chart settings
     eixos.set_ylabel('Materials Ordered Qty (Accumulated)')
     eixos.set_title('Efficient Curve: Build-Up Forecast')
