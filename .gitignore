@@ -9,6 +9,7 @@ venv/
 # Files from Pyinstaller
 dist/
 build/
+*.spec
 
 # Executable path
 BUP Plan Analyzer/
