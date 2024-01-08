@@ -53,6 +53,10 @@ def function_timer(func):
 def read_scope_file(file_full_path: str):
     # Function that reads scope file and complementary info
 
+    # Resetting the list of scenarios every time the e-mail is read
+    global scenarios_list
+    scenarios_list = []
+
     # Columns to read from the Scope file (essential)
     colunas = ['PN', 'ECODE', 'QTY', 'EIS', 'SPC']
 

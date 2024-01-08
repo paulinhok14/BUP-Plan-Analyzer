@@ -16,11 +16,16 @@ def main():
 
     main_screen = ctk.CTk()  # Main Screen
 
+    # Function that will handle window closing event
+    def on_closing_main():
+        main_screen.quit()
+
     # Main Screen settings
     main_screen.title("Build-Up Plan Analyzer")
     main_screen.resizable(width=False, height=False)
     main_screen._set_appearance_mode("dark")
     main_screen.iconbitmap(main_screen_icon)
+    main_screen.protocol("WM_DELETE_WINDOW", on_closing_main)
 
     # Main Scren geometry - Centralizing
     ms_width = 700
@@ -41,8 +46,7 @@ def main():
         lbl_loading.configure(text="Please wait while complementary data is fetched...")
 
         # Reading the Scope file before creating the window
-        # Selecting Scope file
-        full_file_path = select_file()
+        full_file_path = select_file()  # Selecting Scope file
 
         # Executing the function that reads complementary info and organizes DataFrame
         bup_scope = bup.read_scope_file(full_file_path)
@@ -53,10 +57,16 @@ def main():
         # Creating window
         new_window = ctk.CTkToplevel(main_screen)
 
+        # Function that will handle window closing
+        def on_closing_main2():
+            new_window.withdraw()
+            main_screen.deiconify()
+
         # New window settings
         new_window.title(title)
         new_window.resizable(width=False, height=False)
         new_window.iconbitmap(main_screen_icon)
+        new_window.protocol("WM_DELETE_WINDOW", on_closing_main2)
 
         # New window geometry
         nw_width = 700
@@ -174,8 +184,7 @@ def main():
                                             ).place(relx=0.5, rely=0.93, anchor=ctk.CENTER)
 
         # Hiding Main Screen
-        main_screen.iconify()
-        # main_screen.withdraw()
+        main_screen.withdraw()
 
     # Search File CTKImage button icon
     img_open_file = ctk.CTkImage(light_image=Image.open(img_open_file_path),
