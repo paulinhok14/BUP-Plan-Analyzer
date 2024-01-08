@@ -876,76 +876,76 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
     :return: Returns an Image object
     """
 
-    # --------------- GERAÇÃO DO GRÁFICO ---------------
+    # --------------- Chart Generation ---------------
 
-    # Lista com as cores, para que cada Scenario tenha uma cor específica e facilite a diferenciação
+    # List of colors, so that each Scenario has a specific color and facilitates differentiation
     colors_array = ['blue', 'orange', 'black', 'green', 'purple']
 
-    # Tamanho da imagem
+    # Image Size
     width, height = 580, 380
 
-    # Criando uma figura e eixos para inserir o gráfico
+    # Creating a figure and axes to insert the chart
     figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
 
-    # Plotando a linha para cada Scenario do dicionário
+    # Plotting the line for each Scenario in the dictionary
     for index, (scenario_name, scenario_df) in enumerate(scenario_dataframes.items()):
         eixos.plot(scenario_df['Date'], scenario_df['Accum. Delivered Qty (Hyp)'], label=f'Scen. {index}',
                    color=colors_array[index])
-        # Configurando o eixo
+        # Configuring the axis
         plt.xticks(scenario_df.index[::3], scenario_df['Date'][::3], rotation=45, ha='right')
 
-        # Obtendo a data t0 para o Scenario atual e convertendo para o formato MM/YYYY
+        # Getting the t0 date for the current Scenario and converting it to MM/YYYY format
         t0_date = pd.to_datetime(
             df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 't0'].values[0])
         t0_date = t0_date.strftime('%m/%Y')
-        # Adicionando uma linha vertical em t0
+        # Adding a vertical line at t0
         eixos.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0: Scen. {index}')
 
-        # Obtendo a data acft_delivery_start para o Scenario atual e convertendo para o formato MM/YYYY
+        # Getting the acft_delivery_start date for the current Scenario and converting it to MM/YYYY format
         acft_delivery_start_date = pd.to_datetime(
             df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'acft_delivery_start'].values[0])
         acft_delivery_start_date = acft_delivery_start_date.strftime('%m/%Y')
-        # Adicionando uma linha vertical em acft_delivery_start
+        # Adding a vertical line in acft_delivery_start
         eixos.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index],
                       label=f'Acft Delivery Start: Scen. {index}')
 
-        # Adicionando uma faixa de entrega dos materiais entre as data Início e Fim
-        material_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios[
-                                                                                      'Scenario'] == index, 'material_delivery_start_date'].values[
-                                                          0])
+        # Adding a material delivery range between the Start and End dates
+        material_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[
+                                                          df_scope_with_scenarios['Scenario'] == index,
+                                                          'material_delivery_start_date'].values[0])
         material_delivery_start_date = material_delivery_start_date.strftime('%m/%Y')
-        material_delivery_end_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios[
-                                                                                    'Scenario'] == index, 'material_delivery_end_date'].values[
-                                                        0])
+        material_delivery_end_date = pd.to_datetime(df_scope_with_scenarios.loc[
+                                                        df_scope_with_scenarios['Scenario'] == index,
+                                                        'material_delivery_end_date'].values[0])
         material_delivery_end_date = material_delivery_end_date.strftime('%m/%Y')
 
         eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
 
-        # Adicionando uma anotação no ponto em que o Build-Up é concluído (todos os itens entregues)
+        # Adding a note at the point where the Build-Up is completed (all items delivered)
         index_max_acc_qty = scenario_df['Accum. Delivered Qty (Hyp)'].idxmax()
         x_max = scenario_df.loc[index_max_acc_qty, 'Date']
         y_max = scenario_df.loc[index_max_acc_qty, 'Accum. Delivered Qty (Hyp)']
         plt.scatter(x_max, y_max, color=colors_array[index], marker='o', label=f'BUP Conclusion: {x_max}')
 
-    # Configuração do Gráfico
+    # Chart Settings
     eixos.set_ylabel('Materials Delivered Qty (Accumulated)')
     eixos.set_title('Hypothetical Curve: Build-Up Forecast')
     eixos.grid(True)
 
-    # Ajustando espaçamento dos eixos para não cortar os rótulos
+    # Adjusting axis spacing to avoid cutting off labels
     plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
 
-    # Legenda
+    # Legend
     eixos.legend(loc='upper left', fontsize=7, framealpha=0.8)
 
-    # --------------- TRANSFORMANDO EM UMA IMAGEM PARA SER EXIBIDA ---------------
+    # --------------- Turning it into an Image to be displayed ---------------
 
-    # Salvando a figura matplotlib em um objeto BytesIO (memória), para não ter que salvar em um arquivo de imagem
+    # Saving the matplotlib figure to a BytesIO object (memory), so as not to have to save an image file
     tmp_img_hypothetical_chart = BytesIO()
     figura.savefig(tmp_img_hypothetical_chart, format='png', transparent=True)
     tmp_img_hypothetical_chart.seek(0)
 
-    # Carregando a imagem do gráfico para um objeto Image que irá ser retornado pela função
+    # Loading the chart image into an Image object that will be returned by the function
     bup_hypothetical_chart = Image.open(tmp_img_hypothetical_chart)
 
     return bup_hypothetical_chart

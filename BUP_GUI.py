@@ -68,9 +68,6 @@ def main():
         nw_y = (window_height / 2) - (nw_height / 2)
         new_window.geometry('%dx%d+%d+%d' % (nw_width, nw_height, nw_x, nw_y))
 
-        # Hiding Main Screen
-        main_screen.iconify()
-
         # TabView - Secondary screen elements: Tabs
         tbvmenu = ctk.CTkTabview(new_window, width=650, height=570, corner_radius=20,
                                  segmented_button_fg_color="#009898", segmented_button_unselected_color="#009898",
@@ -176,8 +173,9 @@ def main():
                                       width=200, height=30, corner_radius=30
                                             ).place(relx=0.5, rely=0.93, anchor=ctk.CENTER)
 
-        # Minimizes main screen
+        # Hiding Main Screen
         main_screen.iconify()
+        # main_screen.withdraw()
 
     # Search File CTKImage button icon
     img_open_file = ctk.CTkImage(light_image=Image.open(img_open_file_path),
