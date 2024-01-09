@@ -3,13 +3,19 @@ import customtkinter as ctk
 from PIL import Image
 import os
 from tksheet import Sheet
+from tkinter import messagebox
 
 import bup_plan_analyzer as bup  # Source file with program functions
+
+active_user = os.getlogin()
 
 logo_path = r'src\images\logo.png'
 title_path = r'src\images\titulo_bup_analyzer.png'
 img_open_file_path = r'src\images\browse_icon_transp.png'
 main_screen_icon = r'src\images\bup_icon.ico'
+download_icon_path = r'src\images\download-green-arrow.png'
+excel_icon_path = r'src\images\excel_transparent.png'
+export_output_path = fr'C:\Users\{active_user}\Downloads'
 
 
 def main():
@@ -36,6 +42,10 @@ def main():
     def select_file():  # Function to select the Scope file
         file_path = filedialog.askopenfilename()
         return file_path
+
+    # CTk variable that will store the Scenario count. It will be useful to implement tracking with callback
+    # function monitoring it. To show or hide components
+    var_scenarios_count = ctk.IntVar()
 
     def create_new_window(title: str):  # Function to create new window
         # Configures the Execution warning label
@@ -137,8 +147,70 @@ def main():
         tbv_curve_charts.add("Efficient Curve")
         tbv_curve_charts.add("Hypothetical Curve")
 
+        # Image with Excel icon
+        excel_icon = ctk.CTkImage(light_image=Image.open(excel_icon_path),
+                                  dark_image=Image.open(excel_icon_path),
+                                  size=(30, 30))
+
+        # Image with Download Icon
+        download_icon = ctk.CTkImage(light_image=Image.open(download_icon_path),
+                                  dark_image=Image.open(download_icon_path),
+                                  size=(34, 34))
+
+        # Function performed when exporting Data
+        def export_data():
+            try:
+                full_path = export_output_path + r'\bup_scenarios_data.xlsx'
+                bup_scope.to_excel(full_path, index=False)
+                messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+            except Exception as ex:
+                messagebox.showinfo(title="Error!", message=str(ex) + "\n\n Please make sure that the Excel file is "
+                                                                      "closed and you have access to the Downloads folder.")
+
+        # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
+        def callback_func_scenario_add(scenarios_count):
+
+            if scenarios_count.get() == 1:
+                # Show the Export to Excel/Save Image buttons and hide the Scenario Creation message
+                btn_export_data_eff.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
+                btn_export_data_hyp.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
+                btn_save_image_hyp.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
+                lbl_pending_scenario.place_forget()
+            else:
+                pass
+
+        # Tracing the variable and calling the respective functions every time the variable changes
+        var_scenarios_count.trace_add("write", callback=lambda *args: callback_func_scenario_add(var_scenarios_count))
+
+        # Button that saves Efficient Chart Image
+        btn_save_image_eff = ctk.CTkButton(tbv_curve_charts.tab("Efficient Curve"), text="Save Image",
+                                           font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                           image=download_icon, compound="top", fg_color="transparent",
+                                           text_color="#000000", hover=False, border_spacing=0,
+                                           command=bup.save_hypothetical_image)
+
+        # Button that saves Hypothetical Chart Image
+        btn_save_image_hyp = ctk.CTkButton(tbv_curve_charts.tab("Hypothetical Curve"), text="Save Image",
+                                           font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                           image=download_icon, compound="top", fg_color="transparent",
+                                           text_color="#000000", hover=False, border_spacing=0,
+                                           command=bup.save_hypothetical_image)
+
+        # Export data button - Efficient
+        btn_export_data_eff = ctk.CTkButton(tbv_curve_charts.tab("Efficient Curve"), text="Export to Excel",
+                                        font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                        image=excel_icon, compound="top", fg_color="transparent",
+                                        text_color="#000000", hover=False, border_spacing=1,
+                                        command=export_data)
+
+        # Export data button - Hypothetical
+        btn_export_data_hyp = ctk.CTkButton(tbv_curve_charts.tab("Hypothetical Curve"), text="Export to Excel",
+                                        font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                        image=excel_icon, compound="top", fg_color="transparent",
+                                        text_color="#000000", hover=False, border_spacing=1,
+                                        command=export_data)
+
         # Label with the instruction to create a Scenario
-        # lbl_pending_scenario = ctk.CTkLabel(tbv_curve_charts.tab("Efficient Curve"),
         lbl_pending_scenario = ctk.CTkLabel(tbvmenu.tab("Scenarios"),
                                             text="Please create a Scenario in order to generate Build-Up chart.",
                                             font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'),
@@ -170,7 +242,7 @@ def main():
             scenario_window.grab_set()
 
             # Function that creates the window elements and interacts with the Scenario List
-            bup.create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothetical_curve_window, lbl_pending_scenario)
+            bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window)
 
         # Create Scenario button
         btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
@@ -178,7 +250,8 @@ def main():
                                       font=ctk.CTkFont('open sans', size=12, weight='bold'),
                                       bg_color="#cfcfcf", fg_color="#009898", hover_color="#006464",
                                       width=200, height=30, corner_radius=30
-                                            ).place(relx=0.5, rely=0.93, anchor=ctk.CENTER)
+                                            )
+        btn_create_scenario.place(relx=0.5, rely=0.93, anchor=ctk.CENTER)
 
         # Hiding Main Screen
         main_screen.withdraw()
@@ -195,7 +268,8 @@ def main():
                                   bg_color="#242424", fg_color="#009898", hover_color="#006464",
                                   width=250, height=45, corner_radius=30,
                                   image=img_open_file, compound="right", cursor="hand2"
-                                  ).place(relx=0.5, rely=0.82, anchor=ctk.CENTER)
+                                  )
+    btnSearchFile.place(relx=0.5, rely=0.82, anchor=ctk.CENTER)
 
     # Loading label - will be displayed while the file and related information are being read
     lbl_loading = ctk.CTkLabel(master=main_screen, text='', fg_color='#242424', bg_color='#242424',
@@ -209,7 +283,8 @@ def main():
 
     # Logo put into the Label
     lblLogo = ctk.CTkLabel(main_screen, image=image_logo, text="",
-                        bg_color="#242424").place(relx=0.5, rely=0.45, anchor=ctk.CENTER)
+                        bg_color="#242424")
+    lblLogo.place(relx=0.5, rely=0.45, anchor=ctk.CENTER)
 
     # Title CTkImage object
     image_title = ctk.CTkImage(light_image=Image.open(title_path),
@@ -219,7 +294,8 @@ def main():
     # Title put into the Label
     lblMainTitle = ctk.CTkLabel(main_screen, image=image_title,
                              text="",
-                             bg_color="#242424").place(relx=0.5, rely=0.1, anchor=ctk.CENTER)
+                             bg_color="#242424")
+    lblMainTitle.place(relx=0.5, rely=0.1, anchor=ctk.CENTER)
 
     main_screen.mainloop()  # Main Screen running loop
 

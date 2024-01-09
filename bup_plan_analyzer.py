@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from PIL import Image
 from io import BytesIO
-import os
 import customtkinter as ctk
 from tkinter import messagebox
 import time
@@ -12,13 +11,8 @@ import logging
 
 warnings.filterwarnings("ignore")
 
-active_user = os.getlogin()
-
 # Scenarios list
 scenarios_list = []
-
-excel_icon_path = r'src\images\excel_transparent.png'
-export_output_path = fr'C:\Users\{active_user}\Downloads\bup_scenarios_data.xlsx'
 
 # Declaring the variables that will temporarily store the previous values of already registered Scenarios,
 # in case the user wants to reuse the Contractual parameters of the Scenario.
@@ -211,48 +205,10 @@ def generate_histogram(bup_scope):  # Generates the Histogram. Returns a Figure 
 
 
 @function_timer
-def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothetical_curve_window, lbl_pending_scenario) -> None:
+def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window) -> None:
     global scenarios_list
 
     scenario = {}
-
-    # CTk variable that will store the Scenario count. It will be useful to implement tracking with callback
-    # function monitoring it. To show or hide components
-    var_scenarios_count = ctk.IntVar()
-
-    # Image with Excel icon
-    excel_icon = ctk.CTkImage(light_image=Image.open(excel_icon_path),
-                      dark_image=Image.open(excel_icon_path),
-                      size=(30, 30))
-
-    # Function performed when exporting Data
-    def export_data():
-        try:
-            bup_scope.to_excel(export_output_path, index=False)
-            messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + export_output_path))
-        except Exception as ex:
-            messagebox.showinfo(title="Error!", message=str(ex) + "\n\n Please make sure that the Excel file is "
-                                                                  "closed and you have access to the Downloads folder.")
-
-    # Export data button
-    btn_export_data = ctk.CTkButton(efficient_curve_window, text="Export to Excel",
-                                    font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                    image=excel_icon, compound="top", fg_color="transparent",
-                                    text_color="#000000", hover=False, border_spacing=1,
-                                    command=export_data)
-
-    # Function that will be called to evaluate the control variable and Show/Hide Export Data button
-    def export_data_button(scenarios_count):
-
-        if scenarios_count.get() == 1:
-            # Exibir o botão de Exportar para Excel e ocultar a mensagem de Criação de Scenario
-            btn_export_data.place(relx=0.92, rely=0.94, anchor=ctk.CENTER)
-            lbl_pending_scenario.place_forget()
-        else:
-            pass
-
-    # Tracing the variable and calling the function every time the variable changes
-    var_scenarios_count.trace_add("write", callback=lambda *args: export_data_button(var_scenarios_count))
 
     # If the Scenarios list contains at least 1 already registered, the user is offered the option of using the
     # values of Contractual Conditions from the first scenario, changing only the Procurement Length parameters
@@ -289,17 +245,14 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
             # Scenario and disables the Entries.
             def use_previous_scenario_values():
                 # Using control variables globally to store previously registered values
-                global t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value \
+                global t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value\
                     , material_delivery_end_previous_value
 
-                t0_previous_value = ctk.StringVar(value=
-                                                  scenarios_list[0]['t0'].strftime("%d/%m/%Y")
-                                                  )
+                t0_previous_value = ctk.StringVar(value=scenarios_list[0]['t0'].strftime("%d/%m/%Y"))
                 entry_t0.configure(textvariable=t0_previous_value)
                 entry_t0.configure(state="disabled")
 
-                hyp_t0_previous_value = ctk.StringVar(value=
-                                                      scenarios_list[0]['hyp_t0_start'])
+                hyp_t0_previous_value = ctk.StringVar(value=scenarios_list[0]['hyp_t0_start'])
                 entry_hyp_pln_start.configure(textvariable=hyp_t0_previous_value)
                 entry_hyp_pln_start.configure(state="disabled")
 
@@ -651,7 +604,7 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
         # Loading into a CTk Image object
         img_bup_efficient_chart = ctk.CTkImage(bup_efficient_chart,
                                     dark_image=bup_efficient_chart,
-                                    size=(580, 380))
+                                    size=(580, 370))
 
         # Build-Up Efficient Curve Chart - inputting CTkImage in the Label and positioning it on the screen
         ctk.CTkLabel(efficient_curve_window, image=img_bup_efficient_chart,
@@ -663,7 +616,7 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
         # Loading into a CTk Image object
         img_bup_hypothetical_chart = ctk.CTkImage(bup_hypothetical_chart,
                                     dark_image=bup_hypothetical_chart,
-                                    size=(580, 380))
+                                    size=(580, 370))
 
         # Hypothetical Curve Build-Up Chart - inputting CTkImage in the Label and positioning it on the screen
         ctk.CTkLabel(hypothetical_curve_window, image=img_bup_hypothetical_chart,
@@ -674,14 +627,16 @@ def create_scenario(scenario_window, bup_scope, efficient_curve_window, hypothet
                            font=ctk.CTkFont('open sans', size=12, weight='bold'),
                            bg_color="#ebebeb", fg_color="#009898", hover_color="#006464",
                            width=100, height=30, corner_radius=30, cursor="hand2"
-                           ).place(relx=0.3, rely=0.92, anchor=ctk.CENTER)
+                           )
+    btn_ok.place(relx=0.3, rely=0.92, anchor=ctk.CENTER)
 
     # Cancel button
     btn_cancel = ctk.CTkButton(scenario_window, text='Cancel', command=scenario_window.destroy,
                                font=ctk.CTkFont('open sans', size=12, weight='bold'),
                                bg_color="#ebebeb", fg_color="#ff0000", hover_color="#af0003",
                                width=100, height=30, corner_radius=30, cursor="hand2"
-                               ).place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
+                               )
+    btn_cancel.place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
 
 
 @function_timer
@@ -816,7 +771,7 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     colors_array = ['blue', 'orange', 'black', 'green', 'purple']
 
     # Image size
-    width, height = 580, 380
+    width, height = 580, 370
 
     # Creating a figure and axes to insert the chart
     figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
@@ -868,6 +823,7 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     eixos.set_ylabel('Materials Ordered Qty (Accumulated)')
     eixos.set_title('Efficient Curve: Build-Up Forecast')
     eixos.grid(True)
+    eixos.tick_params(axis='both', labelsize=9)  # Adjusting labels size
 
     # Adjusting axis spacing to avoid cutting off labels
     plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
@@ -892,9 +848,9 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
 def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes):
     """
     Function that creates the Hypothetycal Curve BuildUp Chart.
-    :param scenario_dataframes: Dictionary with all scenarios dataframes.
-    :param df_scope_with_scenarios: Created DataFrame on Efficient Curve Build-Up construction. Combinations Scope/Scenarios.
-    :return: Returns an Image object
+    param scenario_dataframes: Dictionary with all scenarios dataframes.
+    param df_scope_with_scenarios: Created DataFrame on Efficient Curve Build-Up construction. Combinations Scope/Scenarios.
+    return: Returns an Image object
     """
 
     # --------------- Chart Generation ---------------
@@ -903,7 +859,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
     colors_array = ['blue', 'orange', 'black', 'green', 'purple']
 
     # Image Size
-    width, height = 580, 380
+    width, height = 580, 370
 
     # Creating a figure and axes to insert the chart
     figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
@@ -950,6 +906,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
 
     # Chart Settings
     eixos.set_ylabel('Materials Delivered Qty (Accumulated)')
+    eixos.tick_params(axis='both', labelsize=9)  # Adjusting labels size
     eixos.set_title('Hypothetical Curve: Build-Up Forecast')
     eixos.grid(True)
 
@@ -970,3 +927,9 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
     bup_hypothetical_chart = Image.open(tmp_img_hypothetical_chart)
 
     return bup_hypothetical_chart
+
+
+@function_timer
+def save_hypothetical_image() -> None:
+    # Function that saves chart image from Hypothetical Build-Up into a local folder.
+    print("salvamos a imagem")
