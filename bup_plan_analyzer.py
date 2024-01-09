@@ -38,7 +38,6 @@ def function_timer(func):
         result = func(*args)
         exec_time = time.time() - start_time
         logging.info(f"Function '{func.__name__}' took {round(exec_time, 2)} seconds to run.")
-        # Insert line for closing file afterwards. It is being blocked by python
         return result
     return wrapper
 
@@ -930,6 +929,6 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
 
 
 @function_timer
-def save_hypothetical_image() -> None:
-    # Function that saves chart image from Hypothetical Build-Up into a local folder.
+def save_hypothetical_image(chart: Image, output_path: str) -> None:
+    # Function that receveis as argument the chart Image object and saves it to
     print("salvamos a imagem")

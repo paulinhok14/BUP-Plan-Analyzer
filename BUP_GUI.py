@@ -48,6 +48,7 @@ def main():
     var_scenarios_count = ctk.IntVar()
 
     def create_new_window(title: str):  # Function to create new window
+
         # Configures the Execution warning label
         lbl_loading.configure(text="Please wait while complementary data is fetched...")
 
@@ -67,12 +68,13 @@ def main():
         def on_closing_main2():
             new_window.withdraw()
             main_screen.deiconify()
+            # Reseting IntVar with Scenario counts
 
         # New window settings
         new_window.title(title)
         new_window.resizable(width=False, height=False)
         new_window.iconbitmap(main_screen_icon)
-        new_window.protocol("WM_DELETE_WINDOW", on_closing_main2)
+        new_window.protocol("WM_DELETE_WINDOW", on_closing_main2())
 
         # New window geometry
         nw_width = 700
@@ -174,6 +176,7 @@ def main():
                 # Show the Export to Excel/Save Image buttons and hide the Scenario Creation message
                 btn_export_data_eff.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
                 btn_export_data_hyp.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
+                btn_save_image_eff.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
                 btn_save_image_hyp.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
                 lbl_pending_scenario.place_forget()
             else:
