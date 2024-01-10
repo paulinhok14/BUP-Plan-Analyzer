@@ -19,6 +19,8 @@ scenarios_list = []
 t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value\
     , material_delivery_end_previous_value = None, None, None, None, None
 
+# Defining global variables that will store Efficient and Hypothetical chart Images when running internal function
+img_eff_chart, img_hyp_chart = None, None
 
 # Log Configs
 open('execution_info.log', 'w').close()  # Clean log file before system execution
@@ -441,8 +443,10 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
 
     # ----------------- Interaction Buttons -----------------
 
-    # Function to return the values entered by user in the Entry, handling Defaults
+    # Function to return the values entered by user in the Entry, handling Defaults. It also saves both chart
+    # Images on global scope variables.
     def get_entry_values():
+        global img_eff_chart, img_hyp_chart
 
         # --------- Contractual Conditions ---------
 
@@ -620,6 +624,9 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
         # Hypothetical Curve Build-Up Chart - inputting CTkImage in the Label and positioning it on the screen
         ctk.CTkLabel(hypothetical_curve_window, image=img_bup_hypothetical_chart,
                     text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
+
+        # Saving both charts Image on global scope variables
+        img_eff_chart, img_hyp_chart = bup_efficient_chart, bup_hypothetical_chart
 
     # OK button
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
@@ -833,14 +840,14 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     # --------------- Turning it into an Image to be displayed ---------------
 
     # Saving the matplotlib figure to a BytesIO object (memory), so it is not necessary to save it in an image file
-    tmp_img_bup_chart = BytesIO()
-    figura.savefig(tmp_img_bup_chart, format='png', transparent=True)
-    tmp_img_bup_chart.seek(0)
+    tmp_img_efficient_chart = BytesIO()
+    figura.savefig(tmp_img_efficient_chart, format='png', transparent=True)
+    tmp_img_efficient_chart.seek(0)
 
     # Loading the chart image into an Image object that will be returned by the function
-    bup_chart = Image.open(tmp_img_bup_chart)
+    efficient_chart = Image.open(tmp_img_efficient_chart)
 
-    return bup_chart, df_scope_with_scenarios, scenario_dataframes
+    return efficient_chart, df_scope_with_scenarios, scenario_dataframes
 
 
 @function_timer
@@ -929,6 +936,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
 
 
 @function_timer
-def save_hypothetical_image(chart: Image, output_path: str) -> None:
-    # Function that receveis as argument the chart Image object and saves it to
-    print("salvamos a imagem")
+def save_chart_image(chart: Image, output_path: str, filename: str) -> None:
+    # Function that receveis as argument the chart Image object, as well as output path and filename, and saves it.
+    print("Full path: ", output_path + r'\\' + filename)
+    chart.save(output_path + r'\\' + filename)

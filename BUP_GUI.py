@@ -190,14 +190,22 @@ def main():
                                            font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                            image=download_icon, compound="top", fg_color="transparent",
                                            text_color="#000000", hover=False, border_spacing=0,
-                                           command=bup.save_hypothetical_image)
+                                           command=lambda: (
+                                               bup.save_chart_image(bup.img_eff_chart,
+                                                                    export_output_path,
+                                                                    "bup_efficient_chart.png"))
+                                           )
 
         # Button that saves Hypothetical Chart Image
         btn_save_image_hyp = ctk.CTkButton(tbv_curve_charts.tab("Hypothetical Curve"), text="Save Image",
                                            font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                            image=download_icon, compound="top", fg_color="transparent",
                                            text_color="#000000", hover=False, border_spacing=0,
-                                           command=bup.save_hypothetical_image)
+                                           command=lambda: (
+                                               bup.save_chart_image(bup.img_hyp_chart,
+                                                                    export_output_path,
+                                                                    "bup_hypothetical_chart.png"))
+                                           )
 
         # Export data button - Efficient
         btn_export_data_eff = ctk.CTkButton(tbv_curve_charts.tab("Efficient Curve"), text="Export to Excel",
