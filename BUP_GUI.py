@@ -43,14 +43,13 @@ def main():
         file_path = filedialog.askopenfilename()
         return file_path
 
-    # CTk variable that will store the Scenario count. It will be useful to implement tracking with callback
-    # function monitoring it. To show or hide components
-    var_scenarios_count = ctk.IntVar()
-
     def create_new_window(title: str):  # Function to create new window
-
         # Configures the Execution warning label
         lbl_loading.configure(text="Please wait while complementary data is fetched...")
+
+        # CTk variable that will store the Scenario count. It will be useful to implement tracking with callback
+        # function monitoring it. To show or hide components
+        var_scenarios_count = ctk.IntVar()
 
         # Reading the Scope file before creating the window
         full_file_path = select_file()  # Selecting Scope file
@@ -69,12 +68,13 @@ def main():
             new_window.withdraw()
             main_screen.deiconify()
             # Reseting IntVar with Scenario counts
+            var_scenarios_count.set(0)
 
         # New window settings
         new_window.title(title)
         new_window.resizable(width=False, height=False)
         new_window.iconbitmap(main_screen_icon)
-        new_window.protocol("WM_DELETE_WINDOW", on_closing_main2())
+        new_window.protocol("WM_DELETE_WINDOW", on_closing_main2)
 
         # New window geometry
         nw_width = 700
