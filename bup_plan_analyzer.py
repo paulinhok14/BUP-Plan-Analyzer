@@ -614,11 +614,11 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
                      text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
         # Calling the function to generate Hypothetical Build-Up chart.
-        bup_hypothetical_chart = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes)
+        bup_hyp_chart_whitebg, bup_hyp_chart = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes)
 
         # Loading into a CTk Image object
-        img_bup_hypothetical_chart = ctk.CTkImage(bup_hypothetical_chart,
-                                    dark_image=bup_hypothetical_chart,
+        img_bup_hypothetical_chart = ctk.CTkImage(bup_hyp_chart,
+                                    dark_image=bup_hyp_chart,
                                     size=(580, 370))
 
         # Hypothetical Curve Build-Up Chart - inputting CTkImage in the Label and positioning it on the screen
@@ -626,7 +626,7 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
                     text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
         # Saving both charts Image on global scope variables
-        img_eff_chart, img_hyp_chart = bup_efficient_chart, bup_hypothetical_chart
+        img_eff_chart, img_hyp_chart = bup_efficient_chart, bup_hyp_chart_whitebg
 
     # OK button
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
@@ -925,18 +925,31 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
     # --------------- Turning it into an Image to be displayed ---------------
 
     # Saving the matplotlib figure to a BytesIO object (memory), so as not to have to save an image file
-    tmp_img_hypothetical_chart = BytesIO()
-    figura.savefig(tmp_img_hypothetical_chart, format='png', transparent=True)
-    tmp_img_hypothetical_chart.seek(0)
+    tmp_img_hyp_chart = BytesIO()
+    figura.savefig(tmp_img_hyp_chart, format='png', transparent=True)
+    tmp_img_hyp_chart.seek(0)
 
     # Loading the chart image into an Image object that will be returned by the function
-    bup_hypothetical_chart = Image.open(tmp_img_hypothetical_chart)
+    bup_hyp_chart = Image.open(tmp_img_hyp_chart)
 
-    return bup_hypothetical_chart
+    # It is necessary to save a chart Image with white background. Transparent is to plot. White to save as a file.
+    tmp_img_hyp_chart_whitebg = BytesIO()
+    figura.savefig(tmp_img_hyp_chart_whitebg, format='png', transparent=False)
+    tmp_img_hyp_chart_whitebg.seek(0)
+
+    # Loading the chart image into Image objects that will be returned by the function
+    bup_hyp_chart_whitebg = Image.open(tmp_img_hyp_chart_whitebg)
+
+    return bup_hyp_chart_whitebg, bup_hyp_chart
 
 
 @function_timer
 def save_chart_image(chart: Image, output_path: str, filename: str) -> None:
     # Function that receveis as argument the chart Image object, as well as output path and filename, and saves it.
-    print("Full path: ", output_path + r'\\' + filename)
-    chart.save(output_path + r'\\' + filename)
+
+    try:
+        chart.save(output_path + '\\' + filename)
+        messagebox.showinfo(title="Success!", message=str("Image was exported to: " + output_path + '\\' + filename))
+    except Exception as ex:
+        messagebox.showinfo(title="Error!", message=str(ex) + "\n\n Please make sure that the Image file is "
+                                                              "closed and you have access to the Downloads folder.")
