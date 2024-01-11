@@ -45,7 +45,7 @@ def function_timer(func):
 
 
 @function_timer
-def read_scope_file(file_full_path: str):
+def read_scope_file(file_full_path: str) -> pd.DataFrame():
     # Function that reads scope file and complementary info
 
     # Resetting the list of scenarios every time the e-mail is read
@@ -601,12 +601,12 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
         # Calling the function to generate the Efficient Build-Up chart. The return of the function is the chart in a
         # figure (Image object), in addition to the DataFrames/Variables created in the function, as a return to be used
         # in the Hypothetical chart
-        bup_efficient_chart, df_scope_with_scenarios, scenario_dataframes = \
+        bup_eff_chart_whitebg, bup_eff_chart, df_scope_with_scenarios, scenario_dataframes = \
             generate_efficient_curve_buildup_chart(bup_scope, scenarios_list)
 
         # Loading into a CTk Image object
-        img_bup_efficient_chart = ctk.CTkImage(bup_efficient_chart,
-                                    dark_image=bup_efficient_chart,
+        img_bup_efficient_chart = ctk.CTkImage(bup_eff_chart,
+                                    dark_image=bup_eff_chart,
                                     size=(580, 370))
 
         # Build-Up Efficient Curve Chart - inputting CTkImage in the Label and positioning it on the screen
@@ -626,7 +626,7 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
                     text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
         # Saving both charts Image on global scope variables
-        img_eff_chart, img_hyp_chart = bup_efficient_chart, bup_hyp_chart_whitebg
+        img_eff_chart, img_hyp_chart = bup_eff_chart_whitebg, bup_hyp_chart_whitebg
 
     # OK button
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
@@ -840,14 +840,22 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     # --------------- Turning it into an Image to be displayed ---------------
 
     # Saving the matplotlib figure to a BytesIO object (memory), so it is not necessary to save it in an image file
-    tmp_img_efficient_chart = BytesIO()
-    figura.savefig(tmp_img_efficient_chart, format='png', transparent=True)
-    tmp_img_efficient_chart.seek(0)
+    tmp_img_eff_chart = BytesIO()
+    figura.savefig(tmp_img_eff_chart, format='png', transparent=True)
+    tmp_img_eff_chart.seek(0)
 
     # Loading the chart image into an Image object that will be returned by the function
-    efficient_chart = Image.open(tmp_img_efficient_chart)
+    bup_eff_chart = Image.open(tmp_img_eff_chart)
 
-    return efficient_chart, df_scope_with_scenarios, scenario_dataframes
+    # It is necessary to save a chart Image with white background. Transparent is to plot. White to save as a file.
+    tmp_img_eff_chart_whitebg = BytesIO()
+    figura.savefig(tmp_img_eff_chart_whitebg, format='png', transparent=False)
+    tmp_img_eff_chart_whitebg.seek(0)
+
+    # Loading the chart image into an Image object that will be returned by the function
+    bup_eff_chart_whitebg = Image.open(tmp_img_eff_chart_whitebg)
+
+    return bup_eff_chart_whitebg, bup_eff_chart, df_scope_with_scenarios, scenario_dataframes
 
 
 @function_timer
