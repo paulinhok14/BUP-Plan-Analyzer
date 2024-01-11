@@ -2,6 +2,7 @@ from tkinter import filedialog  # In order to open file with Explorer
 import customtkinter as ctk
 from PIL import Image
 import os
+import pandas as pd
 from tksheet import Sheet
 from tkinter import messagebox
 
@@ -161,10 +162,21 @@ def main():
 
         # Function performed when exporting Data
         def export_data():
+            """ Function that will run when user click on "Export to Excel" button.
+            It takes no argument. All used variables is consumed from bup_plan_analyzer.py
+            """
             try:
                 full_path = export_output_path + r'\bup_scenarios_data.xlsx'
-                bup_scope.to_excel(full_path, index=False)
+                with pd.ExcelWriter(full_path) as writer:
+                    bup.df_scope_with_scenarios.to_excel(writer, sheet_name='BUP Scope with Scenarios', index=False)
+
+                    consolidated_scenarios_df = pd.DataFrame()
+                    for scenario, df in bup.scenario_dataframes.items():
+                        consolidated_scenarios_df = pd.concat([consolidated_scenarios_df, df], ignore_index=True)
+
+                    consolidated_scenarios_df.to_excel(writer, sheet_name='Scenarios Build-Up', index=False)
                 messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+
             except Exception as ex:
                 messagebox.showinfo(title="Error!", message=str(ex) + "\n\n Please make sure that the Excel file is "
                                                                       "closed and you have access to the Downloads folder.")

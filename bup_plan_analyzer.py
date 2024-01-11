@@ -22,6 +22,10 @@ t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, ma
 # Defining global variables that will store Efficient and Hypothetical chart Images when running internal function
 img_eff_chart, img_hyp_chart = None, None
 
+# Defining global variables that will store pandas DataFrames that will be exported in main file
+# Creating also a dictionary to store scenario DataFrames
+df_scope_with_scenarios, scenario_dataframes = None, {}
+
 # Log Configs
 open('execution_info.log', 'w').close()  # Clean log file before system execution
 log_format = "%(asctime)s: %(levelname)s: %(message)s"
@@ -447,7 +451,7 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
     # Function to return the values entered by user in the Entry, handling Defaults. It also saves both chart
     # Images on global scope variables.
     def get_entry_values():
-        global img_eff_chart, img_hyp_chart
+        global img_eff_chart, img_hyp_chart, df_scope_with_scenarios
 
         # --------- Contractual Conditions ---------
 
@@ -654,6 +658,8 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     # List to store combinations of Scenarios and Scope
     combinations = []
 
+    global scenario_dataframes
+
     for _, row in bup_scope.iterrows():
         # Going through each element of the dictionaries list (each element is a Scenario in scenarios_list)
         for index, scenario in enumerate(scenarios):
@@ -749,8 +755,6 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         final_df_scenarios.loc[scenario_df.index, 'Accum. Ordered Qty (Eff)'] = scenario_df['Ordered Qty'].cumsum()
         final_df_scenarios.loc[scenario_df.index, 'Accum. Delivered Qty (Hyp)'] = scenario_df['Delivered Qty Hyp'].cumsum()
 
-    # Creating a dictionary to store scenario DataFrames
-    scenario_dataframes = {}
 
     # Creating a DF for each Scenario
     for scenario in final_df_scenarios['Scenario'].unique():
