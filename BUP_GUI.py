@@ -40,7 +40,7 @@ def main():
     y = (screen_height/2) - (ms_height/2)
     main_screen.geometry('%dx%d+%d+%d' % (ms_width, ms_height, x, y))
 
-    def select_file():  # Function to select the Scope file
+    def select_file() -> str:  # Function to select the Scope file and return its path
         file_path = filedialog.askopenfilename()
         return file_path
 
@@ -65,7 +65,7 @@ def main():
         new_window = ctk.CTkToplevel(main_screen)
 
         # Function that will handle window closing
-        def on_closing_main2():
+        def on_closing_main2() -> None:
             new_window.withdraw()
             main_screen.deiconify()
             # Reseting IntVar with Scenario counts
@@ -160,8 +160,9 @@ def main():
                                   dark_image=Image.open(download_icon_path),
                                   size=(34, 34))
 
+        @bup.function_timer
         # Function performed when exporting Data
-        def export_data():
+        def export_data() -> None:
             """ Function that will run when user click on "Export to Excel" button.
             It takes no argument. All used variables is consumed from bup_plan_analyzer.py
             """
@@ -182,7 +183,7 @@ def main():
                                                                       "closed and you have access to the Downloads folder.")
 
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
-        def callback_func_scenario_add(scenarios_count):
+        def callback_func_scenario_add(scenarios_count) -> None:
 
             if scenarios_count.get() == 1:
                 # Show the Export to Excel/Save Image buttons and hide the Scenario Creation message

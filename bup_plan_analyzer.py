@@ -221,7 +221,7 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
 
     if scenarios_list:
         # Function to open the Dialog box offering for the user the possibility of reuse
-        def open_confirm_dialog():
+        def open_confirm_dialog() -> None:
             confirm_window = ctk.CTkToplevel(scenario_window)
             confirm_window.title("Warning!")
             confirm_window.resizable(width=False, height=False)
@@ -249,7 +249,7 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
 
             # Function that, when clicking the YES button, uses the values of the first registered
             # Scenario and disables the Entries.
-            def use_previous_scenario_values():
+            def use_previous_scenario_values() -> None:
                 # Using control variables globally to store previously registered values
                 global t0_previous_value, hyp_t0_previous_value, acft_delivery_start_previous_value, material_delivery_start_previous_value\
                     , material_delivery_end_previous_value
@@ -277,7 +277,7 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
                 entry_material_delivery_end.configure(textvariable=material_delivery_end_previous_value)
                 entry_material_delivery_end.configure(state="disabled")
 
-            def nullify_previous_scenario_variables():
+            def nullify_previous_scenario_variables() -> None:
                 """ Function that makes empty the control variables that store the pre-registered scenarios, as
                 the user chose not to use the already registered scenario
                 """
