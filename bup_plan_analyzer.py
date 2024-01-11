@@ -117,7 +117,7 @@ def read_scope_file(file_full_path: str) -> pd.DataFrame():
 
 
 @function_timer
-def generate_dispersion_chart(bup_scope):
+def generate_dispersion_chart(bup_scope: pd.DataFrame):
     # This function receives 'bup_scope' paramter as a pandas DataFrame and creates the chart.
 
     # Function to format y-axis values in thousands
@@ -158,7 +158,8 @@ def generate_dispersion_chart(bup_scope):
 
 
 @function_timer
-def generate_histogram(bup_scope):  # Generates the Histogram. Returns a Figure and the largest Leadtimes
+def generate_histogram(bup_scope: pd.DataFrame):
+    # Generates the Histogram. Returns a Figure and the largest Leadtimes
 
     # DataFrame with highest Leadtimes
     highest_leadimes = bup_scope.nlargest(3, 'Leadtime').to_string(index=False)
