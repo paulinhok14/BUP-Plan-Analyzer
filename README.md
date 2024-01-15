@@ -1,4 +1,4 @@
-# BUP-Plan-Analyzer
+# Build-Up Plan Analyzer
 ###### Version 1.0
 ### What Is?
 
@@ -37,7 +37,7 @@ You can make it a desktop shortcut if you want. Run it doubleclicking.
 
 ![App Icon](docs/app_icon.png)
 
-The main screen should appear:
+The main screen should appear after a while:
 
 ![Main Screen](docs/main_screen.jpg)
 
@@ -54,8 +54,18 @@ It may take a while since complementary information is fetched at this moment in
 ![Loading Reading Scope](docs/loading_reading_scope.jpg)
 ![Log File](docs/log_file.png)
 
-Having it done, another screen should appear, in the first tab called 
+Having it done, another screen should appear, in the first tab called "Scope", where you can see all loaded parts with their respective complementary information.  
+You can also make sure if the file loaded is correct, by checking file name, rows quantity and Contract Value (US$):
 
+![Scope Tab](docs/scope_tab.png)
+
+In the second tab, called "Leadtime Analysis", is presented two charts in order to evaluate Leadtime distribution:
+
+![Leadtime Analysis Tab](docs/leadtime_analysis_tab.png)
+
+In the third tab "Scenarios", is
+
+![Scenarios Tab](docs/scenarios_tab.png)
 
 
 
