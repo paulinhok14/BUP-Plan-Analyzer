@@ -63,10 +63,25 @@ In the second tab, called "Leadtime Analysis", is presented two charts in order 
 
 ![Leadtime Analysis Tab](docs/leadtime_analysis_tab.png)
 
-In the third tab "Scenarios", is
+The third tab "Scenarios" is where the simulation charts for Efficient Chart and Hypothetical Chart will be presented.  
+First you need to click on "Create Scenario" to create a forecast scenario.
 
 ![Scenarios Tab](docs/scenarios_tab.png)
 
+![Button Create Scenario](docs/btn_create_scenario.png)
 
+After that, a
 
+![Create Scenario Scren](docs/create_scenario_screen.png)
 
+Make sure to fill correctly all information considering instructions on label placeholders.  
+
+### **Contractual Conditions** 
+
+Those are required information (except 't0+X', that is an *Integer* with default 3 [months] for Hypothetical Build-Up Start date based on t0) and an error will be raised if any of the information has not been filled in.  
+
+In addition, any other format that is not consistent with the format indicated in the attribute's "placeholder" will result in an error and the creation of the scenario will be made impossible.
+
+### **Procurement Length** 
+
+![Error Invalid Format](docs/error_invalid_format.png)
