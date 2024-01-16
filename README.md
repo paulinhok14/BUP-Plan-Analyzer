@@ -11,7 +11,7 @@ bup_plan_analyzer.py has the main functions of the system.
 ___
 ### How it Works
 
-A scope file with the materials list corresponding to the contract is an essential input.
+A scope file with the materials list corresponding to the contract is a mandatory input.
 The information that should contain in the scope file (.xlsx Excel format) is as follows:
 - 'PN': *text*
 - 'ECODE': *numeric*
@@ -101,6 +101,26 @@ In case there is already a previously registered Scenario, the program will auto
 If the user chooses **"Yes"**, the **Contractual Condition** values will be assumed and "locked" on the Scenario creation window, leaving only open Procurement Length fields to be configured in a different operational Scenario for comparison.
 
 ![Previously Registered Scenario](docs/previously_registered_scenario.png)
+
+If the user chooses **"No"**, the Scenario creation window will normally open with all enabled options.
+
+After clicking **"OK"**, if everything is filled correctly, the Scenario will be created and the Efficient and Hypothetical charts will be generated in their respective tabs.
+
+___
+
+#### **Efficient Curve:**
+
+This chart plots the **best date to issue the Purchase documents**, considering the Leadtime of each material and the respective Procurement Length values.
+
+**The estimated Delivery Date of the material to this chart will always be on the average date between the Material Delivery Start Date & Material Delivery End Date**, that is, the colored range vertically with the respective Scenario's color.
+
+That's why it is entitled **Efficient**, from the cash point of view. **It is the most optimized capital allocation considering the current operational parameters.**
+
+![Efficient Curve Chart](docs/efficient_curve_chart.png)
+
+#### **Hypothetical Curve:**
+
+![Hypothetical Curve Chart](docs/hypothetical_curve_chart.png)
 
 
 ___
