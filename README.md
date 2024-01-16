@@ -112,7 +112,7 @@ ___
 
 This chart plots the **best date to issue the Purchase documents**, considering the Leadtime of each material and the respective Procurement Length values.
 
-**The estimated Delivery Date of the material to this chart will always be on the average date between the Material Delivery Start Date & Material Delivery End Date**, that is, the colored range vertically with the respective Scenario's color.
+**The estimated Delivery Date of the material to this chart will always be on the average date between the Material Delivery Start Date & Material Delivery End Date**, that is, the colored range vertically with the respective Scenario's color, to where the down arrow points.
 
 That's why it is entitled **Efficient**, from the cash point of view. **It is the most optimized capital allocation considering the current operational parameters.**
 
@@ -120,8 +120,20 @@ That's why it is entitled **Efficient**, from the cash point of view. **It is th
 
 #### **Hypothetical Curve:**
 
-![Hypothetical Curve Chart](docs/hypothetical_curve_chart.png)
+This chart presents the RSPL build-up in a way to identify when all materials would be delivered, if all were purchased simultaneously on a Hypothetical date **("X" months after Contract signature [t0]. Default: 3)**.
 
+The line represents **materials delivery**, along with a circle marker of when all materials would have been delivered and build-up will be completed.
+
+This is why it is called **Hypothetical**, as it is based on the hypothesis of starting the entire build-up from a specific date, purchasing all materials at once in a date indicated when creating the scenario.
+
+![Hypothetical Curve Chart](docs/hypothetical_curve_chart.png)
 
 ___
 ### Exporting Data
+
+
+![Export to Excel Button](docs/export_to_excel_button.png)
+
+![Success Export Excel](docs/success_export_excel.png)
+
+
