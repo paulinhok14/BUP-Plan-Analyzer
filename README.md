@@ -45,7 +45,7 @@ Click on 'Search Scope File'
 
 ![Click Scope File](docs/click_scope_file.jpg)
 
-A window with explorer will appear. Choose your scope file and click on 
+A window with explorer will appear. Choose your scope file and click Open: 
 
 ![Click Open File](docs/click_open_file.png)
 
@@ -55,7 +55,7 @@ It may take a while since complementary information is fetched at this moment in
 ![Log File](docs/log_file.png)
 
 Having it done, another screen should appear, in the first tab called "Scope", where you can see all loaded parts with their respective complementary information.  
-You can also make sure if the file loaded is correct, by checking file name, rows quantity and Contract Value (US$):
+You can also make sure that the file loaded is correct by checking file name, rows quantity and Contract Value (US$):
 
 ![Scope Tab](docs/scope_tab.png)
 
@@ -70,7 +70,7 @@ First you need to click on "Create Scenario" to create a forecast scenario.
 
 ![Button Create Scenario](docs/btn_create_scenario.png)
 
-After that, a
+After that, a window will open with the information to be filled:
 
 ![Create Scenario Scren](docs/create_scenario_screen.png)
 
@@ -78,10 +78,30 @@ Make sure to fill correctly all information considering instructions on label pl
 
 ### **Contractual Conditions** 
 
-Those are required information (except 't0+X', that is an *Integer* with default 3 [months] for Hypothetical Build-Up Start date based on t0) and an error will be raised if any of the information has not been filled in.  
+These are **required information** (except 't0+X', that is an *Integer* with default 3 [months] for Hypothetical Build-Up Start date based on t0) and an error will be raised if any of the information has not been filled in.  
 
-In addition, any other format that is not consistent with the format indicated in the attribute's "placeholder" will result in an error and the creation of the scenario will be made impossible.
+In addition, any other format that is not consistent with the format indicated in the attribute's "placeholder" will result in an error and the creation of the scenario won't be possible.
+
+![Error Invalid Format](docs/error_invalid_format.png)
 
 ### **Procurement Length** 
 
-![Error Invalid Format](docs/error_invalid_format.png)
+These are **optional** arguments. They all have a default value indicated on the attribute placeholder displaying what will be the value assumed if nothing is filled.  
+
+It is important to note that there is also a verification of the data type here. An *Integer* is expected **if any value is filled in**, anything different from this (i.e: *text*, or special characters) will generate an error and make it impossible to create the Scenario.
+
+You can just leave it empty to adopt Default values.
+
+![Error Procurement Length](docs/error_procurement_length.png)
+
+In case there is already a previously registered Scenario, the program will automatically identify and, before displaying the Scenario Creation window, a message offering the option to use the values of the **first** registered Scenario will be displayed.
+
+![Already Registered Scenario](docs/already_registered_scenario.png)
+
+If the user chooses **"Yes"**, the **Contractual Condition** values will be assumed and "locked" on the Scenario creation window, leaving only open Procurement Length fields to be configured in a different operational Scenario for comparison.
+
+![Previously Registered Scenario](docs/previously_registered_scenario.png)
+
+
+___
+### Exporting Data
