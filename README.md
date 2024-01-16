@@ -171,8 +171,9 @@ The second feature is the possibility to save images of generated charts (Effici
 
 ![Save Image Button](docs/save_image_button.png)
 
-When you click the button, the images will be saved in .png format, depending on the screen you are on.
-**'bup_efficient_chart.png' if in the Efficient Curve tab**
+When you click the button, the images will be saved in .png format, depending on the screen you are on.  
+
+**'bup_efficient_chart.png' if in the Efficient Curve tab**  
 **'bup_hypothetical_chart.png' if in the Hypothetical Curve tab**
 
 ![Success Img Efficient](docs/success_img_efficient.png)
