@@ -9,6 +9,8 @@ from tkinter import messagebox
 import bup_plan_analyzer as bup  # Source file with program functions
 
 active_user = os.getlogin()
+ctk.set_appearance_mode("light")  # Modes: system (default), light, dark
+ctk.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 
 logo_path = r'src\images\logo.png'
 title_path = r'src\images\titulo_bup_analyzer.png'
@@ -27,10 +29,11 @@ def main():
     main_screen.title("Build-Up Plan Analyzer")
     main_screen.resizable(width=False, height=False)
     main_screen._set_appearance_mode("dark")
+    # main_screen.configure(fg_color="#242424")
     main_screen.iconbitmap(main_screen_icon)
     main_screen.protocol("WM_DELETE_WINDOW", lambda: main_screen.quit())
 
-    # Main Scren geometry - Centralizing
+    # Main Screen geometry - Centralizing
     ms_width = 700
     ms_height = 600
     screen_width = main_screen.winfo_screenwidth()  # Width of the screen
@@ -62,7 +65,7 @@ def main():
         lbl_loading.configure(text="")
 
         # Creating window
-        new_window = ctk.CTkToplevel(main_screen)
+        new_window = ctk.CTkToplevel(main_screen, fg_color='#ebebeb')
 
         # Function that will handle window closing
         def on_closing_main2() -> None:
@@ -90,7 +93,7 @@ def main():
         # TabView - Secondary screen elements: Tabs
         tbvmenu = ctk.CTkTabview(new_window, width=650, height=570, corner_radius=20,
                                  segmented_button_fg_color="#009898", segmented_button_unselected_color="#009898",
-                                 segmented_button_selected_color="#006464")
+                                 segmented_button_selected_color="#006464", bg_color='#ebebeb', fg_color='#dbdbdb')
 
         tbvmenu.pack()
         tbvmenu.add("Scope")
@@ -103,7 +106,8 @@ def main():
         )) + " MM"
 
         label_cost = ctk.CTkLabel(tbvmenu.tab("Scope"), text=bup_cost,
-                                  font=ctk.CTkFont('open sans', size=14, weight='bold'))
+                                  font=ctk.CTkFont('open sans', size=14, weight='bold'),
+                                  text_color='#000000')
         label_cost.pack(anchor="e")
 
         # Creating Sheet object to display dataframe
@@ -112,11 +116,13 @@ def main():
 
         # Label with information: file name and rows number
         lbl_file_name = ctk.CTkLabel(tbvmenu.tab("Scope"), text="File: " + os.path.basename(full_file_path),
-                                     font=ctk.CTkFont('open sans', size=10, weight='bold'))
+                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                     text_color='#000000')
         lbl_file_name.pack(side="left", padx=5)
 
         lbl_rows_count = ctk.CTkLabel(tbvmenu.tab("Scope"), text="Rows: " + str(bup_scope.shape[0]),
-                                      font=ctk.CTkFont('open sans', size=10, weight='bold'))
+                                      font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                      text_color='#000000')
         lbl_rows_count.pack(side="right", padx=10)
 
         # Tab 2 - Leadtime Analysis
@@ -144,8 +150,10 @@ def main():
 
         # TabView - Segregation between Efficient Curve & Hypothetical Curve charts
         tbv_curve_charts = ctk.CTkTabview(tbvmenu.tab("Scenarios"), width=620, height=490, corner_radius=15,
-                                 segmented_button_fg_color="#009898", segmented_button_unselected_color="#009898",
-                                 segmented_button_selected_color="#006464")
+                                          segmented_button_fg_color="#009898",
+                                          segmented_button_unselected_color="#009898",
+                                          segmented_button_selected_color="#006464",
+                                          bg_color='#dbdbdb', fg_color='#cfcfcf')
         tbv_curve_charts.pack()
         tbv_curve_charts.add("Efficient Curve")
         tbv_curve_charts.add("Hypothetical Curve")
@@ -238,7 +246,9 @@ def main():
         lbl_pending_scenario = ctk.CTkLabel(tbvmenu.tab("Scenarios"),
                                             text="Please create a Scenario in order to generate Build-Up chart.",
                                             font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'),
-                                            fg_color='#cfcfcf')
+                                            fg_color='#cfcfcf',
+                                            bg_color='#cfcfcf',
+                                            text_color='#000000')
         lbl_pending_scenario.place(rely=0.5, relx=0.5, anchor=ctk.CENTER)
 
         # Function that creates the window to Add a New Scenario

@@ -11,6 +11,7 @@ import logging
 
 warnings.filterwarnings("ignore")
 
+
 # Scenarios list
 scenarios_list = []
 
@@ -60,29 +61,36 @@ def read_scope_file(file_full_path: str) -> pd.DataFrame():
     colunas = ['PN', 'ECODE', 'QTY', 'EIS', 'SPC']
 
     # Complementary info Source
-    # leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
-    leadtime_source = r'marcsa.txt'
-    # ecode_data_path = r'\\egmap20038\Databases\DB_Ecode-Data.txt'
-    ecode_data_path = r'DB_Ecode-Data.txt'
+    leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
+    # leadtime_source = r'marcsa.txt'
+    ecode_data_path = r'\\egmap20038-new\Databases\DB_Ecode-Data.txt'
+    # ecode_data_path = r'DB_Ecode-Data.txt'
 
-    # File reading and filters
+    # File reading
     scope = pd.read_excel(file_full_path, usecols=colunas)
+
+    # Filters
+    scope.loc[:, 'QTY'] = scope['QTY'].fillna(0).astype(int)
     scope_filtered = scope.query("QTY > 0").copy()
 
     # Formatting
-    scope_filtered.loc[:, 'ECODE'] = scope_filtered['ECODE'].astype(int)
+    scope_filtered.loc[:, 'ECODE'] = scope_filtered['ECODE'].fillna(0).astype(int)
     scope_filtered['EIS'] = scope_filtered['EIS'].fillna('')
 
     # -------------- Fetch for complementary info (Leadtime, ECCN, Acq Cost, Repairability, etc) -------------
 
     # Columns to read from SAP
-    sap_source_columns = ['Material', ' PEP']
+    sap_source_columns = ['Material(MATNR)', 'PrzEntrPrev.(PLIFZ)']
     # Reading leadtime database (SAP)
-    leadtimes = pd.read_csv(leadtime_source, usecols=sap_source_columns, encoding='latin', skiprows=3, sep='|', low_memory=False)
+    leadtimes = pd.read_csv(leadtime_source, usecols=sap_source_columns, encoding='latin', sep='|', low_memory=False)
     # Removing nulls
     leadtimes = leadtimes.dropna()
     # Renaming columns
-    leadtimes.rename(columns={'Material': 'ECODE', ' PEP': 'LEADTIME'}, inplace=True)
+    leadtimes.rename(columns={'Material(MATNR)': 'ECODE', 'PrzEntrPrev.(PLIFZ)': 'LEADTIME'}, inplace=True)
+    # Making sure ECODES are int. OBS: replacing "!" char on some Materials
+    leadtimes['ECODE'] = leadtimes['ECODE'].str.replace('!', '').astype(int)
+
+
     # Joining leadtimes to materials
     bup_scope = scope_filtered.merge(leadtimes, on='ECODE', how='left')
 
@@ -222,7 +230,7 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
     if scenarios_list:
         # Function to open the Dialog box offering for the user the possibility of reuse
         def open_confirm_dialog() -> None:
-            confirm_window = ctk.CTkToplevel(scenario_window)
+            confirm_window = ctk.CTkToplevel(scenario_window, fg_color='#ebebeb')
             confirm_window.title("Warning!")
             confirm_window.resizable(width=False, height=False)
 
