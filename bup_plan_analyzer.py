@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from PIL import Image
 from io import BytesIO
+import json
 import customtkinter as ctk
 from tkinter import messagebox
 import time
@@ -61,10 +62,10 @@ def read_scope_file(file_full_path: str) -> pd.DataFrame():
     colunas = ['PN', 'ECODE', 'QTY', 'EIS', 'SPC']
 
     # Complementary info Source
-    leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
-    # leadtime_source = r'marcsa.txt'
-    ecode_data_path = r'\\egmap20038-new\Databases\DB_Ecode-Data.txt'
-    # ecode_data_path = r'DB_Ecode-Data.txt'
+    # leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
+    leadtime_source = r'marcsa.txt'
+    # ecode_data_path = r'\\egmap20038-new\Databases\DB_Ecode-Data.txt'
+    ecode_data_path = r'DB_Ecode-Data.txt'
 
     # File reading
     scope = pd.read_excel(file_full_path, usecols=colunas)
@@ -715,18 +716,28 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         lambda linha: linha['PN Order Date Hypothetical'] + pd.DateOffset(days=linha['PN Procurement Length'])
         , axis=1)
 
-    # Getting the Maximum and Minimum Date among all possible dates, to delimit the chart's X axis
-    date_columns = ['t0', 'acft_delivery_start', 'material_delivery_start_date', 'material_delivery_end_date',
-                    'PN Order Date', 'PN Order Date Hypothetical']
+    '''
+    Getting the Maximum and Minimum Date among all possible dates, to delimit the chart's X axis. Efficient and Hypothetical curve have different min/max dates,
+    so it is necessary to create two different timelines.
+    '''
+    date_columns_eff = ['t0', 'acft_delivery_start', 'material_delivery_start_date', 'material_delivery_end_date', 'PN Order Date']
+    date_clumns_hyp = ['t0', 'acft_delivery_start', 'material_delivery_start_date', 'material_delivery_end_date', 'Delivery Date Hypothetical']
 
-    # The first min/max returns the min/max date per column and at the end we then have a list of minimums/maximums
-    # The second takes the minimum one from the created list. I add a month at each extreme so that the
-    # parameters vertical lines do not coincide of with chart axis limit line
-    min_date = df_scope_with_scenarios[date_columns].min().min() - pd.DateOffset(months=1)
-    max_date = df_scope_with_scenarios[date_columns].max().max() + pd.DateOffset(months=1)
+    '''
+    The first min/max returns the min/max date per column and at the end we then have a list of minimums/maximums
+    The second takes the minimum one from the created list. I add a month at each extreme so that the
+    parameters vertical lines do not coincide of with chart axis limit line 
+    '''
+    min_date_eff = df_scope_with_scenarios[date_columns_eff].min().min() - pd.DateOffset(months=1)
+    max_date_eff = df_scope_with_scenarios[date_columns_eff].max().max() + pd.DateOffset(months=1)
+    min_date_hyp = df_scope_with_scenarios[date_clumns_hyp].min().min() - pd.DateOffset(months=1)
+    max_date_hyp = df_scope_with_scenarios[date_clumns_hyp].max().max() + pd.DateOffset(months=1)
 
-    date_range = pd.date_range(start=min_date, end=max_date, freq='M')
-    df_dates = pd.DataFrame({'Date': date_range.strftime('%m/%Y')})
+    date_range_eff = pd.date_range(start=min_date_eff, end=max_date_eff, freq='M')
+    date_range_hyp = pd.date_range(start=min_date_hyp, end=max_date_hyp, freq='M')
+
+    df_dates_eff = pd.DataFrame({'Date': date_range_eff.strftime('%m/%Y')})
+    df_dates_hyp = pd.DataFrame({'Date': date_range_hyp.strftime('%m/%Y')})
 
     # ------- Table for Chart generation --------
     # -- Efficient Curve
@@ -739,50 +750,75 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     grouped_counts_hyp = df_scope_with_scenarios.groupby([df_scope_with_scenarios['Delivery Date Hypothetical'].dt.to_period('M'),
                                                           'Scenario']).size().reset_index(name='Delivered Qty Hyp')
     grouped_counts_hyp['Delivery Date Hypothetical'] = grouped_counts_hyp['Delivery Date Hypothetical'].dt.strftime('%m/%Y')
-    # -- Consolidating
-    grouped_counts = grouped_counts_eff.merge(grouped_counts_hyp,
-                                              left_on=['PN Order Date', 'Scenario'],
-                                              right_on=['Delivery Date Hypothetical', 'Scenario'],
-                                              how='outer')
-    # -- Adjusting the final DataFrame
-    grouped_counts['Date'] = grouped_counts['PN Order Date'].fillna(grouped_counts['Delivery Date Hypothetical'])
-    grouped_counts = grouped_counts.drop(['PN Order Date', 'Delivery Date Hypothetical'], axis=1)
 
-    # Passing the Ordered Qty and Delivered Qty info grouped by month and by Scenario to the DF with the Dates Range
-    final_df_scenarios = df_dates.merge(grouped_counts, left_on='Date', right_on='Date', how='left')
-    final_df_scenarios['Scenario'] = final_df_scenarios['Scenario'].fillna(-1).astype(int)
-    final_df_scenarios['Ordered Qty'] = final_df_scenarios['Ordered Qty'].fillna(0)
-    final_df_scenarios['Delivered Qty Hyp'] = final_df_scenarios['Delivered Qty Hyp'].fillna(0)
 
-    # For each scenario, calculating the Accumulated Quantity to plot
-    for scenario in final_df_scenarios['Scenario'].unique():
+    # Passing the Ordered Qty and Delivered Qty info grouped by month and by Scenario to the DF with the Dates Range. Each Hyp/Eff has a dates_range_df
+    # Eff
+    final_df_scenarios_eff = df_dates_eff.merge(grouped_counts_eff, left_on='Date', right_on='PN Order Date', how='left')
+    final_df_scenarios_eff['Scenario'] = final_df_scenarios_eff['Scenario'].fillna(-1).astype(int)
+    final_df_scenarios_eff['Ordered Qty'] = final_df_scenarios_eff['Ordered Qty'].fillna(0)
+    # Hyp
+    final_df_scenarios_hyp = df_dates_hyp.merge(grouped_counts_hyp, left_on='Date', right_on='Delivery Date Hypothetical', how='left')
+    final_df_scenarios_hyp['Scenario'] = final_df_scenarios_hyp['Scenario'].fillna(-1).astype(int)
+    final_df_scenarios_hyp['Delivered Qty Hyp'] = final_df_scenarios_hyp['Delivered Qty Hyp'].fillna(0)
+
+    # Eff - For each scenario, calculating the Accumulated Quantity to plot
+    for scenario in final_df_scenarios_eff['Scenario'].unique():
         # Filtering the df for the current Scenario
-        scenario_df = final_df_scenarios[final_df_scenarios['Scenario'] == scenario]
-
+        scenario_df = final_df_scenarios_eff[final_df_scenarios_eff['Scenario'] == scenario]
         # Calculating the accumulated quantity
-        final_df_scenarios.loc[scenario_df.index, 'Accum. Ordered Qty (Eff)'] = scenario_df['Ordered Qty'].cumsum()
-        final_df_scenarios.loc[scenario_df.index, 'Accum. Delivered Qty (Hyp)'] = scenario_df['Delivered Qty Hyp'].cumsum()
+        final_df_scenarios_eff.loc[scenario_df.index, 'Accum. Ordered Qty (Eff)'] = scenario_df['Ordered Qty'].cumsum()
 
+    # Hyp - For each scenario, calculating the Accumulated Quantity to plot
+    for scenario in final_df_scenarios_hyp['Scenario'].unique():
+        # Filtering the df for the current Scenario
+        scenario_df = final_df_scenarios_hyp[final_df_scenarios_hyp['Scenario'] == scenario]
+        # Calculating the accumulated quantity
+        final_df_scenarios_hyp.loc[scenario_df.index, 'Accum. Delivered Qty (Hyp)'] = scenario_df['Delivered Qty Hyp'].cumsum()
 
-    # Creating a DF for each Scenario
-    for scenario in final_df_scenarios['Scenario'].unique():
+    # Eff - Creating a DF for each Scenario
+    for scenario in final_df_scenarios_eff['Scenario'].unique():
         if scenario != -1:  # Scenario -1 is only indicative of nullity, it is not a real scenario
-            tmp_filtered_scenario_final_df = final_df_scenarios[final_df_scenarios['Scenario'] == scenario]
-            scenario_df = df_dates.merge(tmp_filtered_scenario_final_df[
-                                             ['Date', 'Scenario', 'Ordered Qty', 'Delivered Qty Hyp',
-                                              'Accum. Ordered Qty (Eff)', 'Accum. Delivered Qty (Hyp)']],
+
+            '''
+            Creating the list associated to each Scenario in the dict. This list should have 2 elements.
+            First one is Efficient DF and Second one is Hypothetical DF
+            '''
+            scenario_dataframes[f'Scenario_{int(scenario)}'] = []
+
+            tmp_filtered_scenario_final_df = final_df_scenarios_eff[final_df_scenarios_eff['Scenario'] == scenario]
+            scenario_df = df_dates_eff.merge(tmp_filtered_scenario_final_df[
+                                             ['Date', 'Scenario', 'Ordered Qty','Accum. Ordered Qty (Eff)']
+                                             ],
                                          left_on='Date', right_on='Date', how='left')
             # Filling in nulls
             scenario_df['Scenario'] = scenario_df['Scenario'].fillna(scenario).astype(int)
             scenario_df['Ordered Qty'] = scenario_df['Ordered Qty'].fillna(0)
+
+            # Filling empty months for Accumulated Qty based on last record
+            scenario_df['Accum. Ordered Qty (Eff)'].fillna(method='ffill', inplace=True)
+
+            # Storing the DataFrame in the dictionary with the scenario name
+            scenario_dataframes[f'Scenario_{int(scenario)}'].append(scenario_df)
+
+    # Hyp - Creating a DF for each Scenario
+    for scenario in final_df_scenarios_hyp['Scenario'].unique():
+        if scenario != -1:  # Scenario -1 is only indicative of nullity, it is not a real scenario
+
+            tmp_filtered_scenario_final_df = final_df_scenarios_hyp[final_df_scenarios_hyp['Scenario'] == scenario]
+            scenario_df = df_dates_hyp.merge(tmp_filtered_scenario_final_df[
+                                             ['Date', 'Scenario', 'Delivered Qty Hyp','Accum. Delivered Qty (Hyp)']
+                                             ],
+                                         left_on='Date', right_on='Date', how='left')
+            # Filling in nulls
+            scenario_df['Scenario'] = scenario_df['Scenario'].fillna(scenario).astype(int)
             scenario_df['Delivered Qty Hyp'] = scenario_df['Delivered Qty Hyp'].fillna(0)
 
-            # Filling empty months for Accumulated Qty (both Eff and Hyp) based on last record
-            scenario_df['Accum. Ordered Qty (Eff)'].fillna(method='ffill', inplace=True)
+            # Filling empty months for Accumulated Qty based on last record
             scenario_df['Accum. Delivered Qty (Hyp)'].fillna(method='ffill', inplace=True)
 
             # Storing the DataFrame in the dictionary with the scenario name
-            scenario_dataframes[f'Scenario_{int(scenario)}'] = scenario_df
+            scenario_dataframes[f'Scenario_{int(scenario)}'].append(scenario_df)
 
     # --------------- Chart Generation ---------------
 
@@ -795,11 +831,11 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     # Creating a figure and axes to insert the chart
     figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
 
-    # Plotting the line for each Scenario in the dictionary
-    for index, (scenario_name, scenario_df) in enumerate(scenario_dataframes.items()):
-        eixos.plot(scenario_df['Date'], scenario_df['Accum. Ordered Qty (Eff)'], label=f'Scen. {index}', color=colors_array[index])
+    # Eff - Plotting the line for each Scenario in the dictionary
+    for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
+        eixos.plot(scenario_df_list[0]['Date'], scenario_df_list[0]['Accum. Ordered Qty (Eff)'], label=f'Scen. {index}', color=colors_array[index])
         # Configuring the axis
-        plt.xticks(scenario_df.index[::3], scenario_df['Date'][::3], rotation=45, ha='right')
+        plt.xticks(scenario_df_list[0].index[::3], scenario_df_list[0]['Date'][::3], rotation=45, ha='right')
 
         # Getting the t0 date for the current Scenario and converting it to MM/YYYY format
         t0_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 't0'].values[0])
@@ -822,16 +858,16 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
 
         # Adding a note at the point where Build-Up planning should start (date when first order is released)
-        filter_dates_with_order = scenario_df['Ordered Qty'] != 0
-        dates_with_order = scenario_df[filter_dates_with_order]
+        filter_dates_with_order = scenario_df_list[0]['Ordered Qty'] != 0
+        dates_with_order = scenario_df_list[0][filter_dates_with_order]
         index_first_order = dates_with_order['Ordered Qty'].idxmin()
-        x_first_order = scenario_df.loc[index_first_order, 'Date']
-        y_first_order = scenario_df.loc[index_first_order, 'Accum. Ordered Qty (Eff)']
+        x_first_order = scenario_df_list[0].loc[index_first_order, 'Date']
+        y_first_order = scenario_df_list[0].loc[index_first_order, 'Accum. Ordered Qty (Eff)']
         eixos.scatter(x_first_order, y_first_order, color=colors_array[index], marker='o', label=f'Planning Start: {x_first_order}')
 
         # Adding a caretdown (not labeling) in BUP finish date (avg between End and Start material delivery date)
         # x_bup_finished = scenario_df.loc[0, 'avg_date_between_materials_deadline']
-        y_bup_finished = scenario_df['Accum. Ordered Qty (Eff)'].max()
+        y_bup_finished = scenario_df_list[0]['Accum. Ordered Qty (Eff)'].max()
         # Getting the avg_date_between_materials_deadline date for the current Scenario and converting it to MM/YYYY
         x_bup_finished = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index,
                                                                     'avg_date_between_materials_deadline']
@@ -875,8 +911,8 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
 def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes):
     """
     Function that creates the Hypothetycal Curve BuildUp Chart.
-    param scenario_dataframes: Dictionary with all scenarios dataframes.
     param df_scope_with_scenarios: Created DataFrame on Efficient Curve Build-Up construction. Combinations Scope/Scenarios.
+    param scenario_dataframes: Dictionary with all scenarios dataframes. Each scenario has a list with 2 DF elements. Efficient and Hypothetical, respectively.
     return: Returns an Image object
     """
 
@@ -892,11 +928,11 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
     figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
 
     # Plotting the line for each Scenario in the dictionary
-    for index, (scenario_name, scenario_df) in enumerate(scenario_dataframes.items()):
-        eixos.plot(scenario_df['Date'], scenario_df['Accum. Delivered Qty (Hyp)'], label=f'Scen. {index}',
+    for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
+        eixos.plot(scenario_df_list[1]['Date'], scenario_df_list[1]['Accum. Delivered Qty (Hyp)'], label=f'Scen. {index}',
                    color=colors_array[index])
         # Configuring the axis
-        plt.xticks(scenario_df.index[::3], scenario_df['Date'][::3], rotation=45, ha='right')
+        plt.xticks(scenario_df_list[1].index[::3], scenario_df_list[1]['Date'][::3], rotation=45, ha='right')
 
         # Getting the t0 date for the current Scenario and converting it to MM/YYYY format
         t0_date = pd.to_datetime(
@@ -926,9 +962,9 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
         eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
 
         # Adding a note at the point where the Build-Up is completed (all items delivered)
-        index_max_acc_qty = scenario_df['Accum. Delivered Qty (Hyp)'].idxmax()
-        x_max = scenario_df.loc[index_max_acc_qty, 'Date']
-        y_max = scenario_df.loc[index_max_acc_qty, 'Accum. Delivered Qty (Hyp)']
+        index_max_acc_qty = scenario_df_list[1]['Accum. Delivered Qty (Hyp)'].idxmax()
+        x_max = scenario_df_list[1].loc[index_max_acc_qty, 'Date']
+        y_max = scenario_df_list[1].loc[index_max_acc_qty, 'Accum. Delivered Qty (Hyp)']
         plt.scatter(x_max, y_max, color=colors_array[index], marker='o', label=f'BUP Conclusion: {x_max}')
 
     # Chart Settings

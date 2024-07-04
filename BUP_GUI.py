@@ -5,20 +5,27 @@ import os
 import pandas as pd
 from tksheet import Sheet
 from tkinter import messagebox
+import webbrowser
 
 import bup_plan_analyzer as bup  # Source file with program functions
 
+# App Settings
 active_user = os.getlogin()
 ctk.set_appearance_mode("light")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
+# Version
+app_version: str = 'Release: ' + 'v1.2'
 
+# Reference Variables
 logo_path = r'src\images\logo.png'
 title_path = r'src\images\titulo_bup_analyzer.png'
 img_open_file_path = r'src\images\browse_icon_transp.png'
+help_button_path = r'src\images\help.png'
 main_screen_icon = r'src\images\bup_icon.ico'
 download_icon_path = r'src\images\download-green-arrow.png'
 excel_icon_path = r'src\images\excel_transparent.png'
 export_output_path = fr'C:\Users\{active_user}\Downloads'
+readme_url = r'https://github.com/paulinhok14/BUP-Plan-Analyzer/blob/master/README.md'
 
 
 def main():
@@ -330,6 +337,29 @@ def main():
                              text="",
                              bg_color="#242424")
     lblMainTitle.place(relx=0.5, rely=0.1, anchor=ctk.CENTER)
+
+    # Version Label
+    lbl_version = ctk.CTkLabel(main_screen,
+                               text=app_version,
+                               fg_color='#242424',
+                               bg_color='#242424',
+                               font=ctk.CTkFont('open sans', size=13, weight='bold'),
+                               text_color='#ffffff')
+    lbl_version.place(relx=0.02, rely=0.93)
+
+    # "Help button" CTkImage object
+    image_help = ctk.CTkImage(light_image=Image.open(help_button_path),
+                              dark_image=Image.open(help_button_path),
+                              size=(60, 60))
+    # "Help button"
+    lbl_help_button = ctk.CTkButton(main_screen, image=image_help,
+                                    text="", width=60, height=60,
+                                    bg_color="#242424",
+                                    fg_color='#242424',
+                                    hover=False,
+                                    command=lambda: webbrowser.open(readme_url)
+                                    )
+    lbl_help_button.place(relx=0.885, rely=0.87)
 
     main_screen.mainloop()  # Main Screen running loop
 
