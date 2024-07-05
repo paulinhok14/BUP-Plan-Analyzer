@@ -107,6 +107,42 @@ def main():
         tbvmenu.add("Leadtime Analysis")
         tbvmenu.add("Scenarios")
 
+        @bup.function_timer
+        def export_data(xl_spreadsheet: str) -> None:
+            """ Function that will run when user click on "Export to Excel" button.
+            param xl_spreadsheet: It contains the specific spreadsheet that will be exported.
+            Possibilities: 'efficient_chart', 'hypothetical_chart' and 'scope'.
+            All used variables is consumed from bup_plan_analyzer.py.
+            """
+            '''
+            # Switch-case depending on which spreadsheet should be exported
+            match xl_spreadsheet:
+                case 'efficient_chart':
+                    print('é o eficiente')
+                    # try:
+                    #     full_path = export_output_path + r'\efficient_chart_table.xlsx'
+
+                case 'hypothetical_chart':
+                    print('é o hipotetico')
+                case 'scope':
+                    print('é o escopo')
+            '''
+            try:
+                full_path = export_output_path + r'\bup_scenarios_data.xlsx'
+                with pd.ExcelWriter(full_path) as writer:
+                    bup.df_scope_with_scenarios.to_excel(writer, sheet_name='BUP Scope with Scenarios', index=False)
+
+                    consolidated_scenarios_df = pd.DataFrame()
+                    for scenario, df in bup.scenario_dataframes.items():
+                        consolidated_scenarios_df = pd.concat([consolidated_scenarios_df[0], df], ignore_index=True)
+
+                    consolidated_scenarios_df.to_excel(writer, sheet_name='Scenarios Build-Up', index=False)
+                messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+
+            except Exception as ex:
+                messagebox.showinfo(title="Error!", message=str(ex) + "\n\nPlease make sure that the Excel file is "
+                                                                      "closed and you have access to the Downloads folder.")
+
         # Tab 1 - Scope
         bup_cost = "List Value: US$ " + str("{:.2f}".format(
             bup_scope.apply(lambda linha: linha['Acq Cost'] * linha['Qty'], axis=1).sum() / 1000000
@@ -116,6 +152,22 @@ def main():
                                   font=ctk.CTkFont('open sans', size=14, weight='bold'),
                                   text_color='#000000')
         label_cost.pack(anchor="e")
+
+        # Image with Excel icon for Label
+        img_xl_icon_label = ctk.CTkImage(light_image=Image.open(excel_icon_path),
+                                  dark_image=Image.open(excel_icon_path),
+                                  size=(20, 20))
+
+        # Export to Excel Label
+        lbl_export_xl = ctk.CTkLabel(tbvmenu.tab("Scope"),
+                                     text='Export to Excel ',
+                                     font=ctk.CTkFont('open sans', size=12, underline=True),
+                                     text_color='#25a848',
+                                     image=img_xl_icon_label,
+                                     compound="right"
+                                     )
+        lbl_export_xl.place(rely=0, relx=0)
+        lbl_export_xl.bind(sequence='<Button-1>', command=lambda _: export_data('scope'))
 
         # Creating Sheet object to display dataframe
         sheet = Sheet(tbvmenu.tab("Scope"), data=bup_scope.values.tolist(), headers=bup_scope.columns.tolist())
@@ -175,27 +227,6 @@ def main():
                                   dark_image=Image.open(download_icon_path),
                                   size=(34, 34))
 
-        @bup.function_timer
-        # Function performed when exporting Data
-        def export_data() -> None:
-            """ Function that will run when user click on "Export to Excel" button.
-            It takes no argument. All used variables is consumed from bup_plan_analyzer.py
-            """
-            try:
-                full_path = export_output_path + r'\bup_scenarios_data.xlsx'
-                with pd.ExcelWriter(full_path) as writer:
-                    bup.df_scope_with_scenarios.to_excel(writer, sheet_name='BUP Scope with Scenarios', index=False)
-
-                    consolidated_scenarios_df = pd.DataFrame()
-                    for scenario, df in bup.scenario_dataframes.items():
-                        consolidated_scenarios_df = pd.concat([consolidated_scenarios_df, df], ignore_index=True)
-
-                    consolidated_scenarios_df.to_excel(writer, sheet_name='Scenarios Build-Up', index=False)
-                messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
-
-            except Exception as ex:
-                messagebox.showinfo(title="Error!", message=str(ex) + "\n\n Please make sure that the Excel file is "
-                                                                      "closed and you have access to the Downloads folder.")
 
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
         def callback_func_scenario_add(scenarios_count) -> None:
@@ -240,14 +271,14 @@ def main():
                                         font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                         image=excel_icon, compound="top", fg_color="transparent",
                                         text_color="#000000", hover=False, border_spacing=1,
-                                        command=export_data)
+                                        command=lambda: (export_data('efficient_chart')))
 
         # Export data button - Hypothetical
         btn_export_data_hyp = ctk.CTkButton(tbv_curve_charts.tab("Hypothetical Curve"), text="Export to Excel",
                                         font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                         image=excel_icon, compound="top", fg_color="transparent",
                                         text_color="#000000", hover=False, border_spacing=1,
-                                        command=export_data)
+                                        command=lambda: (export_data('hypothetical_chart')))
 
         # Label with the instruction to create a Scenario
         lbl_pending_scenario = ctk.CTkLabel(tbvmenu.tab("Scenarios"),
@@ -352,14 +383,23 @@ def main():
                               dark_image=Image.open(help_button_path),
                               size=(60, 60))
     # "Help button"
-    lbl_help_button = ctk.CTkButton(main_screen, image=image_help,
+    btn_help = ctk.CTkButton(main_screen, image=image_help,
                                     text="", width=60, height=60,
                                     bg_color="#242424",
                                     fg_color='#242424',
                                     hover=False,
                                     command=lambda: webbrowser.open(readme_url)
                                     )
-    lbl_help_button.place(relx=0.885, rely=0.87)
+    btn_help.place(relx=0.885, rely=0.87)
+
+    # MRSE button
+    lbl_mrse = ctk.CTkLabel(main_screen, text="© MRSE 2024",
+                            font=ctk.CTkFont('open sans', size=13),
+                            text_color='#ffffff',
+                            fg_color='#242424',
+                            bg_color='#242424'
+                            )
+    lbl_mrse.place(relx=0.45, rely=0.93)
 
     main_screen.mainloop()  # Main Screen running loop
 

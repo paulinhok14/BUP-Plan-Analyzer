@@ -95,8 +95,8 @@ def read_scope_file(file_full_path: str) -> pd.DataFrame():
     # Joining leadtimes to materials
     bup_scope = scope_filtered.merge(leadtimes, on='ECODE', how='left')
 
-    # Columns to read Ecode Data
-    ecode_data_columns = ['ECODE', 'ACQCOST']
+    # Columns to read from Ecode Data
+    ecode_data_columns = ['ECODE', 'ACQCOST', 'ENGDESC']
 
     # Getting for each Ecode the index of the record that has the highest Acq Cost (premise for duplicates)
     ecode_data = pd.read_csv(ecode_data_path, usecols=ecode_data_columns).drop_duplicates()
@@ -117,14 +117,14 @@ def read_scope_file(file_full_path: str) -> pd.DataFrame():
 
     # Joining Ecode Data info
     # Acq Cost
-    bup_scope = bup_scope.merge(ecode_data_filtered[['ECODE', 'ACQCOST']], how='left', on='ECODE')
+    bup_scope = bup_scope.merge(ecode_data_filtered[['ECODE', 'ACQCOST', 'ENGDESC']], how='left', on='ECODE')
 
     # Ordering by Leadtime descending
     bup_scope = bup_scope.sort_values('LEADTIME', ascending=False).reset_index(drop=True)
 
     # Renaming columns
     bup_scope.rename(columns={'ECODE': 'Ecode', 'QTY': 'Qty', 'LEADTIME': 'Leadtime',
-                              'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost'}, inplace=True)
+                              'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost', 'ENGDESC': 'Description'}, inplace=True)
 
     return bup_scope
 
@@ -1008,5 +1008,5 @@ def save_chart_image(chart: Image, output_path: str, filename: str) -> None:
         chart.save(output_path + '\\' + filename)
         messagebox.showinfo(title="Success!", message=str("Image was exported to: " + output_path + '\\' + filename))
     except Exception as ex:
-        messagebox.showinfo(title="Error!", message=str(ex) + "\n\n Please make sure that the Image file is "
-                                                              "closed and you have access to the Downloads folder.")
+        messagebox.showinfo(title="Error!", message=str(ex) + "\n\nPlease make sure that the Image file is "
+                                                              "closed and you have access to the local Downloads folder.")
