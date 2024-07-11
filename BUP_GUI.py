@@ -155,15 +155,30 @@ def main():
                                                               "closed and you have access to the Downloads folder.")
 
                 case 'scope':
-                    try:
-                        full_path = export_output_path + r'\BUP_Scope_Data.xlsx'
-                        with pd.ExcelWriter(full_path) as writer:
-                            bup_scope.to_excel(writer, sheet_name='Scope', index=False)
-                        messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
-                    except Exception as ex:
-                        messagebox.showinfo(title="Error!",
-                                            message=str(ex) + "\n\nPlease make sure that the Excel file is "
-                                                              "closed and you have access to the Downloads folder.")
+                    '''
+                    If "bup.df_scope_with_scenarios" is a DataFrame, it will give preference to export Scope with Scenarios info.
+                    Else, only Scope information will be exported.
+                    '''
+                    if not isinstance(bup.df_scope_with_scenarios, pd.DataFrame):
+                        try:
+                            full_path = export_output_path + r'\BUP_Scope_Data.xlsx'
+                            with pd.ExcelWriter(full_path) as writer:
+                                bup_scope.to_excel(writer, sheet_name='Scope', index=False)
+                            messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+                        except Exception as ex:
+                            messagebox.showinfo(title="Error!",
+                                                message=str(ex) + "\n\nPlease make sure that the Excel file is "
+                                                                  "closed and you have access to the Downloads folder.")
+                    else:
+                        try:
+                            full_path = export_output_path + r'\BUP_Scope_with_Scenarios_Data.xlsx'
+                            with pd.ExcelWriter(full_path) as writer:
+                                bup.df_scope_with_scenarios.to_excel(writer, sheet_name='Scope with Scenarios', index=False)
+                            messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+                        except Exception as ex:
+                            messagebox.showinfo(title="Error!",
+                                                message=str(ex) + "\n\nPlease make sure that the Excel file is "
+                                                                  "closed and you have access to the Downloads folder.")
 
         # Tab 1 - Scope
         bup_cost = "List Value: US$ " + str("{:.2f}".format(
