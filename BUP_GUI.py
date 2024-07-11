@@ -114,34 +114,56 @@ def main():
             Possibilities: 'efficient_chart', 'hypothetical_chart' and 'scope'.
             All used variables is consumed from bup_plan_analyzer.py.
             """
-            '''
+
             # Switch-case depending on which spreadsheet should be exported
             match xl_spreadsheet:
                 case 'efficient_chart':
-                    print('é o eficiente')
-                    # try:
-                    #     full_path = export_output_path + r'\efficient_chart_table.xlsx'
+                    try:
+                        full_path = export_output_path + r'\BUP_Eficient_Chart_Data.xlsx'
+                        with pd.ExcelWriter(full_path) as writer:
+
+                            eff_consolidated_scenarios = pd.DataFrame()
+                            for scenario_name, scenario_df_list in bup.scenario_dataframes.items():
+                                eff_consolidated_scenarios = pd.concat([eff_consolidated_scenarios, scenario_df_list[0]],
+                                                                       ignore_index=True)
+
+                            eff_consolidated_scenarios.to_excel(writer, sheet_name='Efficient Chart Data', index=False)
+                        messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+
+                    except Exception as ex:
+                        messagebox.showinfo(title="Error!",
+                                            message=str(ex) + "\n\nPlease make sure that the Excel file is "
+                                                              "closed and you have access to the Downloads folder.")
 
                 case 'hypothetical_chart':
-                    print('é o hipotetico')
+                    try:
+                        full_path = export_output_path + r'\BUP_Hypothetical_Chart_Data.xlsx'
+                        with pd.ExcelWriter(full_path) as writer:
+
+                            hyp_consolidated_scenarios = pd.DataFrame()
+                            for scenario_name, scenario_df_list in bup.scenario_dataframes.items():
+                                hyp_consolidated_scenarios = pd.concat(
+                                    [hyp_consolidated_scenarios, scenario_df_list[1]],
+                                    ignore_index=True)
+
+                            hyp_consolidated_scenarios.to_excel(writer, sheet_name='Hypothetical Chart Data', index=False)
+                        messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+
+                    except Exception as ex:
+                        messagebox.showinfo(title="Error!",
+                                            message=str(ex) + "\n\nPlease make sure that the Excel file is "
+                                                              "closed and you have access to the Downloads folder.")
+
                 case 'scope':
-                    print('é o escopo')
-            '''
-            try:
-                full_path = export_output_path + r'\bup_scenarios_data.xlsx'
-                with pd.ExcelWriter(full_path) as writer:
-                    bup.df_scope_with_scenarios.to_excel(writer, sheet_name='BUP Scope with Scenarios', index=False)
-
-                    consolidated_scenarios_df = pd.DataFrame()
-                    for scenario, df in bup.scenario_dataframes.items():
-                        consolidated_scenarios_df = pd.concat([consolidated_scenarios_df[0], df], ignore_index=True)
-
-                    consolidated_scenarios_df.to_excel(writer, sheet_name='Scenarios Build-Up', index=False)
-                messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
-
-            except Exception as ex:
-                messagebox.showinfo(title="Error!", message=str(ex) + "\n\nPlease make sure that the Excel file is "
-                                                                      "closed and you have access to the Downloads folder.")
+                    try:
+                        full_path = export_output_path + r'\BUP_Scope_Data.xlsx'
+                        with pd.ExcelWriter(full_path) as writer:
+                            bup_scope.to_excel(writer, sheet_name='Scope', index=False)
+                        messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+                    except Exception as ex:
+                        messagebox.showinfo(title="Error!",
+                                            message=str(ex) + "\n\nPlease make sure that the Excel file is "
+                                                              "closed and you have access to the Downloads folder.")
 
         # Tab 1 - Scope
         bup_cost = "List Value: US$ " + str("{:.2f}".format(

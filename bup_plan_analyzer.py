@@ -710,7 +710,6 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         lambda linha: linha['avg_date_between_materials_deadline'] - pd.DateOffset(days=linha['PN Procurement Length'])
         , axis=1)
 
-    # Criando a coluna com a data hipotética de início das compras de material, já pensando no gráfico Hipotético
     # Creating the column with the hypothetical start date of material purchases
     df_scope_with_scenarios['PN Order Date Hypothetical'] = df_scope_with_scenarios.apply(
         lambda linha: linha['t0'] + pd.DateOffset(months=linha['hyp_t0_start'])
