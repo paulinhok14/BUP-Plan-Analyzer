@@ -126,6 +126,10 @@ def read_scope_file(file_full_path: str) -> pd.DataFrame():
     bup_scope.rename(columns={'ECODE': 'Ecode', 'QTY': 'Qty', 'LEADTIME': 'Leadtime',
                               'EIS': 'EIS Critical', 'ACQCOST': 'Acq Cost', 'ENGDESC': 'Description'}, inplace=True)
 
+    # Reordering columns
+    columns_order = ['PN', 'Ecode', 'Description', 'Qty', 'SPC', 'Leadtime', 'Acq Cost', 'EIS Critical']
+    bup_scope = bup_scope.reindex(columns_order, axis=1)
+
     return bup_scope
 
 

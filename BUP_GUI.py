@@ -164,13 +164,14 @@ def main():
                                      font=ctk.CTkFont('open sans', size=12, underline=True),
                                      text_color='#25a848',
                                      image=img_xl_icon_label,
-                                     compound="right"
+                                     compound="right",
+                                     cursor="hand2"
                                      )
         lbl_export_xl.place(rely=0, relx=0)
         lbl_export_xl.bind(sequence='<Button-1>', command=lambda _: export_data('scope'))
 
         # Creating Sheet object to display dataframe
-        sheet = Sheet(tbvmenu.tab("Scope"), data=bup_scope.values.tolist(), headers=bup_scope.columns.tolist())
+        sheet = Sheet(tbvmenu.tab("Scope"), data=bup_scope.values.tolist(), headers=bup_scope.columns.tolist(),)
         sheet.pack(fill="both", expand=True)
 
         # Label with information: file name and rows number
