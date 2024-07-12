@@ -224,24 +224,11 @@ def main():
 
         # Tab 2 - Leadtime Analysis
 
-        # Generating the Acq Cost x Leadtime scatterplot (dispersion chart)
-        dispersion_chart = bup.generate_dispersion_chart(bup_scope)
+        # Inserting Acq Cost x Leadtime Scatter and returning CTk Image object
+        dispersion_image = bup.generate_dispersion_chart(bup_scope, tbvmenu.tab("Leadtime Analysis"))
 
-        # Loading the function return into a CTk Image object
-        img_dispersion_chart = ctk.CTkImage(dispersion_chart,
-                                     dark_image=dispersion_chart,
-                                     size=(600, 220))
-
-        # Dispersion Chart - inputting the label and positioning it on the screen
-        ctk.CTkLabel(tbvmenu.tab("Leadtime Analysis"), image=img_dispersion_chart,
-                     text="").pack(pady=20, anchor="e")
-
-        # Generating the Histogram and saving the chart image
-        histogram_image, highest_leadimes = bup.generate_histogram(bup_scope)
-
-        # Histogram Chart - inputting the Label and positioning it on the screen
-        ctk.CTkLabel(tbvmenu.tab("Leadtime Analysis"), image=histogram_image,
-                     text="").pack()
+        # Inserting Histogram Chart and returning CTk Image object
+        histogram_image = bup.generate_histogram(bup_scope, tbvmenu.tab("Leadtime Analysis"))
 
         # Tab 3 - Scenarios
 
@@ -264,7 +251,6 @@ def main():
         download_icon = ctk.CTkImage(light_image=Image.open(download_icon_path),
                                   dark_image=Image.open(download_icon_path),
                                   size=(34, 34))
-
 
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
         def callback_func_scenario_add(scenarios_count) -> None:

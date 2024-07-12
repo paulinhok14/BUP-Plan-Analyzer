@@ -2,6 +2,7 @@ import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image
 from io import BytesIO
 import json
@@ -9,6 +10,7 @@ import customtkinter as ctk
 from tkinter import messagebox
 import time
 import logging
+import mplcursors as mpc
 
 warnings.filterwarnings("ignore")
 
@@ -134,7 +136,7 @@ def read_scope_file(file_full_path: str) -> pd.DataFrame():
 
 
 @function_timer
-def generate_dispersion_chart(bup_scope: pd.DataFrame):
+def generate_dispersion_chart(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
     # This function receives 'bup_scope' paramter as a pandas DataFrame and creates the chart.
 
     # Function to format y-axis values in thousands
@@ -143,7 +145,13 @@ def generate_dispersion_chart(bup_scope: pd.DataFrame):
 
     # Image Size
     width, height = 600, 220
-    fig, ax = plt.subplots(figsize=(width / 100, height / 100))
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')  # Layout property that handles "cutting" axes labels
+    # Keeping background transparent
+    fig.patch.set_facecolor("None")
+    fig.patch.set_alpha(0)
+    ax.set_facecolor('None')
+
+    # Categories
     expendable_items = bup_scope[bup_scope['SPC'] == 'Expendable']
     repairable_items = bup_scope[bup_scope['SPC'] == 'Repairable']
 
@@ -153,13 +161,20 @@ def generate_dispersion_chart(bup_scope: pd.DataFrame):
     ax.scatter(repairable_items['Leadtime'], repairable_items['Acq Cost'], color='purple', label='Repairables')
 
     # Adding labels and legends
-    ax.set_xlabel('Leadtime')
+    ax.set_xlabel('Leadtime', loc='right')
     ax.set_ylabel('Acq Cost')
     ax.set_title('Dispersion Acq Cost x Leadtime', fontsize=10)
     ax.legend(fontsize=9, framealpha=0.6)
     plt.grid(True)
     # Setting personalized format to y-axis
     ax.yaxis.set_major_formatter(FuncFormatter(format_acq_cost))
+
+    # Inserting chart into Canvas
+    canvas_dispersion = FigureCanvasTkAgg(fig, master=root)
+    canvas_dispersion.draw()
+    # Configuring Canvas background
+    canvas_dispersion.get_tk_widget().configure(background='#dbdbdb',)
+    canvas_dispersion.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
 
     # --------------- Turning it into an Image to be displayed  ---------------
 
@@ -169,32 +184,36 @@ def generate_dispersion_chart(bup_scope: pd.DataFrame):
     tmp_img_dispersion_chart.seek(0)
 
     # Loading the chart image into an Image object that will be returned by the function
-    dispersion_chart = Image.open(tmp_img_dispersion_chart)
+    dispersion_image = Image.open(tmp_img_dispersion_chart)
 
-    return dispersion_chart
+    return dispersion_image
 
 
 @function_timer
-def generate_histogram(bup_scope: pd.DataFrame):
-    # Generates the Histogram. Returns a Figure and the largest Leadtimes
-
-    # DataFrame with highest Leadtimes
-    highest_leadimes = bup_scope.nlargest(3, 'Leadtime').to_string(index=False)
+def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
+    '''
+    :param bup_scope: DataFrame with scope and additional information
+    :param root: CTk Frame in which chart will be inserted
+    :return: histogram_image: Chart CTkImage object in order to export
+    '''
 
     # Image size
     width, height = 600, 220
 
     # Creating figure and axes to insert the chart
-    fig, ax = plt.subplots(figsize=(width / 100, height / 100))
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')  # Layout property that handles "cutting" axes labels
+    # Keeping background transparent
     fig.patch.set_facecolor("None")
+    fig.patch.set_alpha(0)
+    ax.set_facecolor('None')
 
     # Creating Histogram and saving the information in control variables
     n, bins, patches = ax.hist(bup_scope['Leadtime'], bins=20, edgecolor='k', linewidth=0.7, alpha=0.9)
 
     # Histogram settings
-    ax.set_xlabel('Leadtime (in days)')
     ax.set_ylabel('Materials Count')
-    ax.set_title('Leadtime Histogram', fontsize=10)
+    ax.set_xlabel('Leadtime', loc='right')
+    ax.set_title('Leadtime Histogram (in days)', fontsize=10)
     # Adjusting the y-axis limit (the largest bar was transcending the upper limit)
     ax.set_ylim(0, max(n) + 50)  # Adding a margin to accommodate the count at the top of the bar
 
@@ -206,6 +225,16 @@ def generate_histogram(bup_scope: pd.DataFrame):
             'family': 'open sans',
             'size': 9
         })
+
+    # Inserting Hover with mplcursors
+    mpc.cursor(hover=True)
+
+    # Inserting chart into Canvas
+    canvas_histogram = FigureCanvasTkAgg(fig, master=root)
+    canvas_histogram.draw()
+    # Configuring Canvas background
+    canvas_histogram.get_tk_widget().configure(background='#dbdbdb')
+    canvas_histogram.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
 
     # --- Saving the chart image in BytesIO() (memory) so it is not necessary to save as a file ---
     tmp_img_histogram_chart = BytesIO()
@@ -220,7 +249,7 @@ def generate_histogram(bup_scope: pd.DataFrame):
                                    dark_image=histogram_chart,
                                    size=(600, 220))
 
-    return histogram_image, highest_leadimes
+    return histogram_image
 
 
 @function_timer
