@@ -2,7 +2,9 @@ import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+import matplotlib.lines as mlines
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
 from PIL import Image
 from io import BytesIO
 import json
@@ -151,20 +153,19 @@ def generate_dispersion_chart(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
     fig.patch.set_alpha(0)
     ax.set_facecolor('None')
 
-    # Categories
-    expendable_items = bup_scope[bup_scope['SPC'] == 'Expendable']
-    repairable_items = bup_scope[bup_scope['SPC'] == 'Repairable']
+    # Scattering Items
+    conditional_colors = np.where(bup_scope['SPC'] == 'Expendable', 'orange', 'purple')
+    scatter = ax.scatter(bup_scope['Leadtime'], bup_scope['Acq Cost'], color=conditional_colors, marker='o', alpha=0.7)
 
-    # Plotting Expendable items
-    ax.scatter(expendable_items['Leadtime'], expendable_items['Acq Cost'], color='orange', label='Expendables')
-    # Plotting Repairable items
-    ax.scatter(repairable_items['Leadtime'], repairable_items['Acq Cost'], color='purple', label='Repairables')
+    # Custom Labels Patches
+    expendable_patch = mlines.Line2D([], [], marker='o', color='orange', markersize=6, lw=0, label='Expendable')
+    repairable_patch = mlines.Line2D([], [], marker='o', color='purple', markersize=6, lw=0, label='Repairable')
 
     # Adding labels and legends
     ax.set_xlabel('Leadtime', loc='right')
     ax.set_ylabel('Acq Cost')
     ax.set_title('Dispersion Acq Cost x Leadtime', fontsize=10)
-    ax.legend(fontsize=9, framealpha=0.6)
+    ax.legend(handles=[expendable_patch, repairable_patch], fontsize=9, framealpha=0.6)
     plt.grid(True)
     # Setting personalized format to y-axis
     ax.yaxis.set_major_formatter(FuncFormatter(format_acq_cost))
@@ -175,6 +176,18 @@ def generate_dispersion_chart(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
     # Configuring Canvas background
     canvas_dispersion.get_tk_widget().configure(background='#dbdbdb',)
     canvas_dispersion.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
+
+    # Annotation function to connect with mplcursors
+    def set_annotations(sel):
+        sel.annotation.set_text(
+            'PN: ' + str(bup_scope['PN'][sel.target.index]) + "\n" +
+            'Acq Cost: US$ ' + f"{round(bup_scope['Acq Cost'][sel.target.index]):,}" + "\n" +
+            'Leadtime: ' + str(bup_scope['Leadtime'][sel.target.index]) + "\n" +
+            'EIS Critical: ' + str(bup_scope['EIS Critical'][sel.target.index])
+        )
+
+    # Inserting Hover with mplcursors
+    mpc.cursor(scatter, hover=True).connect('add', lambda sel: set_annotations(sel))
 
     # --------------- Turning it into an Image to be displayed  ---------------
 
@@ -226,8 +239,17 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
             'size': 9
         })
 
+    # Annotation function to connect with mplcursors
+    def set_annotations(sel):
+        sel.annotation.set_text(
+            'Parts Count: ' + str(round(sel.target[1])) + "\n" +
+            'Lower Limit: ' + str(round(bins[sel.target.index])) + "\n" +
+            'Upper Limit: ' + str(round(bins[sel.target.index + 1]))
+        )
+        pass
+
     # Inserting Hover with mplcursors
-    mpc.cursor(hover=True)
+    mpc.cursor(patches, hover=True).connect('add', lambda sel: set_annotations(sel))
 
     # Inserting chart into Canvas
     canvas_histogram = FigureCanvasTkAgg(fig, master=root)
@@ -649,16 +671,12 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
         # figure (Image object), in addition to the DataFrames/Variables created in the function, as a return to be used
         # in the Hypothetical chart
         bup_eff_chart_whitebg, bup_eff_chart, df_scope_with_scenarios, scenario_dataframes = \
-            generate_efficient_curve_buildup_chart(bup_scope, scenarios_list)
+            generate_efficient_curve_buildup_chart(bup_scope, scenarios_list, efficient_curve_window)
 
         # Loading into a CTk Image object
         img_bup_efficient_chart = ctk.CTkImage(bup_eff_chart,
                                     dark_image=bup_eff_chart,
                                     size=(580, 370))
-
-        # Build-Up Efficient Curve Chart - inputting CTkImage in the Label and positioning it on the screen
-        ctk.CTkLabel(efficient_curve_window, image=img_bup_efficient_chart,
-                     text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
         # Calling the function to generate Hypothetical Build-Up chart.
         bup_hyp_chart_whitebg, bup_hyp_chart = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes)
@@ -693,8 +711,13 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
 
 
 @function_timer
-def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
-
+def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, root: ctk.CTkFrame):
+    '''
+    :param bup_scope: DataFrame with Scope and Scenarios
+    :param scenarios: List with all created Scenarios
+    :param root: CTkFrame in which the Chart will be displayed
+    :return: CTkImage objects in order to be exported/downloaded. Chart will be plotted in this function with FigureCanvasTkAgg
+    '''
     # --------------- Data Processing ---------------
 
     # List to store combinations of Scenarios and Scope
@@ -861,11 +884,15 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
     width, height = 580, 370
 
     # Creating a figure and axes to insert the chart
-    figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100))
+    # Keeping background transparent
+    fig.patch.set_facecolor("None")
+    fig.patch.set_alpha(0)
+    ax.set_facecolor('None')
 
     # Eff - Plotting the line for each Scenario in the dictionary
     for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
-        eixos.plot(scenario_df_list[0]['Date'], scenario_df_list[0]['Accum. Ordered Qty (Eff)'], label=f'Scen. {index}', color=colors_array[index])
+        axs = ax.plot(scenario_df_list[0]['Date'], scenario_df_list[0]['Accum. Ordered Qty (Eff)'], label=f'Scen. {index}', color=colors_array[index])
         # Configuring the axis
         plt.xticks(scenario_df_list[0].index[::3], scenario_df_list[0]['Date'][::3], rotation=45, ha='right')
 
@@ -873,13 +900,13 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         t0_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 't0'].values[0])
         t0_date = t0_date.strftime('%m/%Y')
         # Adding a vertical line at t0
-        eixos.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0: Scen. {index}')
+        ax.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0: Scen. {index}')
 
         # Getting the acft_delivery_start date for the current Scenario and converting it to MM/YYYY format
         acft_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'acft_delivery_start'].values[0])
         acft_delivery_start_date = acft_delivery_start_date.strftime('%m/%Y')
         # Adding a vertical line in acft_delivery_start
-        eixos.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index], label=f'Acft Delivery Start: Scen. {index}')
+        ax.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index], label=f'Acft Delivery Start: Scen. {index}')
 
         # Adding a material delivery range between the Start and End dates
         material_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'material_delivery_start_date'].values[0])
@@ -887,7 +914,7 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         material_delivery_end_date = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'material_delivery_end_date'].values[0])
         material_delivery_end_date = material_delivery_end_date.strftime('%m/%Y')
 
-        eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
+        ax.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
 
         # Adding a note at the point where Build-Up planning should start (date when first order is released)
         filter_dates_with_order = scenario_df_list[0]['Ordered Qty'] != 0
@@ -895,7 +922,7 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         index_first_order = dates_with_order['Ordered Qty'].idxmin()
         x_first_order = scenario_df_list[0].loc[index_first_order, 'Date']
         y_first_order = scenario_df_list[0].loc[index_first_order, 'Accum. Ordered Qty (Eff)']
-        eixos.scatter(x_first_order, y_first_order, color=colors_array[index], marker='o', label=f'Planning Start: {x_first_order}')
+        ax.scatter(x_first_order, y_first_order, color=colors_array[index], marker='o', label=f'Planning Start: {x_first_order}')
 
         # Adding a caretdown (not labeling) in BUP finish date (avg between End and Start material delivery date)
         # x_bup_finished = scenario_df.loc[0, 'avg_date_between_materials_deadline']
@@ -904,25 +931,42 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
         x_bup_finished = pd.to_datetime(df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index,
                                                                     'avg_date_between_materials_deadline']
                                         .values[0]).strftime('%m/%Y')
-        eixos.scatter(x_bup_finished, y_bup_finished, color=colors_array[index], marker=7, label=None)
+        ax.scatter(x_bup_finished, y_bup_finished, color=colors_array[index], marker=7, label=None)
 
     # Chart settings
-    eixos.set_ylabel('Materials Ordered Qty (Accumulated)')
-    eixos.set_title('Efficient Curve: Build-Up Forecast')
-    eixos.grid(True)
-    eixos.tick_params(axis='both', labelsize=9)  # Adjusting labels size
+    ax.set_ylabel('Materials Ordered Qty (Accumulated)')
+    ax.set_title('Efficient Curve: Build-Up Forecast')
+    ax.grid(True)
+    ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
 
     # Adjusting axis spacing to avoid cutting off labels
     plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
 
     # Legend
-    eixos.legend(loc='upper left', fontsize=7, framealpha=0.8)
+    ax.legend(loc='upper left', fontsize=7, framealpha=0.8)
+
+    # Annotation function to connect with mplcursors
+    def set_annotations(sel):
+        sel.annotation.set_text(
+            'Ordered Qty: ' + str(round(sel.target[1])) + "\n" +
+            'Date ' + str(scenario_df_list[0]['Date'][round(sel.target.index)]) + "\n"
+        )
+    # Inserting Hover with mplcursors
+    mpc.cursor(axs, hover=True).connect('add', lambda sel: set_annotations(sel))
+
+    # Inserting chart into Canvas
+    canvas_eff = FigureCanvasTkAgg(fig, master=root)
+    canvas_eff.draw()
+    # Configuring Canvas background
+    canvas_eff.get_tk_widget().configure(background='#cfcfcf')
+    # canvas_eff.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
+    canvas_eff.get_tk_widget().place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
     # --------------- Turning it into an Image to be displayed ---------------
 
     # Saving the matplotlib figure to a BytesIO object (memory), so it is not necessary to save it in an image file
     tmp_img_eff_chart = BytesIO()
-    figura.savefig(tmp_img_eff_chart, format='png', transparent=True)
+    fig.savefig(tmp_img_eff_chart, format='png', transparent=True)
     tmp_img_eff_chart.seek(0)
 
     # Loading the chart image into an Image object that will be returned by the function
@@ -930,7 +974,7 @@ def generate_efficient_curve_buildup_chart(bup_scope, scenarios):
 
     # It is necessary to save a chart Image with white background. Transparent is to plot. White to save as a file.
     tmp_img_eff_chart_whitebg = BytesIO()
-    figura.savefig(tmp_img_eff_chart_whitebg, format='png', transparent=False)
+    fig.savefig(tmp_img_eff_chart_whitebg, format='png', transparent=False)
     tmp_img_eff_chart_whitebg.seek(0)
 
     # Loading the chart image into an Image object that will be returned by the function

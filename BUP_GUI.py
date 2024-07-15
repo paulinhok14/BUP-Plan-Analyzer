@@ -25,7 +25,10 @@ main_screen_icon = r'src\images\bup_icon.ico'
 download_icon_path = r'src\images\download-green-arrow.png'
 excel_icon_path = r'src\images\excel_transparent.png'
 export_output_path = fr'C:\Users\{active_user}\Downloads'
+app_path = os.path.dirname(os.path.realpath(__file__))
 readme_url = r'https://github.com/paulinhok14/BUP-Plan-Analyzer/blob/master/README.md'
+# readme_path = os.path.join(app_path, 'README.md')
+# TO DO: Make README.md open local file using default web browser (or specific), independent of default ".md" openers from user OS
 
 
 def main():
@@ -36,7 +39,6 @@ def main():
     main_screen.title("Build-Up Plan Analyzer")
     main_screen.resizable(width=False, height=False)
     main_screen._set_appearance_mode("dark")
-    # main_screen.configure(fg_color="#242424")
     main_screen.iconbitmap(main_screen_icon)
     main_screen.protocol("WM_DELETE_WINDOW", lambda: main_screen.quit())
 
@@ -412,8 +414,9 @@ def main():
                                     bg_color="#242424",
                                     fg_color='#242424',
                                     hover=False,
-                                    command=lambda: webbrowser.open(readme_url)
-                                    )
+                                    # command=lambda: webbrowser.open(f'file:///{readme_path}', new=2)
+                                command=lambda: webbrowser.open(readme_url, new=2)
+                             )
     btn_help.place(relx=0.885, rely=0.87)
 
     # MRSE button
