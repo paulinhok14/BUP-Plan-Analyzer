@@ -220,8 +220,15 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
     fig.patch.set_alpha(0)
     ax.set_facecolor('None')
 
+    # Inserting Average and Standard Deviation of Leadtimes - Before histogram plottation
+    avg_leadtimes = bup_scope['Leadtime'].mean()
+    sd_leadtimes = bup_scope['Leadtime'].std()
+    ax.axvline(x=avg_leadtimes, linestyle='--', color='black', label=f'Average: {round(avg_leadtimes)}')
+    ax.axvspan(avg_leadtimes - sd_leadtimes, avg_leadtimes + sd_leadtimes, alpha=0.5, color='#fccf03',
+               label=f'Std: {round(sd_leadtimes)}', hatch='/')
+
     # Creating Histogram and saving the information in control variables
-    n, bins, patches = ax.hist(bup_scope['Leadtime'], bins=20, edgecolor='k', linewidth=0.7, alpha=0.9)
+    n, bins, patches = ax.hist(bup_scope['Leadtime'], bins=20, edgecolor='k', color='#1fa9a4', linewidth=0.7, alpha=0.9)
 
     # Histogram settings
     ax.set_ylabel('Materials Count')
@@ -239,6 +246,9 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
             'size': 9
         })
 
+    # Legend
+    ax.legend(fontsize=9, framealpha=0.6)
+
     # Annotation function to connect with mplcursors
     def set_annotations(sel):
         sel.annotation.set_text(
@@ -246,7 +256,6 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
             'Lower Limit: ' + str(round(bins[sel.target.index])) + "\n" +
             'Upper Limit: ' + str(round(bins[sel.target.index + 1]))
         )
-        pass
 
     # Inserting Hover with mplcursors
     mpc.cursor(patches, hover=True).connect('add', lambda sel: set_annotations(sel))
@@ -679,16 +688,12 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
                                     size=(580, 370))
 
         # Calling the function to generate Hypothetical Build-Up chart.
-        bup_hyp_chart_whitebg, bup_hyp_chart = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes)
+        bup_hyp_chart_whitebg, bup_hyp_chart = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes, hypothetical_curve_window)
 
         # Loading into a CTk Image object
         img_bup_hypothetical_chart = ctk.CTkImage(bup_hyp_chart,
                                     dark_image=bup_hyp_chart,
                                     size=(580, 370))
-
-        # Hypothetical Curve Build-Up Chart - inputting CTkImage in the Label and positioning it on the screen
-        ctk.CTkLabel(hypothetical_curve_window, image=img_bup_hypothetical_chart,
-                    text="").place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
         # Saving both charts Image on global scope variables
         img_eff_chart, img_hyp_chart = bup_eff_chart_whitebg, bup_hyp_chart_whitebg
@@ -881,10 +886,10 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, r
     colors_array = ['blue', 'orange', 'black', 'green', 'purple']
 
     # Image size
-    width, height = 580, 370
+    width, height = 680, 435
 
     # Creating a figure and axes to insert the chart
-    fig, ax = plt.subplots(figsize=(width / 100, height / 100))
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100),  layout='constrained')
     # Keeping background transparent
     fig.patch.set_facecolor("None")
     fig.patch.set_alpha(0)
@@ -949,7 +954,7 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, r
     def set_annotations(sel):
         sel.annotation.set_text(
             'Ordered Qty: ' + str(round(sel.target[1])) + "\n" +
-            'Date ' + str(scenario_df_list[0]['Date'][round(sel.target.index)]) + "\n"
+            'Date ' + str(scenario_df_list[0]['Date'][round(sel.target.index)])
         )
     # Inserting Hover with mplcursors
     mpc.cursor(axs, hover=True).connect('add', lambda sel: set_annotations(sel))
@@ -959,7 +964,6 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, r
     canvas_eff.draw()
     # Configuring Canvas background
     canvas_eff.get_tk_widget().configure(background='#cfcfcf')
-    # canvas_eff.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
     canvas_eff.get_tk_widget().place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
     # --------------- Turning it into an Image to be displayed ---------------
@@ -984,7 +988,7 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, r
 
 
 @function_timer
-def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes):
+def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios: pd.DataFrame, scenario_dataframes, root: ctk.CTkFrame):
     """
     Function that creates the Hypothetycal Curve BuildUp Chart.
     param df_scope_with_scenarios: Created DataFrame on Efficient Curve Build-Up construction. Combinations Scope/Scenarios.
@@ -998,14 +1002,18 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
     colors_array = ['blue', 'orange', 'black', 'green', 'purple']
 
     # Image Size
-    width, height = 580, 370
+    width, height = 680, 435
 
     # Creating a figure and axes to insert the chart
-    figura, eixos = plt.subplots(figsize=(width / 100, height / 100))
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')
+    # Keeping background transparent
+    fig.patch.set_facecolor("None")
+    fig.patch.set_alpha(0)
+    ax.set_facecolor('None')
 
     # Plotting the line for each Scenario in the dictionary
     for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
-        eixos.plot(scenario_df_list[1]['Date'], scenario_df_list[1]['Accum. Delivered Qty (Hyp)'], label=f'Scen. {index}',
+        axs = ax.plot(scenario_df_list[1]['Date'], scenario_df_list[1]['Accum. Delivered Qty (Hyp)'], label=f'Scen. {index}',
                    color=colors_array[index])
         # Configuring the axis
         plt.xticks(scenario_df_list[1].index[::3], scenario_df_list[1]['Date'][::3], rotation=45, ha='right')
@@ -1015,14 +1023,14 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
             df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 't0'].values[0])
         t0_date = t0_date.strftime('%m/%Y')
         # Adding a vertical line at t0
-        eixos.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0: Scen. {index}')
+        ax.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0: Scen. {index}')
 
         # Getting the acft_delivery_start date for the current Scenario and converting it to MM/YYYY format
         acft_delivery_start_date = pd.to_datetime(
             df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'acft_delivery_start'].values[0])
         acft_delivery_start_date = acft_delivery_start_date.strftime('%m/%Y')
         # Adding a vertical line in acft_delivery_start
-        eixos.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index],
+        ax.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index],
                       label=f'Acft Delivery Start: Scen. {index}')
 
         # Adding a material delivery range between the Start and End dates
@@ -1035,7 +1043,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
                                                         'material_delivery_end_date'].values[0])
         material_delivery_end_date = material_delivery_end_date.strftime('%m/%Y')
 
-        eixos.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
+        ax.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
 
         # Adding a note at the point where the Build-Up is completed (all items delivered)
         index_max_acc_qty = scenario_df_list[1]['Accum. Delivered Qty (Hyp)'].idxmax()
@@ -1044,22 +1052,39 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
         plt.scatter(x_max, y_max, color=colors_array[index], marker='o', label=f'BUP Conclusion: {x_max}')
 
     # Chart Settings
-    eixos.set_ylabel('Materials Delivered Qty (Accumulated)')
-    eixos.tick_params(axis='both', labelsize=9)  # Adjusting labels size
-    eixos.set_title('Hypothetical Curve: Build-Up Forecast')
-    eixos.grid(True)
+    ax.set_ylabel('Materials Delivered Qty (Accumulated)')
+    ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
+    ax.set_title('Hypothetical Curve: Build-Up Forecast')
+    ax.grid(True)
 
     # Adjusting axis spacing to avoid cutting off labels
     plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
 
     # Legend
-    eixos.legend(loc='upper left', fontsize=7, framealpha=0.8)
+    ax.legend(loc='upper left', fontsize=7, framealpha=0.8)
+
+    # Annotation function to connect with mplcursors
+    def set_annotations(sel):
+        sel.annotation.set_text(
+            'Delivered Qty: ' + str(round(sel.target[1])) + "\n" +
+            'Date ' + str(scenario_df_list[0]['Date'][round(sel.target.index)])
+        )
+
+    # Inserting Hover with mplcursors
+    mpc.cursor(axs, hover=True).connect('add', lambda sel: set_annotations(sel))
+
+    # Inserting chart into Canvas
+    canvas_eff = FigureCanvasTkAgg(fig, master=root)
+    canvas_eff.draw()
+    # Configuring Canvas background
+    canvas_eff.get_tk_widget().configure(background='#cfcfcf')
+    canvas_eff.get_tk_widget().place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
 
     # --------------- Turning it into an Image to be displayed ---------------
 
     # Saving the matplotlib figure to a BytesIO object (memory), so as not to have to save an image file
     tmp_img_hyp_chart = BytesIO()
-    figura.savefig(tmp_img_hyp_chart, format='png', transparent=True)
+    fig.savefig(tmp_img_hyp_chart, format='png', transparent=True)
     tmp_img_hyp_chart.seek(0)
 
     # Loading the chart image into an Image object that will be returned by the function
@@ -1067,7 +1092,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_
 
     # It is necessary to save a chart Image with white background. Transparent is to plot. White to save as a file.
     tmp_img_hyp_chart_whitebg = BytesIO()
-    figura.savefig(tmp_img_hyp_chart_whitebg, format='png', transparent=False)
+    fig.savefig(tmp_img_hyp_chart_whitebg, format='png', transparent=False)
     tmp_img_hyp_chart_whitebg.seek(0)
 
     # Loading the chart image into Image objects that will be returned by the function
