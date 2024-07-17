@@ -108,6 +108,7 @@ def main():
         tbvmenu.add("Scope")
         tbvmenu.add("Leadtime Analysis")
         tbvmenu.add("Scenarios")
+        tbvmenu.add("Stock Analysis")
 
         @bup.function_timer
         def export_data(xl_spreadsheet: str) -> None:
@@ -243,6 +244,7 @@ def main():
         tbv_curve_charts.pack()
         tbv_curve_charts.add("Efficient Curve")
         tbv_curve_charts.add("Hypothetical Curve")
+        tbv_curve_charts.add("Cost Avoidance")
 
         # Image with Excel icon
         excel_icon = ctk.CTkImage(light_image=Image.open(excel_icon_path),
@@ -351,6 +353,16 @@ def main():
                                             )
         btn_create_scenario.place(relx=0.5, rely=0.93, anchor=ctk.CENTER)
 
+        # Tab 4 - Stock Analysis
+
+        btn_read_stock_data = ctk.CTkButton(tbvmenu.tab("Stock Analysis"), text='Read Stock Data',
+                                      command=lambda: print('Stock read!'),
+                                      font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                                      bg_color="#dbdbdb", fg_color="#009898", hover_color="#006464",
+                                      width=200, height=30, corner_radius=30
+                                      )
+        btn_read_stock_data.pack()
+
         # Hiding Main Screen
         main_screen.withdraw()
 
@@ -415,7 +427,7 @@ def main():
                                     fg_color='#242424',
                                     hover=False,
                                     # command=lambda: webbrowser.open(f'file:///{readme_path}', new=2)
-                                command=lambda: webbrowser.open(readme_url, new=2)
+                                    command=lambda: webbrowser.open(readme_url, new=2)
                              )
     btn_help.place(relx=0.885, rely=0.87)
 

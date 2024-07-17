@@ -55,7 +55,7 @@ def function_timer(func):
 
 
 @function_timer
-def read_scope_file(file_full_path: str) -> pd.DataFrame():
+def read_scope_file(file_full_path: str) -> pd.DataFrame:
     # Function that reads scope file and complementary info
 
     # Resetting the list of scenarios every time the e-mail is read
@@ -224,8 +224,8 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
     avg_leadtimes = bup_scope['Leadtime'].mean()
     sd_leadtimes = bup_scope['Leadtime'].std()
     ax.axvline(x=avg_leadtimes, linestyle='--', color='black', label=f'Average: {round(avg_leadtimes)}')
-    ax.axvspan(avg_leadtimes - sd_leadtimes, avg_leadtimes + sd_leadtimes, alpha=0.5, color='#fccf03',
-               label=f'Std: {round(sd_leadtimes)}', hatch='/')
+    ax.axvspan(avg_leadtimes - sd_leadtimes, avg_leadtimes + sd_leadtimes, alpha=0.4, color='#fccf03',
+               label=f'Std: {round(sd_leadtimes)}', hatch='/', edgecolor='black')
 
     # Creating Histogram and saving the information in control variables
     n, bins, patches = ax.hist(bup_scope['Leadtime'], bins=20, edgecolor='k', color='#1fa9a4', linewidth=0.7, alpha=0.9)
@@ -984,11 +984,90 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, r
     # Loading the chart image into an Image object that will be returned by the function
     bup_eff_chart_whitebg = Image.open(tmp_img_eff_chart_whitebg)
 
+    # ----------- At last, calling function to Generate Efficient Chart with Acq Cost ----------- #
+    generate_acqcost_curve(df_scope_with_scenarios, df_dates_eff, df_dates_hyp, scenario_dataframes)
+
     return bup_eff_chart_whitebg, bup_eff_chart, df_scope_with_scenarios, scenario_dataframes
 
 
 @function_timer
-def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios: pd.DataFrame, scenario_dataframes, root: ctk.CTkFrame):
+def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: pd.DataFrame, df_dates_hyp: pd.DataFrame, scenario_dataframes: dict):
+    '''
+    This function generates Acq Cost charts for both Efficient and Hypothetical curve.
+    :param df_scope_with_scenarios: DataFrame with Scope and All Scenarios joined information
+    :param df_dates_eff: DataFrame with a 'date' Series, with Min and Max range date for Efficient Chart
+    :param df_dates_hyp: DataFrame with a 'date' Series, with Min and Max range date for Hypothetical Chart
+    :return:
+    '''
+
+    # Hard copy so not to change main df_scope_with_scenarios
+    df_acqcost_chart_info = df_scope_with_scenarios.copy()
+
+    # Creating Material Total Cost column (Qty * Acq Cost)
+    df_acqcost_chart_info['Total Acq Cost'] = df_acqcost_chart_info['Qty'] * df_acqcost_chart_info['Acq Cost']
+    # Creating Month/Year columns for Efficient and Hypothetical charts
+    df_acqcost_chart_info['Order Date (Eff)'] = df_acqcost_chart_info['PN Order Date'].dt.to_period('M').dt.strftime('%m/%Y')
+    df_acqcost_chart_info['Delivery Date (Hyp)'] = df_acqcost_chart_info['Delivery Date Hypothetical'].dt.strftime('%m/%Y')
+
+    # Creating DFs with Grouped Sum for each Chart (Eff/Hyp)
+    grouped_sum_acqcost_eff = df_acqcost_chart_info[['Scenario', 'Order Date (Eff)', 'Total Acq Cost']].groupby(['Scenario', 'Order Date (Eff)']).sum('Total Acq Cost').reset_index()
+    grouped_sum_acqcost_hyp = df_acqcost_chart_info[['Scenario', 'Delivery Date (Hyp)', 'Total Acq Cost']].groupby(['Scenario', 'Delivery Date (Hyp)']).sum('Total Acq Cost').reset_index()
+
+    # Merging with Date Range DFs for each Chart (Eff/Hyp)
+    grouped_sum_acqcost_eff = df_dates_eff.merge(grouped_sum_acqcost_eff, how='left', left_on='Date', right_on='Order Date (Eff)')
+    grouped_sum_acqcost_hyp = df_dates_hyp.merge(grouped_sum_acqcost_hyp, how='left', left_on='Date', right_on='Delivery Date (Hyp)')
+    grouped_sum_acqcost_eff.to_excel('grouped_sum_acqcost_eff.xlsx') #test
+    # Making '-1' the 'Scenario' null values. This is a solution to not allow multiple scenarios dfs to disturb a fillna() with specific rules.
+    grouped_sum_acqcost_eff['Scenario'] = grouped_sum_acqcost_eff['Scenario'].fillna(-1).astype(int)
+    grouped_sum_acqcost_hyp['Scenario'] = grouped_sum_acqcost_hyp['Scenario'].fillna(-1).astype(int)
+    grouped_sum_acqcost_eff['Total Acq Cost'] = grouped_sum_acqcost_eff['Total Acq Cost'].fillna(0)
+    grouped_sum_acqcost_hyp['Total Acq Cost'] = grouped_sum_acqcost_hyp['Total Acq Cost'].fillna(0)
+    grouped_sum_acqcost_eff.to_excel('grouped_sum_acqcost_eff2.xlsx') #test
+
+
+
+    # Efficient - For each scenario, calculating the Accumulated Acq Cost to plot
+    for scenario in grouped_sum_acqcost_eff['Scenario'].unique():
+        # Filtering the df for the current Scenario
+        scenario_df = grouped_sum_acqcost_eff[grouped_sum_acqcost_eff['Scenario'] == scenario]
+        # Calculating the accumulated $ Volume
+        grouped_sum_acqcost_eff.loc[scenario_df.index, 'Accum. Acq Cost'] = scenario_df['Total Acq Cost'].cumsum()
+
+    # Hypothetical - For each scenario, calculating the Accumulated Quantity to plot
+    for scenario in grouped_sum_acqcost_hyp['Scenario'].unique():
+        # Filtering the df for the current Scenario
+        scenario_df = grouped_sum_acqcost_hyp[grouped_sum_acqcost_hyp['Scenario'] == scenario]
+        # Calculating the accumulated $ Volume
+        grouped_sum_acqcost_hyp.loc[scenario_df.index, 'Accum. Acq Cost'] = scenario_df['Total Acq Cost'].cumsum()
+
+
+    # Efficient - Creating a DF for each Scenario
+    for scenario in grouped_sum_acqcost_eff['Scenario'].unique():
+        if scenario != -1:  # Scenario -1 is only indicative of nullity, it is not a real scenario
+            '''
+            Adding to the List of Dataframes from dict "scenario_dataframs" 2 new DFs.
+            First one is already Efficient DF and Second one is Hypothetical DF, for Parts Qty
+            Third and Fourth will be Acq Cost DFs for Efficient and Hypothetical, respectively
+            '''
+            tmp_filtered_scenario_acqcost_df = grouped_sum_acqcost_eff[grouped_sum_acqcost_eff['Scenario'] == scenario]
+            scenario_df = df_dates_eff.merge(tmp_filtered_scenario_final_df[
+                                                 ['Date', 'Scenario', 'Ordered Qty', 'Accum. Ordered Qty (Eff)']
+                                             ],
+                                             left_on='Date', right_on='Date', how='left')
+            # Filling in nulls
+            scenario_df['Scenario'] = scenario_df['Scenario'].fillna(scenario).astype(int)
+            scenario_df['Ordered Qty'] = scenario_df['Ordered Qty'].fillna(0)
+
+            # Filling empty months for Accumulated Qty based on last record
+            scenario_df['Accum. Ordered Qty (Eff)'].fillna(method='ffill', inplace=True)
+
+            # Storing the DataFrame in the dictionary with the scenario name
+            scenario_dataframes[f'Scenario_{int(scenario)}'].append(scenario_df)
+
+
+
+@function_timer
+def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios: pd.DataFrame, scenario_dataframes: dict, root: ctk.CTkFrame):
     """
     Function that creates the Hypothetycal Curve BuildUp Chart.
     param df_scope_with_scenarios: Created DataFrame on Efficient Curve Build-Up construction. Combinations Scope/Scenarios.
