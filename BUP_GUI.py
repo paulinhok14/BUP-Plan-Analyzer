@@ -256,6 +256,18 @@ def main():
                                   dark_image=Image.open(download_icon_path),
                                   size=(34, 34))
 
+        # Switch in order to toggle between Parts/Acq Cost chart visualization
+        swt_toggle_parts_acqcost_eff = ctk.CTkSwitch(tbv_curve_charts.tab("Efficient Curve"),
+                                                     text="",
+                                                     command=lambda: print('eff'),
+                                                     width=50, height=12
+                                                     )
+        swt_toggle_parts_acqcost_hyp = ctk.CTkSwitch(tbv_curve_charts.tab("Hypothetical Curve"),
+                                                     text="",
+                                                     command=lambda: print('hyp'),bg_color='black',fg_color='black',
+                                                     width=50, height=12
+                                                     )
+
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
         def callback_func_scenario_add(scenarios_count) -> None:
 
@@ -265,6 +277,8 @@ def main():
                 btn_export_data_hyp.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
                 btn_save_image_eff.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
                 btn_save_image_hyp.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
+                swt_toggle_parts_acqcost_eff.place(relx=0.92, rely=0.001, anchor=ctk.CENTER)
+                swt_toggle_parts_acqcost_hyp.place(relx=0.92, rely=0.001, anchor=ctk.CENTER)
                 lbl_pending_scenario.place_forget()
             else:
                 pass
@@ -323,6 +337,7 @@ def main():
             scenario_window = ctk.CTkToplevel(tbvmenu.tab("Scenarios"))
             efficient_curve_window = tbv_curve_charts.tab("Efficient Curve")
             hypothetical_curve_window = tbv_curve_charts.tab("Hypothetical Curve")
+            cost_avoidance_window = tbv_curve_charts.tab("Cost Avoidance")
 
             # Window settings
             scenario_window.title("Add New Scenario")
@@ -341,8 +356,8 @@ def main():
             # Setting (capturing) focus to the window
             scenario_window.grab_set()
 
-            # Function that creates the window elements and interacts with the Scenario List
-            bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window)
+            # Function that handles Scenarios creation, creates the window elements and interacts with the Scenario List
+            bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window, cost_avoidance_window)
 
         # Create Scenario button
         btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',

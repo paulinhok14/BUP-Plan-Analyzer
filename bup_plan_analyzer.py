@@ -284,7 +284,19 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
 
 
 @function_timer
-def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window) -> None:
+def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntVar, bup_scope: pd.DataFrame,
+                    efficient_curve_window: ctk.CTkFrame, hypothetical_curve_window: ctk.CTkFrame, cost_avoidance_window: ctk.CTkFrame) -> None:
+    '''
+    This is the function that handles Scenarios creating. Here will be created the Scenarios creation window, and also will be
+    the function that calls all other functions that executes subsequently after creating a Scenario. That is:
+    [generate_efficient_curve_buildup_chart(), generate_hypothetical_curve_buildup_chart(), generate_acqcost_curve(), generate_cost_avoidance_chart()]
+    :param scenario_window:
+    :param var_scenarios_count:
+    :param bup_scope:
+    :param efficient_curve_window:
+    :param hypothetical_curve_window:
+    :return:
+    '''
     global scenarios_list
 
     scenario = {}
@@ -713,6 +725,9 @@ def create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_c
                                width=100, height=30, corner_radius=30, cursor="hand2"
                                )
     btn_cancel.place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
+
+    # Calling function to generate Cost Avoidance Chart
+    generate_cost_avoidance_chart()
 
 
 @function_timer
@@ -1204,6 +1219,10 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 
     # ------------------------- Chart Generation ------------------------- #
 
+
+@function_timer
+def generate_cost_avoidance_chart():
+    pass
 
 @function_timer
 def save_chart_image(chart: Image, output_path: str, filename: str) -> None:
