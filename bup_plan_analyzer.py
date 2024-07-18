@@ -146,7 +146,7 @@ def generate_dispersion_chart(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
         return f'US$ {value / 1000:.0f}k'
 
     # Image Size
-    width, height = 600, 220
+    width, height = 600, 235
     fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')  # Layout property that handles "cutting" axes labels
     # Keeping background transparent
     fig.patch.set_facecolor("None")
@@ -175,7 +175,7 @@ def generate_dispersion_chart(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
     canvas_dispersion.draw()
     # Configuring Canvas background
     canvas_dispersion.get_tk_widget().configure(background='#dbdbdb',)
-    canvas_dispersion.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
+    canvas_dispersion.get_tk_widget().pack(fill=ctk.BOTH, expand=True, pady=(0,10))
 
     # Annotation function to connect with mplcursors
     def set_annotations(sel):
@@ -211,7 +211,7 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
     '''
 
     # Image size
-    width, height = 600, 220
+    width, height = 600, 235
 
     # Creating figure and axes to insert the chart
     fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')  # Layout property that handles "cutting" axes labels
@@ -979,7 +979,7 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, r
     canvas_eff.draw()
     # Configuring Canvas background
     canvas_eff.get_tk_widget().configure(background='#cfcfcf')
-    canvas_eff.get_tk_widget().place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
+    canvas_eff.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
 
     # --------------- Turning it into an Image to be displayed ---------------
 
@@ -1097,7 +1097,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios: pd.DataFr
     canvas_eff.draw()
     # Configuring Canvas background
     canvas_eff.get_tk_widget().configure(background='#cfcfcf')
-    canvas_eff.get_tk_widget().place(relx=0.5, rely=0.43, anchor=ctk.CENTER)
+    canvas_eff.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
 
     # --------------- Turning it into an Image to be displayed ---------------
 
@@ -1234,3 +1234,7 @@ def save_chart_image(chart: Image, output_path: str, filename: str) -> None:
     except Exception as ex:
         messagebox.showinfo(title="Error!", message=str(ex) + "\n\nPlease make sure that the Image file is "
                                                               "closed and you have access to the local Downloads folder.")
+
+@function_timer
+def read_stock_data():
+    pass

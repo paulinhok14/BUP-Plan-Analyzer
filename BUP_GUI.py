@@ -44,7 +44,7 @@ def main():
 
     # Main Screen geometry - Centralizing
     ms_width = 700
-    ms_height = 600
+    ms_height = 630
     screen_width = main_screen.winfo_screenwidth()  # Width of the screen
     screen_height = main_screen.winfo_screenheight()  # Height of the screen
     # Calculates the initial X and Y to position the screen
@@ -63,6 +63,11 @@ def main():
         # CTk variable that will store the Scenario count. It will be useful to implement tracking with callback
         # function monitoring it. To show or hide components
         var_scenarios_count = ctk.IntVar()
+
+        # Another CTk variable. Now StringVar in order to handle with Acq Cost/Parts Qty charts exhibition. It starts with 'Parts (#)' and can be 'Acq Cost (US$)'
+        # Each Window (Eff/Hyp) needs its particular StringVar, so as not to be necessary to bound/link both CTkSwitch toggles
+        chart_mode_selection_eff = ctk.StringVar(value='Parts (#)')
+        chart_mode_selection_hyp = ctk.StringVar(value='Parts (#)')
 
         # Reading the Scope file before creating the window
         full_file_path = select_file()  # Selecting Scope file
@@ -91,7 +96,7 @@ def main():
 
         # New window geometry
         nw_width = 700
-        nw_height = 600
+        nw_height = 630
         window_width = new_window.winfo_screenwidth()  # Width of the screen
         window_height = new_window.winfo_screenheight()  # Height of the screen
         # Calculates the initial X and Y to position the screen
@@ -100,7 +105,7 @@ def main():
         new_window.geometry('%dx%d+%d+%d' % (nw_width, nw_height, nw_x, nw_y))
 
         # TabView - Secondary screen elements: Tabs
-        tbvmenu = ctk.CTkTabview(new_window, width=650, height=570, corner_radius=20,
+        tbvmenu = ctk.CTkTabview(new_window, width=650, height=600, corner_radius=20,
                                  segmented_button_fg_color="#009898", segmented_button_unselected_color="#009898",
                                  segmented_button_selected_color="#006464", bg_color='#ebebeb', fg_color='#dbdbdb')
 
@@ -211,7 +216,7 @@ def main():
         lbl_export_xl.bind(sequence='<Button-1>', command=lambda _: export_data('scope'))
 
         # Creating Sheet object to display dataframe
-        sheet = Sheet(tbvmenu.tab("Scope"), data=bup_scope.values.tolist(), headers=bup_scope.columns.tolist(),)
+        sheet = Sheet(tbvmenu.tab("Scope"), data=bup_scope.values.tolist(), headers=bup_scope.columns.tolist())
         sheet.pack(fill="both", expand=True)
 
         # Label with information: file name and rows number
@@ -236,7 +241,7 @@ def main():
         # Tab 3 - Scenarios
 
         # TabView - Segregation between Efficient Curve & Hypothetical Curve charts
-        tbv_curve_charts = ctk.CTkTabview(tbvmenu.tab("Scenarios"), width=620, height=490, corner_radius=15,
+        tbv_curve_charts = ctk.CTkTabview(tbvmenu.tab("Scenarios"), width=620, height=520, corner_radius=15,
                                           segmented_button_fg_color="#009898",
                                           segmented_button_unselected_color="#009898",
                                           segmented_button_selected_color="#006464",
@@ -256,17 +261,58 @@ def main():
                                   dark_image=Image.open(download_icon_path),
                                   size=(34, 34))
 
+        def toggle_chart_mode_selection(str_var: ctk.StringVar, chart_name: str) -> None:
+            '''
+            This function handles CTkSwitch toggling, for both windows (Eff/Hyp). It receives StringVar that is being changed, and set the components
+            such as a CTkLabel to obey the new Text and Color values. This would trigger the action to change the Chart being shown.
+            :param str_var: The ctk.StringVar in which 'Parts'/'Acq Cost' are being stored.
+            :param chart_name: String containing the name of the Window that is being changed. 'eff' or 'hyp'
+            '''
+            current_value = str_var.get()
+            print()
+
+            if current_value == 'Parts (#)':
+                str_var.set('Acq Cost (US$)')
+
+                # Updating Label and Switch properties for Acq Cost Selection
+                if chart_name == 'eff':
+                    swt_toggle_parts_acqcost_eff.configure(button_color='#004b00', progress_color='green')
+                    lbl_chart_mode_eff.configure(text=str_var.get(), text_color='green')
+                else:
+                    swt_toggle_parts_acqcost_hyp.configure(button_color='#004b00', progress_color='green')
+                    lbl_chart_mode_hyp.configure(text=str_var.get(), text_color='green')
+            else:
+                str_var.set('Parts (#)')
+
+                # Updating Label and Switch properties for Parts Selection
+                if chart_name == 'eff':
+                    swt_toggle_parts_acqcost_eff.configure(button_color='orange', fg_color='#ad7102')
+                    lbl_chart_mode_eff.configure(text=str_var.get(), text_color='#ad7102')
+                else:
+                    swt_toggle_parts_acqcost_hyp.configure(button_color='orange', fg_color='#ad7102')
+                    lbl_chart_mode_hyp.configure(text=str_var.get(), text_color='#ad7102')
+
         # Switch in order to toggle between Parts/Acq Cost chart visualization
         swt_toggle_parts_acqcost_eff = ctk.CTkSwitch(tbv_curve_charts.tab("Efficient Curve"),
                                                      text="",
-                                                     command=lambda: print('eff'),
-                                                     width=50, height=12
+                                                     command=lambda: toggle_chart_mode_selection(chart_mode_selection_eff, 'eff'),
+                                                     width=45, height=12, button_color='orange', fg_color='#ad7102',
                                                      )
         swt_toggle_parts_acqcost_hyp = ctk.CTkSwitch(tbv_curve_charts.tab("Hypothetical Curve"),
                                                      text="",
-                                                     command=lambda: print('hyp'),bg_color='black',fg_color='black',
-                                                     width=50, height=12
+                                                     command=lambda: toggle_chart_mode_selection(chart_mode_selection_hyp, 'hyp'),
+                                                     width=45, height=12, button_color='orange', fg_color='#ad7102'
                                                      )
+
+        # Labels to show current selected StringVar value: AcqCost/Parts
+        lbl_chart_mode_eff = ctk.CTkLabel(tbv_curve_charts.tab("Efficient Curve"),
+                                          text=chart_mode_selection_eff.get(),
+                                          font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                          text_color='#ad7102')
+        lbl_chart_mode_hyp = ctk.CTkLabel(tbv_curve_charts.tab("Hypothetical Curve"),
+                                          text=chart_mode_selection_hyp.get(),
+                                          font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                          text_color='#ad7102')
 
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
         def callback_func_scenario_add(scenarios_count) -> None:
@@ -277,8 +323,10 @@ def main():
                 btn_export_data_hyp.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
                 btn_save_image_eff.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
                 btn_save_image_hyp.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
-                swt_toggle_parts_acqcost_eff.place(relx=0.92, rely=0.001, anchor=ctk.CENTER)
-                swt_toggle_parts_acqcost_hyp.place(relx=0.92, rely=0.001, anchor=ctk.CENTER)
+                swt_toggle_parts_acqcost_eff.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
+                swt_toggle_parts_acqcost_hyp.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
+                lbl_chart_mode_eff.place(relx=0.88, rely=0.02, anchor="e")
+                lbl_chart_mode_hyp.place(relx=0.88, rely=0.02, anchor="e")
                 lbl_pending_scenario.place_forget()
             else:
                 pass
