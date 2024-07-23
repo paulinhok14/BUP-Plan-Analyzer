@@ -307,12 +307,6 @@ def main():
                                                      width=45, height=12, button_color='orange', fg_color='#ad7102'
                                                      )
 
-        # ComboBoxes in order to handle the Acq Cost for different Scenarios. Each scenario produces a unique Acq Cost Chart.
-        cbx_selected_scenario_eff = ctk.CTkComboBox(tbv_curve_charts.tab("Efficient Curve"),
-                                                    width=80, height=12,)
-        cbx_selected_scenario_hyp = ctk.CTkComboBox(tbv_curve_charts.tab("Hypothetical Curve"),
-                                                    width=80, height=12)
-
         # Labels to show current selected StringVar value: AcqCost/Parts
         lbl_chart_mode_eff = ctk.CTkLabel(tbv_curve_charts.tab("Efficient Curve"),
                                           text=chart_mode_selection_eff.get(),
@@ -322,6 +316,24 @@ def main():
                                           text=chart_mode_selection_hyp.get(),
                                           font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                           text_color='#ad7102')
+
+        # ComboBoxes in order to handle the Acq Cost for different Scenarios. Each scenario produces a unique Acq Cost Chart.
+        cbx_selected_scenario_eff = ctk.CTkComboBox(tbv_curve_charts.tab("Efficient Curve"),
+                                                    height=20, width=130,
+                                                    font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                                    dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                                    values=['Scenario 0', 'Scenario 1'],
+                                                    state='readonly')
+        cbx_selected_scenario_hyp = ctk.CTkComboBox(tbv_curve_charts.tab("Hypothetical Curve"),
+                                                    height=20, width=130,
+                                                    font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                                    dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                                    values=['Scenario 0', 'Scenario 1'],
+                                                    state='readonly')
+
+        # As with state='readonly' the first value on the list is not showed in placeholder. It has to be set manually
+        cbx_selected_scenario_eff.set('Scenario 0')
+        cbx_selected_scenario_hyp.set('Scenario 0')
 
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
         def callback_func_scenario_add(scenarios_count) -> None:
@@ -361,7 +373,7 @@ def main():
                         # Remove Parts Chart
                         mpl_canvas_list[0].get_tk_widget().place_forget()
                         # Insert Scenario ComboBox and Acq Cost Chart
-                        cbx_selected_scenario_eff.place(relx=0.05, rely=0.02, anchor=ctk.CENTER)
+                        cbx_selected_scenario_eff.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
                     else:
                         # Insert Parts Chart
                         mpl_canvas_list[0].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
@@ -374,7 +386,7 @@ def main():
                         # Remove Parts Chart
                         mpl_canvas_list[1].get_tk_widget().place_forget()
                         # Insert Scenario ComboBox and Acq Cost Chart
-                        cbx_selected_scenario_hyp.place(relx=0.05, rely=0.02, anchor=ctk.CENTER)
+                        cbx_selected_scenario_hyp.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
                     else:
                         # Insert Parts Chart
                         mpl_canvas_list[1].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
