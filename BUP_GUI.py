@@ -269,7 +269,6 @@ def main():
             :param chart_name: String containing the name of the Window that is being changed. 'eff' or 'hyp'
             '''
             current_value = str_var.get()
-            print()
 
             if current_value == 'Parts (#)':
                 str_var.set('Acq Cost (US$)')
@@ -295,14 +294,24 @@ def main():
         # Switch in order to toggle between Parts/Acq Cost chart visualization
         swt_toggle_parts_acqcost_eff = ctk.CTkSwitch(tbv_curve_charts.tab("Efficient Curve"),
                                                      text="",
-                                                     command=lambda: toggle_chart_mode_selection(chart_mode_selection_eff, 'eff'),
+                                                     command=lambda: (toggle_chart_mode_selection(chart_mode_selection_eff, 'eff'),
+                                                                      callback_func_chart_mode_toggle(chart_mode_selection_eff, 'eff',
+                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_acqcost_eff, bup.canvas_acqcost_hyp])),
                                                      width=45, height=12, button_color='orange', fg_color='#ad7102',
                                                      )
         swt_toggle_parts_acqcost_hyp = ctk.CTkSwitch(tbv_curve_charts.tab("Hypothetical Curve"),
                                                      text="",
-                                                     command=lambda: toggle_chart_mode_selection(chart_mode_selection_hyp, 'hyp'),
+                                                     command=lambda: (toggle_chart_mode_selection(chart_mode_selection_hyp, 'hyp'),
+                                                                      callback_func_chart_mode_toggle(chart_mode_selection_hyp, 'hyp',
+                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_acqcost_eff, bup.canvas_acqcost_hyp])),
                                                      width=45, height=12, button_color='orange', fg_color='#ad7102'
                                                      )
+
+        # ComboBoxes in order to handle the Acq Cost for different Scenarios. Each scenario produces a unique Acq Cost Chart.
+        cbx_selected_scenario_eff = ctk.CTkComboBox(tbv_curve_charts.tab("Efficient Curve"),
+                                                    width=80, height=12,)
+        cbx_selected_scenario_hyp = ctk.CTkComboBox(tbv_curve_charts.tab("Hypothetical Curve"),
+                                                    width=80, height=12)
 
         # Labels to show current selected StringVar value: AcqCost/Parts
         lbl_chart_mode_eff = ctk.CTkLabel(tbv_curve_charts.tab("Efficient Curve"),
@@ -331,7 +340,48 @@ def main():
             else:
                 pass
 
-        # Tracing the variable and calling the respective functions every time the variable changes
+        def callback_func_chart_mode_toggle(chart_mode: ctk.StringVar, chart_name: str, mpl_canvas_list: list) -> None:
+            '''
+            This is the function that will handle the Charts in different mode exhibition.
+            It will be called whenever a CTkSwitch is toggled, and based on the variable, it decides what Chart to show (Parts/Acq Cost)
+            :param chart_mode: StringVar with the Chart Mode that is being triggered
+            :param chart_name: Window being toggled (eff/hyp)
+            :param mpl_canvas_list: List with the Chart canvas to be manipulated
+            mpl_canvas_list indexs:
+            0: Efficient Chart - Parts
+            1: Hypothetical Chart - Parts
+            2: List with Efficient Charts - Acq Cost, for each Scenario created.
+            3: List with Hypothetical Charts - Acq Cost, for each Scenario created.
+            '''
+
+            match chart_name:
+                # Efficient Window: CTkSwitch toggled
+                case 'eff':
+                    if chart_mode.get() == 'Acq Cost (US$)':
+                        # Remove Parts Chart
+                        mpl_canvas_list[0].get_tk_widget().place_forget()
+                        # Insert Scenario ComboBox and Acq Cost Chart
+                        cbx_selected_scenario_eff.place(relx=0.05, rely=0.02, anchor=ctk.CENTER)
+                    else:
+                        # Insert Parts Chart
+                        mpl_canvas_list[0].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                        # Remove Scenario ComboBox and Acq Cost Chart
+                        cbx_selected_scenario_eff.place_forget()
+
+                # Hypothetical Window: CTkSwitch toggled
+                case 'hyp':
+                    if chart_mode.get() == 'Acq Cost (US$)':
+                        # Remove Parts Chart
+                        mpl_canvas_list[1].get_tk_widget().place_forget()
+                        # Insert Scenario ComboBox and Acq Cost Chart
+                        cbx_selected_scenario_hyp.place(relx=0.05, rely=0.02, anchor=ctk.CENTER)
+                    else:
+                        # Insert Parts Chart
+                        mpl_canvas_list[1].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                        # Remove Scenario ComboBox and Acq Cost Chart
+                        cbx_selected_scenario_hyp.place_forget()
+
+        # Tracing Scenario creation variable and calling the respective functions every time the variable changes
         var_scenarios_count.trace_add("write", callback=lambda *args: callback_func_scenario_add(var_scenarios_count))
 
         # Button that saves Efficient Chart Image
@@ -404,7 +454,10 @@ def main():
             # Setting (capturing) focus to the window
             scenario_window.grab_set()
 
-            # Function that handles Scenarios creation, creates the window elements and interacts with the Scenario List
+            '''
+            Function that handles Scenarios creation, creates the window elements and interacts with the Scenario List.
+            It will also return the Canvas for each Chart, enabling toggle function to handle the exhibition
+            '''
             bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window, cost_avoidance_window)
 
         # Create Scenario button

@@ -32,6 +32,9 @@ img_eff_chart, img_hyp_chart = None, None
 # Creating also a dictionary to store scenario DataFrames
 df_scope_with_scenarios, scenario_dataframes = None, {}
 
+# Global variables to store FigureCanvasTkAgg objects to be toggled in SwitchButton. Changing Build-Up curves from Parts/AcqCost
+canvas_eff, canvas_hyp, canvas_acqcost_eff, canvas_acqcost_hyp = None, None, None, None
+
 # Log Configs
 open('execution_info.log', 'w').close()  # Clean log file before system execution
 log_format = "%(asctime)s: %(levelname)s: %(message)s"
@@ -285,7 +288,7 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
 
 @function_timer
 def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntVar, bup_scope: pd.DataFrame,
-                    efficient_curve_window: ctk.CTkFrame, hypothetical_curve_window: ctk.CTkFrame, cost_avoidance_window: ctk.CTkFrame) -> None:
+                    efficient_curve_window: ctk.CTkFrame, hypothetical_curve_window: ctk.CTkFrame, cost_avoidance_window: ctk.CTkFrame):
     '''
     This is the function that handles Scenarios creating. Here will be created the Scenarios creation window, and also will be
     the function that calls all other functions that executes subsequently after creating a Scenario. That is:
@@ -536,7 +539,11 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
     # Function to return the values entered by user in the Entry, handling Defaults. It also saves both chart
     # Images on global scope variables.
     def get_entry_values():
-        global img_eff_chart, img_hyp_chart, df_scope_with_scenarios
+        '''
+        As this is an awaiting function, it has to assign the value directly to the global scope variables.
+        In another way, if tried to return directly from 'create_scenario()' (parent function), it would raise a 'non exists' error
+        '''
+        global img_eff_chart, img_hyp_chart, df_scope_with_scenarios, canvas_eff, canvas_hyp, canvas_acqcost_eff, canvas_acqcost_hyp
 
         # --------- Contractual Conditions ---------
 
@@ -691,24 +698,15 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         # Calling the function to generate the Efficient Build-Up chart. The return of the function is the chart in a
         # figure (Image object), in addition to the DataFrames/Variables created in the function, as a return to be used
         # in the Hypothetical chart
-        bup_eff_chart_whitebg, bup_eff_chart, df_scope_with_scenarios, scenario_dataframes = \
-            generate_efficient_curve_buildup_chart(bup_scope, scenarios_list, efficient_curve_window)
-
-        # Loading into a CTk Image object
-        img_bup_efficient_chart = ctk.CTkImage(bup_eff_chart,
-                                    dark_image=bup_eff_chart,
-                                    size=(580, 370))
+        canvas_eff, bup_eff_chart_whitebg, df_scope_with_scenarios, scenario_dataframes = generate_efficient_curve_buildup_chart(bup_scope, scenarios_list, efficient_curve_window)
 
         # Calling the function to generate Hypothetical Build-Up chart.
-        bup_hyp_chart_whitebg, bup_hyp_chart = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes, hypothetical_curve_window)
+        bup_hyp_chart_whitebg, canvas_hyp = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes, hypothetical_curve_window)
 
-        # Loading into a CTk Image object
-        img_bup_hypothetical_chart = ctk.CTkImage(bup_hyp_chart,
-                                    dark_image=bup_hyp_chart,
-                                    size=(580, 370))
 
         # Saving both charts Image on global scope variables
         img_eff_chart, img_hyp_chart = bup_eff_chart_whitebg, bup_hyp_chart_whitebg
+
 
     # OK button
     btn_ok = ctk.CTkButton(scenario_window, text='OK', command=get_entry_values,
@@ -731,12 +729,11 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
 
 
 @function_timer
-def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, root: ctk.CTkFrame):
+def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios: list, root: ctk.CTkFrame):
     '''
     :param bup_scope: DataFrame with Scope and Scenarios
     :param scenarios: List with all created Scenarios
     :param root: CTkFrame in which the Chart will be displayed
-    :return: CTkImage objects in order to be exported/downloaded. Chart will be plotted in this function with FigureCanvasTkAgg
     '''
     # --------------- Data Processing ---------------
 
@@ -983,14 +980,6 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, r
 
     # --------------- Turning it into an Image to be displayed ---------------
 
-    # Saving the matplotlib figure to a BytesIO object (memory), so it is not necessary to save it in an image file
-    tmp_img_eff_chart = BytesIO()
-    fig.savefig(tmp_img_eff_chart, format='png', transparent=True)
-    tmp_img_eff_chart.seek(0)
-
-    # Loading the chart image into an Image object that will be returned by the function
-    bup_eff_chart = Image.open(tmp_img_eff_chart)
-
     # It is necessary to save a chart Image with white background. Transparent is to plot. White to save as a file.
     tmp_img_eff_chart_whitebg = BytesIO()
     fig.savefig(tmp_img_eff_chart_whitebg, format='png', transparent=False)
@@ -999,11 +988,10 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios, r
     # Loading the chart image into an Image object that will be returned by the function
     bup_eff_chart_whitebg = Image.open(tmp_img_eff_chart_whitebg)
 
-    # ----------- At last, calling function to Generate Efficient Chart with Acq Cost ----------- #
+    # ----------- At last, calling function to Generate Charts with Acq Cost ----------- #
     generate_acqcost_curve(df_scope_with_scenarios, df_dates_eff, df_dates_hyp, scenario_dataframes)
 
-    return bup_eff_chart_whitebg, bup_eff_chart, df_scope_with_scenarios, scenario_dataframes
-
+    return canvas_eff, bup_eff_chart_whitebg, df_scope_with_scenarios, scenario_dataframes
 
 
 @function_timer
@@ -1012,7 +1000,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios: pd.DataFr
     Function that creates the Hypothetycal Curve BuildUp Chart.
     param df_scope_with_scenarios: Created DataFrame on Efficient Curve Build-Up construction. Combinations Scope/Scenarios.
     param scenario_dataframes: Dictionary with all scenarios dataframes. Each scenario has a list with 2 DF elements. Efficient and Hypothetical, respectively.
-    return: Returns an Image object
+    return: Returns an Image object and also the Chart Canvas object (FigureCanvasTkAgg): canvas_hyp
     """
 
     # --------------- Chart Generation ---------------
@@ -1093,21 +1081,13 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios: pd.DataFr
     mpc.cursor(axs, hover=True).connect('add', lambda sel: set_annotations(sel))
 
     # Inserting chart into Canvas
-    canvas_eff = FigureCanvasTkAgg(fig, master=root)
-    canvas_eff.draw()
+    canvas_hyp = FigureCanvasTkAgg(fig, master=root)
+    canvas_hyp.draw()
     # Configuring Canvas background
-    canvas_eff.get_tk_widget().configure(background='#cfcfcf')
-    canvas_eff.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+    canvas_hyp.get_tk_widget().configure(background='#cfcfcf')
+    canvas_hyp.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
 
     # --------------- Turning it into an Image to be displayed ---------------
-
-    # Saving the matplotlib figure to a BytesIO object (memory), so as not to have to save an image file
-    tmp_img_hyp_chart = BytesIO()
-    fig.savefig(tmp_img_hyp_chart, format='png', transparent=True)
-    tmp_img_hyp_chart.seek(0)
-
-    # Loading the chart image into an Image object that will be returned by the function
-    bup_hyp_chart = Image.open(tmp_img_hyp_chart)
 
     # It is necessary to save a chart Image with white background. Transparent is to plot. White to save as a file.
     tmp_img_hyp_chart_whitebg = BytesIO()
@@ -1117,7 +1097,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios: pd.DataFr
     # Loading the chart image into Image objects that will be returned by the function
     bup_hyp_chart_whitebg = Image.open(tmp_img_hyp_chart_whitebg)
 
-    return bup_hyp_chart_whitebg, bup_hyp_chart
+    return bup_hyp_chart_whitebg, canvas_hyp
 
 
 @function_timer
@@ -1127,7 +1107,7 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
     :param df_scope_with_scenarios: DataFrame with Scope and All Scenarios joined information
     :param df_dates_eff: DataFrame with a 'date' Series, with Min and Max range date for Efficient Chart
     :param df_dates_hyp: DataFrame with a 'date' Series, with Min and Max range date for Hypothetical Chart
-    :return:
+    :return: Object FigureCanvasTkAgg, in order to be plotted as soon as the Switches to Acq Cost are toggled. It will be managed by another function.
     '''
 
     # Hard copy so not to change main df_scope_with_scenarios
@@ -1218,6 +1198,91 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 
 
     # ------------------------- Chart Generation ------------------------- #
+
+    # List of colors, so that each Scenario has a specific color and facilitates differentiation
+    colors_array = ['blue', 'orange', 'black', 'green', 'purple']
+
+    # Image size
+    width, height = 680, 435
+
+    # Creating a figure and axes to insert the chart
+    fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')
+    # Keeping background transparent
+    fig.patch.set_facecolor("None")
+    fig.patch.set_alpha(0)
+    ax.set_facecolor('None')
+
+    # Creating the chart for each Scenario, separately
+    # Efficient - Acq Cost
+    for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
+        # Bars - Monthly Acq Cost
+        bars = ax.bar(scenario_df_list[2]['Accum. Acq Cost'], scenario_df_list[2]['Order Date (Eff)'],
+                      label=f'Scen. {index}',
+                      color=colors_array[index])
+
+        # Accumulated Line
+        axs = ax.plot(scenario_df_list[2]['Accum. Acq Cost'], scenario_df_list[2]['Order Date (Eff)'],
+                      label=f'Scen. {index}',
+                      color=colors_array[index])
+        # Configuring the axis
+        plt.xticks(scenario_df_list[2].index[::3], scenario_df_list[2]['Order Date (Eff)'][::3], rotation=45, ha='right')
+
+        # Getting the t0 date for the current Scenario and converting it to MM/YYYY format
+        t0_date = pd.to_datetime(
+            df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 't0'].values[0])
+        t0_date = t0_date.strftime('%m/%Y')
+        # Adding a vertical line at t0
+        ax.axvline(x=t0_date, linestyle='--', color=colors_array[index], label=f't0: Scen. {index}')
+
+        # Getting the acft_delivery_start date for the current Scenario and converting it to MM/YYYY format
+        acft_delivery_start_date = pd.to_datetime(
+            df_scope_with_scenarios.loc[df_scope_with_scenarios['Scenario'] == index, 'acft_delivery_start'].values[0])
+        acft_delivery_start_date = acft_delivery_start_date.strftime('%m/%Y')
+        # Adding a vertical line in acft_delivery_start
+        ax.axvline(x=acft_delivery_start_date, linestyle='dotted', color=colors_array[index],
+                   label=f'Acft Delivery Start: Scen. {index}')
+
+        # Adding a material delivery range between the Start and End dates
+        material_delivery_start_date = pd.to_datetime(df_scope_with_scenarios.loc[
+                                                          df_scope_with_scenarios['Scenario'] == index,
+                                                          'material_delivery_start_date'].values[0])
+        material_delivery_start_date = material_delivery_start_date.strftime('%m/%Y')
+        material_delivery_end_date = pd.to_datetime(df_scope_with_scenarios.loc[
+                                                        df_scope_with_scenarios['Scenario'] == index,
+                                                        'material_delivery_end_date'].values[0])
+        material_delivery_end_date = material_delivery_end_date.strftime('%m/%Y')
+
+        ax.axvspan(material_delivery_start_date, material_delivery_end_date, alpha=0.5, color=colors_array[index])
+
+        # Adding a note at the point where the Build-Up is completed (all items delivered)
+        index_max_acc_cost = scenario_df_list[2]['Accum. Acq Cost'].idxmax()
+        x_max = scenario_df_list[2].loc[index_max_acc_cost, 'Order Date (Eff)']
+        y_max = scenario_df_list[2].loc[index_max_acc_cost, 'Accum. Acq Cost']
+        plt.scatter(x_max, y_max, color=colors_array[index], marker='o', label=f'BUP Conclusion: {x_max}')
+
+    # Chart Settings
+    ax.set_ylabel('Materials Delivered Qty (Accumulated)')
+    ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
+    ax.set_title('Hypothetical Curve: Build-Up Forecast')
+    ax.grid(True)
+
+    # fig.show()
+
+    # Inserting chart into Canvas
+    '''canvas_dispersion = FigureCanvasTkAgg(fig, master=root)
+    canvas_dispersion.draw()
+    # Configuring Canvas background
+    canvas_dispersion.get_tk_widget().configure(background='#dbdbdb', )
+    canvas_dispersion.get_tk_widget().pack(fill=ctk.BOTH, expand=True, pady=(0, 10))
+    '''
+
+    ''' 
+    The Canvas objects should be passed as a list, as each Scenario demands a particular Chart (Canvas Object).
+    Everytime that a new Scenario is created, this list is cleared and the object created for each scenario will be appended to list
+    '''
+    canvas_list_acqcost: list = []
+
+
 
 
 @function_timer
