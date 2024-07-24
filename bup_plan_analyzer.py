@@ -33,7 +33,7 @@ img_eff_chart, img_hyp_chart = None, None
 df_scope_with_scenarios, scenario_dataframes = None, {}
 
 # Global variables to store FigureCanvasTkAgg objects to be toggled in SwitchButton. Changing Build-Up curves from Parts/AcqCost
-canvas_eff, canvas_hyp, canvas_acqcost_eff, canvas_acqcost_hyp, canvas_list_acqcost_eff, canvas_list_acqcost_hyp = None, None, None, None, [], []
+canvas_eff, canvas_hyp, canvas_list_acqcost_eff, canvas_list_acqcost_hyp = None, None, [], []
 
 # Log Configs
 open('execution_info.log', 'w').close()  # Clean log file before system execution
@@ -1282,7 +1282,7 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
         canvas_acqcost_eff = FigureCanvasTkAgg(fig, master=efficient_curve_window)
         canvas_acqcost_eff.draw()
         # Configuring Canvas background
-        canvas_acqcost_eff.get_tk_widget().configure(background='#dbdbdb')
+        canvas_acqcost_eff.get_tk_widget().configure(background='#cfcfcf')
 
         # Appending to List
         canvas_list_acqcost_eff.append(canvas_acqcost_eff)
@@ -1345,7 +1345,7 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
         canvas_acqcost_hyp = FigureCanvasTkAgg(fig, master=hypothetical_curve_window)
         canvas_acqcost_hyp.draw()
         # Configuring Canvas background
-        canvas_acqcost_hyp.get_tk_widget().configure(background='#dbdbdb')
+        canvas_acqcost_hyp.get_tk_widget().configure(background='#cfcfcf')
 
         # Appending to List
         canvas_list_acqcost_hyp.append(canvas_acqcost_hyp)

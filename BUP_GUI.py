@@ -30,6 +30,8 @@ readme_url = r'https://github.com/paulinhok14/BUP-Plan-Analyzer/blob/master/READ
 # readme_path = os.path.join(app_path, 'README.md')
 # TO DO: Make README.md open local file using default web browser (or specific), independent of default ".md" openers from user OS
 
+# These variables will keep the Last Acq Cost canvas showed, so that I can handle it on CTkSwitch toggle (AcqCost/Parts)
+last_acq_cost_canvas_eff, last_acq_cost_canvas_hyp = None, None
 
 def main():
 
@@ -296,14 +298,14 @@ def main():
                                                      text="",
                                                      command=lambda: (toggle_chart_mode_selection(chart_mode_selection_eff, 'eff'),
                                                                       callback_func_chart_mode_toggle(chart_mode_selection_eff, 'eff',
-                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_acqcost_eff, bup.canvas_acqcost_hyp])),
+                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_list_acqcost_eff, bup.canvas_list_acqcost_hyp])),
                                                      width=45, height=12, button_color='orange', fg_color='#ad7102',
                                                      )
         swt_toggle_parts_acqcost_hyp = ctk.CTkSwitch(tbv_curve_charts.tab("Hypothetical Curve"),
                                                      text="",
                                                      command=lambda: (toggle_chart_mode_selection(chart_mode_selection_hyp, 'hyp'),
                                                                       callback_func_chart_mode_toggle(chart_mode_selection_hyp, 'hyp',
-                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_acqcost_eff, bup.canvas_acqcost_hyp])),
+                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_list_acqcost_eff, bup.canvas_list_acqcost_hyp])),
                                                      width=45, height=12, button_color='orange', fg_color='#ad7102'
                                                      )
 
@@ -317,11 +319,6 @@ def main():
                                           font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                           text_color='#ad7102')
 
-        #test
-        def test_function(value):
-            # print(next(iter(bup.scenario_dataframes)))
-            print(list(bup.scenario_dataframes.keys()))
-            print(value)
 
         # ComboBoxes in order to handle the Acq Cost for different Scenarios. Each scenario produces a unique Acq Cost Chart.
         cbx_selected_scenario_eff = ctk.CTkComboBox(tbv_curve_charts.tab("Efficient Curve"),
@@ -329,16 +326,25 @@ def main():
                                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                                     dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                                     state='readonly',
-                                                    command=test_function)
+                                                    command=lambda value: (callback_func_chart_mode_toggle(chart_mode_selection_eff, 'eff',
+                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_list_acqcost_eff, bup.canvas_list_acqcost_hyp],
+                                                                                                      cbx_triggered=True,
+                                                                                                      cbx_selected=value)))
         cbx_selected_scenario_hyp = ctk.CTkComboBox(tbv_curve_charts.tab("Hypothetical Curve"),
                                                     height=20, width=130,
                                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                                     dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                                    state='readonly')
+                                                    state='readonly',
+                                                    command=lambda value: (callback_func_chart_mode_toggle(chart_mode_selection_hyp, 'hyp',
+                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_list_acqcost_eff, bup.canvas_list_acqcost_hyp],
+                                                                                                      cbx_triggered=True,
+                                                                                                      cbx_selected=value)))
 
 
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
         def callback_func_scenario_add(scenarios_count) -> None:
+
+            global last_acq_cost_canvas_eff, last_acq_cost_canvas_hyp
 
             # When a Scenario is created, the ComboBox values will also be updated
             cbx_selected_scenario_eff.configure(values=list(bup.scenario_dataframes.keys()))
@@ -360,17 +366,23 @@ def main():
                 # Only in the first time, the ComboBox 'placeholder' will have the first Scenario
                 cbx_selected_scenario_eff.set(list(bup.scenario_dataframes.keys())[0])
                 cbx_selected_scenario_hyp.set(list(bup.scenario_dataframes.keys())[0])
+
+                # Also only when a first Scenario is created, I assign this first scenario charts to Acq Cost last showed charts
+                last_acq_cost_canvas_eff = bup.canvas_list_acqcost_eff[0].get_tk_widget()
+                last_acq_cost_canvas_hyp = bup.canvas_list_acqcost_hyp[0].get_tk_widget()
+
             else:
                 pass
 
 
-        def callback_func_chart_mode_toggle(chart_mode: ctk.StringVar, chart_name: str, mpl_canvas_list: list) -> None:
+        def callback_func_chart_mode_toggle(chart_mode: ctk.StringVar, chart_name: str, mpl_canvas_list: list, cbx_triggered:bool=False, cbx_selected:str=None) -> None:
             '''
             This is the function that will handle the Charts in different mode exhibition.
             It will be called whenever a CTkSwitch is toggled, and based on the variable, it decides what Chart to show (Parts/Acq Cost)
             :param chart_mode: StringVar with the Chart Mode that is being triggered
             :param chart_name: Window being toggled (eff/hyp)
             :param mpl_canvas_list: List with the Chart canvas to be manipulated
+            :param cbx_triggered: This arg will be True only when being called by ComboBox switching Acq Cost charts between scenarios.
             mpl_canvas_list indexs:
             0: Efficient Chart - Parts
             1: Hypothetical Chart - Parts
@@ -378,32 +390,64 @@ def main():
             3: List with Hypothetical Charts - Acq Cost, for each Scenario created.
             '''
 
-            match chart_name:
-                # Efficient Window: CTkSwitch toggled
-                case 'eff':
-                    if chart_mode.get() == 'Acq Cost (US$)':
-                        # Remove Parts Chart
-                        mpl_canvas_list[0].get_tk_widget().place_forget()
-                        # Insert Scenario ComboBox and Acq Cost Chart
-                        cbx_selected_scenario_eff.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
-                    else:
-                        # Insert Parts Chart
-                        mpl_canvas_list[0].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
-                        # Remove Scenario ComboBox and Acq Cost Chart
-                        cbx_selected_scenario_eff.place_forget()
+            global last_acq_cost_canvas_eff, last_acq_cost_canvas_hyp
 
-                # Hypothetical Window: CTkSwitch toggled
-                case 'hyp':
-                    if chart_mode.get() == 'Acq Cost (US$)':
-                        # Remove Parts Chart
-                        mpl_canvas_list[1].get_tk_widget().place_forget()
-                        # Insert Scenario ComboBox and Acq Cost Chart
-                        cbx_selected_scenario_hyp.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
-                    else:
-                        # Insert Parts Chart
-                        mpl_canvas_list[1].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
-                        # Remove Scenario ComboBox and Acq Cost Chart
-                        cbx_selected_scenario_hyp.place_forget()
+            if cbx_triggered == False:
+
+                match chart_name:
+                    # Efficient Window: CTkSwitch toggled
+                    case 'eff':
+                        if chart_mode.get() == 'Acq Cost (US$)':
+                            # Remove Parts Chart
+                            mpl_canvas_list[0].get_tk_widget().place_forget()
+                            # Insert Scenario ComboBox and Acq Cost Chart
+                            cbx_selected_scenario_eff.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
+                            last_acq_cost_canvas_eff.place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                        else:
+                            # Insert Parts Chart
+                            mpl_canvas_list[0].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                            # Remove Scenario ComboBox and Acq Cost Chart
+                            cbx_selected_scenario_eff.place_forget()
+                            last_acq_cost_canvas_eff.place_forget()
+
+                    # Hypothetical Window: CTkSwitch toggled
+                    case 'hyp':
+                        if chart_mode.get() == 'Acq Cost (US$)':
+                            # Remove Parts Chart
+                            mpl_canvas_list[1].get_tk_widget().place_forget()
+                            # Insert Scenario ComboBox and Acq Cost Chart
+                            cbx_selected_scenario_hyp.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
+                            last_acq_cost_canvas_hyp.place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                        else:
+                            # Insert Parts Chart
+                            mpl_canvas_list[1].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                            # Remove Scenario ComboBox and Acq Cost Chart
+                            cbx_selected_scenario_hyp.place_forget()
+                            last_acq_cost_canvas_hyp.place_forget()
+                        
+            elif cbx_triggered == True:
+                # Getting the index to search on the list, based on the last char of value, ex: 0 for 'Scenario_0'
+                chart_index = int(cbx_selected[-1])
+                # print(mpl_canvas_list[0])
+                # print(mpl_canvas_list[1])
+                # print(mpl_canvas_list[2])
+                # print(mpl_canvas_list[3])
+
+                print(cbx_selected)
+                print(chart_index)
+
+                # Efficient Screen Switching
+                if chart_name == 'eff':
+                    last_acq_cost_canvas_eff.place_forget()
+                    mpl_canvas_list[2][chart_index].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                    last_acq_cost_canvas_eff = mpl_canvas_list[2][chart_index].get_tk_widget()
+
+                # Hypothetical Screen Switching
+                elif chart_name == 'hyp':
+                    last_acq_cost_canvas_hyp.place_forget()
+                    mpl_canvas_list[3][chart_index].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                    last_acq_cost_canvas_hyp =  mpl_canvas_list[3][chart_index].get_tk_widget()
+
 
         # Tracing Scenario creation variable and calling the respective functions every time the variable changes
         var_scenarios_count.trace_add("write", callback=lambda *args: callback_func_scenario_add(var_scenarios_count))
