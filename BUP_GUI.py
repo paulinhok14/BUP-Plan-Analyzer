@@ -317,26 +317,33 @@ def main():
                                           font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                           text_color='#ad7102')
 
+        #test
+        def test_function(value):
+            # print(next(iter(bup.scenario_dataframes)))
+            print(list(bup.scenario_dataframes.keys()))
+            print(value)
+
         # ComboBoxes in order to handle the Acq Cost for different Scenarios. Each scenario produces a unique Acq Cost Chart.
         cbx_selected_scenario_eff = ctk.CTkComboBox(tbv_curve_charts.tab("Efficient Curve"),
                                                     height=20, width=130,
                                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                                     dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                                    values=['Scenario 0', 'Scenario 1'],
-                                                    state='readonly')
+                                                    state='readonly',
+                                                    command=test_function)
         cbx_selected_scenario_hyp = ctk.CTkComboBox(tbv_curve_charts.tab("Hypothetical Curve"),
                                                     height=20, width=130,
                                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                                     dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                                    values=['Scenario 0', 'Scenario 1'],
                                                     state='readonly')
 
-        # As with state='readonly' the first value on the list is not showed in placeholder. It has to be set manually
-        cbx_selected_scenario_eff.set('Scenario 0')
-        cbx_selected_scenario_hyp.set('Scenario 0')
 
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
         def callback_func_scenario_add(scenarios_count) -> None:
+
+            # When a Scenario is created, the ComboBox values will also be updated
+            cbx_selected_scenario_eff.configure(values=list(bup.scenario_dataframes.keys()))
+            cbx_selected_scenario_hyp.configure(values=list(bup.scenario_dataframes.keys()))
+
 
             if scenarios_count.get() == 1:
                 # Show the Export to Excel/Save Image buttons and hide the Scenario Creation message
@@ -349,8 +356,13 @@ def main():
                 lbl_chart_mode_eff.place(relx=0.88, rely=0.02, anchor="e")
                 lbl_chart_mode_hyp.place(relx=0.88, rely=0.02, anchor="e")
                 lbl_pending_scenario.place_forget()
+
+                # Only in the first time, the ComboBox 'placeholder' will have the first Scenario
+                cbx_selected_scenario_eff.set(list(bup.scenario_dataframes.keys())[0])
+                cbx_selected_scenario_hyp.set(list(bup.scenario_dataframes.keys())[0])
             else:
                 pass
+
 
         def callback_func_chart_mode_toggle(chart_mode: ctk.StringVar, chart_name: str, mpl_canvas_list: list) -> None:
             '''

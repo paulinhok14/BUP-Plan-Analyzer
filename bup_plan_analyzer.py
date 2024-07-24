@@ -690,9 +690,6 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         scenarios_list.append(scenario)
         scenario_window.destroy()
 
-        # Adding 1 to IntVar with the Scenarios count
-        var_scenarios_count.set(var_scenarios_count.get() + 1)
-
         # ----------- Calling the chart generation function -----------
 
         # Calling the function to generate the Efficient Build-Up chart. The return of the function is the chart in a
@@ -704,9 +701,11 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         # Calling the function to generate Hypothetical Build-Up chart.
         bup_hyp_chart_whitebg, canvas_hyp = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes, hypothetical_curve_window)
 
-
         # Saving both charts Image on global scope variables
         img_eff_chart, img_hyp_chart = bup_eff_chart_whitebg, bup_hyp_chart_whitebg
+
+        # Adding 1 to IntVar with the Scenarios count
+        var_scenarios_count.set(var_scenarios_count.get() + 1)
 
 
     # OK button
