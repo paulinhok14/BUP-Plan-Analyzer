@@ -1209,16 +1209,8 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
     # Image size
     width, height = 680, 435
 
-    # Creating a figure and axes to insert the chart
-    fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')
-    # Keeping background transparent
-    fig.patch.set_facecolor("None")
-    fig.patch.set_alpha(0)
-    ax.set_facecolor('None')
-
     # Creating the chart for each Scenario, separately
-
-    ''' 
+    '''
     The Canvas objects should be passed as a list, as each Scenario demands a particular Chart (Canvas Object).
     Everytime that a new Scenario is created, this list is cleared and the object created for each scenario will be appended to list
     '''
@@ -1227,13 +1219,20 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 
     # Efficient - Acq Cost
     for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
+        # Creating a figure and axes to insert the chart
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')
+        # Keeping background transparent
+        fig.patch.set_facecolor("None")
+        fig.patch.set_alpha(0)
+        ax.set_facecolor('None')
+
         # Bars - Monthly Acq Cost
-        bars = ax.bar(scenario_df_list[2]['Accum. Acq Cost'], scenario_df_list[2]['Order Date (Eff)'],
+        bars = ax.bar(scenario_df_list[2]['Order Date (Eff)'], scenario_df_list[2]['Total Acq Cost'],
                       label=f'Scen. {index}',
                       color=colors_array[index])
 
         # Accumulated Line
-        axs = ax.plot(scenario_df_list[2]['Accum. Acq Cost'], scenario_df_list[2]['Order Date (Eff)'],
+        axs = ax.plot(scenario_df_list[2]['Order Date (Eff)'], scenario_df_list[2]['Accum. Acq Cost'],
                       label=f'Scen. {index}',
                       color=colors_array[index])
         # Configuring the axis
@@ -1278,11 +1277,39 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
         ax.set_title(f'Efficient Curve (US$): {scenario_name}')
         ax.grid(True)
 
+        # Function to format y-axis (float) to money format in million (US$ X M)
+        def y_axis_acqcost_fmt(x, _):
+            return f'U$ {x/1e6:.2f}M'
+        
+        # Setting formatter function for y axis
+        ax.yaxis.set_major_formatter(FuncFormatter(y_axis_acqcost_fmt))
+
         # Inserting chart into Canvas
         canvas_acqcost_eff = FigureCanvasTkAgg(fig, master=efficient_curve_window)
         canvas_acqcost_eff.draw()
         # Configuring Canvas background
         canvas_acqcost_eff.get_tk_widget().configure(background='#cfcfcf')
+
+        # Annotation function to connect with mplcursors - Bars
+        def set_annotations_bars_eff(sel):
+            sel.annotation.set_text(
+                'Date: ' + str(scenario_df_list[2]['Order Date (Eff)'][sel.target.index]) + '\n' +
+                'Order Qty: U$' + f"{scenario_df_list[2]['Total Acq Cost'][sel.target.index] / 1e3:.0f}k"        
+            )
+
+        # Annotation function to connect with mplcursors - Lines
+        def set_annotations_lines_eff(sel):
+            order_date = scenario_df_list[2]['Order Date (Eff)'][round(sel.target.index)]
+            accum_acq_cost = scenario_df_list[2]['Accum. Acq Cost'][round(sel.target.index)]
+            sel.annotation.set_text(
+                f'Date: {order_date}\nOrder Qty: U$ {accum_acq_cost / 1e6:.2f}M'
+            )
+
+        # Inserting Hover with mplcursors
+        # Bars
+        mpc.cursor(bars, hover=True).connect('add', lambda sel: set_annotations_bars_eff(sel))
+        # Line
+        mpc.cursor(axs, hover=True).connect('add', lambda sel: set_annotations_lines_eff(sel))
 
         # Appending to List
         canvas_list_acqcost_eff.append(canvas_acqcost_eff)
@@ -1290,13 +1317,20 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 
     # Hypothetical - Acq Cost
     for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
+        # Creating a figure and axes to insert the chart
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')
+        # Keeping background transparent
+        fig.patch.set_facecolor("None")
+        fig.patch.set_alpha(0)
+        ax.set_facecolor('None')
+
         # Bars - Monthly Acq Cost
-        bars = ax.bar(scenario_df_list[3]['Accum. Acq Cost'], scenario_df_list[3]['Delivery Date (Hyp)'],
+        bars = ax.bar(scenario_df_list[3]['Delivery Date (Hyp)'], scenario_df_list[3]['Total Acq Cost'],
                       label=f'Scen. {index}',
                       color=colors_array[index])
 
         # Accumulated Line
-        axs = ax.plot(scenario_df_list[3]['Accum. Acq Cost'], scenario_df_list[3]['Delivery Date (Hyp)'],
+        axs = ax.plot(scenario_df_list[3]['Delivery Date (Hyp)'], scenario_df_list[3]['Accum. Acq Cost'],
                       label=f'Scen. {index}',
                       color=colors_array[index])
         # Configuring the axis
@@ -1346,6 +1380,27 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
         canvas_acqcost_hyp.draw()
         # Configuring Canvas background
         canvas_acqcost_hyp.get_tk_widget().configure(background='#cfcfcf')
+
+        # Annotation function to connect with mplcursors - Bars
+        def set_annotations_bars_hyp(sel):
+            sel.annotation.set_text(
+                'Date: ' + str(scenario_df_list[3]['Delivery Date (Hyp)'][sel.target.index]) + '\n' +
+                'Order Qty: U$' + f"{scenario_df_list[3]['Total Acq Cost'][sel.target.index] / 1e3:.0f}k"        
+            )
+
+        # Annotation function to connect with mplcursors - Lines
+        def set_annotations_lines_hyp(sel):
+            order_date = scenario_df_list[3]['Delivery Date (Hyp)'][round(sel.target.index)]
+            accum_acq_cost = scenario_df_list[3]['Accum. Acq Cost'][round(sel.target.index)]
+            sel.annotation.set_text(
+                f'Date: {order_date}\nDelivered Qty: U$ {accum_acq_cost / 1e6:.2f}M'
+            )
+
+        # Inserting Hover with mplcursors
+        # Bars
+        mpc.cursor(bars, hover=True).connect('add', lambda sel: set_annotations_bars_hyp(sel))
+        # Line
+        mpc.cursor(axs, hover=True).connect('add', lambda sel: set_annotations_lines_hyp(sel))
 
         # Appending to List
         canvas_list_acqcost_hyp.append(canvas_acqcost_hyp)

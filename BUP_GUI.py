@@ -368,8 +368,8 @@ def main():
                 cbx_selected_scenario_hyp.set(list(bup.scenario_dataframes.keys())[0])
 
                 # Also only when a first Scenario is created, I assign this first scenario charts to Acq Cost last showed charts
-                last_acq_cost_canvas_eff = bup.canvas_list_acqcost_eff[0].get_tk_widget()
-                last_acq_cost_canvas_hyp = bup.canvas_list_acqcost_hyp[0].get_tk_widget()
+                last_acq_cost_canvas_eff = bup.canvas_list_acqcost_eff[0]
+                last_acq_cost_canvas_hyp = bup.canvas_list_acqcost_hyp[0]
 
             else:
                 pass
@@ -392,6 +392,11 @@ def main():
 
             global last_acq_cost_canvas_eff, last_acq_cost_canvas_hyp
 
+            parts_eff_chart = mpl_canvas_list[0]
+            parts_hyp_chart = mpl_canvas_list[1]
+            list_acqcost_eff_charts = mpl_canvas_list[2]
+            list_acqcost_hyp_charts = mpl_canvas_list[3]
+
             if cbx_triggered == False:
 
                 match chart_name:
@@ -399,54 +404,48 @@ def main():
                     case 'eff':
                         if chart_mode.get() == 'Acq Cost (US$)':
                             # Remove Parts Chart
-                            mpl_canvas_list[0].get_tk_widget().place_forget()
+                            parts_eff_chart.get_tk_widget().place_forget()
                             # Insert Scenario ComboBox and Acq Cost Chart
                             cbx_selected_scenario_eff.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
-                            last_acq_cost_canvas_eff.place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                            last_acq_cost_canvas_eff.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
                         else:
                             # Insert Parts Chart
-                            mpl_canvas_list[0].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                            parts_eff_chart.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
                             # Remove Scenario ComboBox and Acq Cost Chart
                             cbx_selected_scenario_eff.place_forget()
-                            last_acq_cost_canvas_eff.place_forget()
+                            last_acq_cost_canvas_eff.get_tk_widget().place_forget()
 
                     # Hypothetical Window: CTkSwitch toggled
                     case 'hyp':
                         if chart_mode.get() == 'Acq Cost (US$)':
                             # Remove Parts Chart
-                            mpl_canvas_list[1].get_tk_widget().place_forget()
+                            parts_hyp_chart.get_tk_widget().place_forget()
                             # Insert Scenario ComboBox and Acq Cost Chart
                             cbx_selected_scenario_hyp.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
-                            last_acq_cost_canvas_hyp.place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                            last_acq_cost_canvas_hyp.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
                         else:
                             # Insert Parts Chart
-                            mpl_canvas_list[1].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                            parts_hyp_chart.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
                             # Remove Scenario ComboBox and Acq Cost Chart
                             cbx_selected_scenario_hyp.place_forget()
-                            last_acq_cost_canvas_hyp.place_forget()
+                            last_acq_cost_canvas_hyp.get_tk_widget().place_forget()
                         
             elif cbx_triggered == True:
                 # Getting the index to search on the list, based on the last char of value, ex: 0 for 'Scenario_0'
                 chart_index = int(cbx_selected[-1])
-                # print(mpl_canvas_list[0])
-                # print(mpl_canvas_list[1])
-                # print(mpl_canvas_list[2])
-                # print(mpl_canvas_list[3])
-
-                print(cbx_selected)
-                print(chart_index)
 
                 # Efficient Screen Switching
                 if chart_name == 'eff':
-                    last_acq_cost_canvas_eff.place_forget()
-                    mpl_canvas_list[2][chart_index].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
-                    last_acq_cost_canvas_eff = mpl_canvas_list[2][chart_index].get_tk_widget()
+                    last_acq_cost_canvas_eff.get_tk_widget().place_forget()
+                    list_acqcost_eff_charts[chart_index].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                    last_acq_cost_canvas_eff = list_acqcost_eff_charts[chart_index]
 
                 # Hypothetical Screen Switching
                 elif chart_name == 'hyp':
-                    last_acq_cost_canvas_hyp.place_forget()
-                    mpl_canvas_list[3][chart_index].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
-                    last_acq_cost_canvas_hyp =  mpl_canvas_list[3][chart_index].get_tk_widget()
+                    print('hyp',last_acq_cost_canvas_hyp) #test
+                    last_acq_cost_canvas_hyp.get_tk_widget().place_forget()
+                    list_acqcost_hyp_charts[chart_index].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+                    last_acq_cost_canvas_hyp =  list_acqcost_hyp_charts[chart_index]
 
 
         # Tracing Scenario creation variable and calling the respective functions every time the variable changes
