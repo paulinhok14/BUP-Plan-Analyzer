@@ -442,7 +442,6 @@ def main():
 
                 # Hypothetical Screen Switching
                 elif chart_name == 'hyp':
-                    print('hyp',last_acq_cost_canvas_hyp) #test
                     last_acq_cost_canvas_hyp.get_tk_widget().place_forget()
                     list_acqcost_hyp_charts[chart_index].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
                     last_acq_cost_canvas_hyp =  list_acqcost_hyp_charts[chart_index]

@@ -704,6 +704,9 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         # Saving both charts Image on global scope variables
         img_eff_chart, img_hyp_chart = bup_eff_chart_whitebg, bup_hyp_chart_whitebg
 
+        # Calling function to generate Cost Avoidance Chart
+        generate_cost_avoidance_screen(cost_avoidance_window)
+
         # Adding 1 to IntVar with the Scenarios count
         var_scenarios_count.set(var_scenarios_count.get() + 1)
 
@@ -724,8 +727,6 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
                                )
     btn_cancel.place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
 
-    # Calling function to generate Cost Avoidance Chart
-    generate_cost_avoidance_chart()
 
 
 @function_timer
@@ -952,7 +953,7 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios: l
 
     # Chart settings
     ax.set_ylabel('Materials Ordered Qty (Accumulated)')
-    ax.set_title('Efficient Curve: Build-Up Forecast')
+    ax.set_title('Efficient Curve: Build-Up Forecast', color='#ad7102', fontweight='bold')
     ax.grid(True)
     ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
 
@@ -1061,7 +1062,7 @@ def generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios: pd.DataFr
     # Chart Settings
     ax.set_ylabel('Materials Delivered Qty (Accumulated)')
     ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
-    ax.set_title('Hypothetical Curve: Build-Up Forecast')
+    ax.set_title('Hypothetical Curve: Build-Up Forecast', color='#ad7102', fontweight='bold')
     ax.grid(True)
 
     # Adjusting axis spacing to avoid cutting off labels
@@ -1274,7 +1275,7 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
         # Chart Settings
         ax.set_ylabel('Acq Cost (US$) Order Qty')
         ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
-        ax.set_title(f'Efficient Curve (US$): {scenario_name}')
+        ax.set_title(f'Efficient Curve (US$): {scenario_name}', color='green', fontweight='bold')
         ax.grid(True)
 
         # Function to format y-axis (float) to money format in million (US$ X M)
@@ -1372,8 +1373,15 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
         # Chart Settings
         ax.set_ylabel('Acq Cost (US$) Delivered Qty')
         ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
-        ax.set_title(f'Hypothetical Curve (US$): {scenario_name}')
+        ax.set_title(f'Hypothetical Curve (US$): {scenario_name}', color='green', fontweight='bold')
         ax.grid(True)
+
+        # Function to format y-axis (float) to money format in million (US$ X M)
+        def y_axis_acqcost_fmt(x, _):
+            return f'U$ {x/1e6:.2f}M'
+        
+        # Setting formatter function for y axis
+        ax.yaxis.set_major_formatter(FuncFormatter(y_axis_acqcost_fmt))
 
         # Inserting chart into Canvas
         canvas_acqcost_hyp = FigureCanvasTkAgg(fig, master=hypothetical_curve_window)
@@ -1385,7 +1393,7 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
         def set_annotations_bars_hyp(sel):
             sel.annotation.set_text(
                 'Date: ' + str(scenario_df_list[3]['Delivery Date (Hyp)'][sel.target.index]) + '\n' +
-                'Order Qty: U$' + f"{scenario_df_list[3]['Total Acq Cost'][sel.target.index] / 1e3:.0f}k"        
+                'Delivered Qty: U$' + f"{scenario_df_list[3]['Total Acq Cost'][sel.target.index] / 1e3:.0f}k"        
             )
 
         # Annotation function to connect with mplcursors - Lines
@@ -1409,8 +1417,17 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 
 
 @function_timer
-def generate_cost_avoidance_chart():
-    pass
+def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame):
+    
+    # WACC
+    wacc: float = 5.04 # mock
+
+    # GUI Elements
+    slider = ctk.CTkSlider(cost_avoidance_screen,
+                           from_=0, to=100)
+    
+    slider.pack()
+
 
 @function_timer
 def save_chart_image(chart: Image, output_path: str, filename: str) -> None:
