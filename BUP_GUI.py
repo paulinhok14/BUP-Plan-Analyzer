@@ -371,6 +371,11 @@ def main():
                 last_acq_cost_canvas_eff = bup.canvas_list_acqcost_eff[0]
                 last_acq_cost_canvas_hyp = bup.canvas_list_acqcost_hyp[0]
 
+                # Placing Cost Avoidance Screen elements
+                cbx_cost_avoidance.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
+                # Only in the first time, the ComboBox 'placeholder' will have the first Scenario
+                cbx_cost_avoidance.set(list(bup.scenario_dataframes.keys())[0])
+
             else:
                 pass
 
@@ -534,6 +539,16 @@ def main():
                                       width=200, height=30, corner_radius=30
                                             )
         btn_create_scenario.place(relx=0.5, rely=0.93, anchor=ctk.CENTER)
+
+        # Tab 3rd - Cost Avoidance Screen
+        cost_avoidance_screen = tbv_curve_charts.tab("Cost Avoidance")
+
+        # Scenarios ComboBox
+        cbx_cost_avoidance = ctk.CTkComboBox(cost_avoidance_screen,
+                                            height=20, width=130,
+                                            font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                            dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                            state='readonly')
 
         # Tab 4 - Stock Analysis
 

@@ -1420,13 +1420,47 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame):
     
     # WACC
-    wacc: float = 5.04 # mock
+    wacc_value = 5.04 # mock
+    doublevar_wacc = ctk.DoubleVar(cost_avoidance_screen, value=wacc_value)
+
+    # Slider values settings
+    from_value: float = -50
+    to_value: float = +50
+    steps = 100
+    strvar_operat_eff_variation = ctk.StringVar(cost_avoidance_screen, value=0)
 
     # GUI Elements
     slider = ctk.CTkSlider(cost_avoidance_screen,
-                           from_=0, to=100)
+                           from_=from_value, to=to_value,
+                           number_of_steps=steps,
+                           #variable=strvar_operat_eff_variation
+                           )
     
-    slider.pack()
+    slider.place(relx=0.5, rely=0.84, anchor=ctk.CENTER)
+    # Operational Efficiency Parameters - Full Supply Chain steps
+    lbl_operat_eff = ctk.CTkLabel(cost_avoidance_screen,
+                                  text='Procurement Length Simulation',
+                                  font=ctk.CTkFont('open sans', size=12, weight='bold')
+                                  )
+    lbl_operat_eff.place(relx=0.5, rely=0.75, anchor=ctk.CENTER)
+
+
+    # WACC Elements
+    lbl_wacc = ctk.CTkLabel(cost_avoidance_screen, text=r'WACC (% in US$): ',
+                            font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                            )
+    lbl_wacc.place(relx=0.88, rely=0.023, anchor="e")
+
+    entry_wacc = ctk.CTkEntry(cost_avoidance_screen,
+                              textvariable=doublevar_wacc,
+                              width=50, height=12)
+    entry_wacc.place(relx=0.94, rely=0.023, anchor=ctk.CENTER)
+
+    
+    
+    
+    
+    
 
 
 @function_timer
