@@ -1420,30 +1420,9 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame):
     
     # WACC
-    wacc_value = 5.04 # mock
+    wacc_value = 5.42 # Mock 29/07/24 as analyzed in cost of debt proportion. Cost of equity are 13,41% as beta for ERJ is 1.54, 10-Year Tresury rates are 4.1% and 6% ERP. 
+    # Equity to Debt ratio is 63/37% so full WACC, considering equity, would be 10.48%. Only Debt Cost was mocked (5.42).
     doublevar_wacc = ctk.DoubleVar(cost_avoidance_screen, value=wacc_value)
-
-    # Slider values settings
-    from_value: float = -50
-    to_value: float = +50
-    steps = 100
-    strvar_operat_eff_variation = ctk.StringVar(cost_avoidance_screen, value=0)
-
-    # GUI Elements
-    slider = ctk.CTkSlider(cost_avoidance_screen,
-                           from_=from_value, to=to_value,
-                           number_of_steps=steps,
-                           #variable=strvar_operat_eff_variation
-                           )
-    
-    slider.place(relx=0.5, rely=0.84, anchor=ctk.CENTER)
-    # Operational Efficiency Parameters - Full Supply Chain steps
-    lbl_operat_eff = ctk.CTkLabel(cost_avoidance_screen,
-                                  text='Procurement Length Simulation',
-                                  font=ctk.CTkFont('open sans', size=12, weight='bold')
-                                  )
-    lbl_operat_eff.place(relx=0.5, rely=0.75, anchor=ctk.CENTER)
-
 
     # WACC Elements
     lbl_wacc = ctk.CTkLabel(cost_avoidance_screen, text=r'WACC (% in US$): ',
@@ -1456,7 +1435,58 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame):
                               width=50, height=12)
     entry_wacc.place(relx=0.94, rely=0.023, anchor=ctk.CENTER)
 
+    # Slider values settings
+    from_value: float = -50
+    to_value: float = +50
+    steps = 100
+    doublevar_operat_eff_variation = ctk.DoubleVar(value=0)
+
+    # Slider callback function to update Label text
+    def update_label(value):
+        # If value is positive
+        if doublevar_operat_eff_variation.get() >= 0:
+            lbl_efficiency_variation_num.configure(text=f'Efficiency Gain: +{doublevar_operat_eff_variation.get()}%',
+                                                   text_color='green')
+        # If negative
+        else:
+            lbl_efficiency_variation_num.configure(text=f'Efficiency Loss: {doublevar_operat_eff_variation.get()}%',
+                                                   text_color='red')
+
+
+    # GUI Elements
     
+    # Operational Efficiency Parameters - Full Supply Chain steps
+    lbl_operat_eff = ctk.CTkLabel(cost_avoidance_screen,
+                                  text='Procurement Length Simulation',
+                                  font=ctk.CTkFont('open sans', size=12, weight='bold')
+                                  )
+    lbl_operat_eff.place(relx=0.5, rely=0.72, anchor=ctk.CENTER)
+
+    # Slider
+    slider = ctk.CTkSlider(cost_avoidance_screen,
+                           from_=from_value, to=to_value,
+                           number_of_steps=steps,
+                           variable=doublevar_operat_eff_variation,
+                           command=update_label,
+                           progress_color='green',
+                           button_color='#009898',
+                           button_hover_color='#009898',
+                           fg_color='red',
+                           )
+    
+    slider.place(relx=0.5, rely=0.79, anchor=ctk.CENTER)
+
+    # Label indicating percentage changing on Procurement Length parameters (Operational Efficiency Gain/Loss)
+    lbl_efficiency_variation_num = ctk.CTkLabel(cost_avoidance_screen,
+                                                font=ctk.CTkFont('open sans', size=14, weight='bold'),
+                                                text_color='green',
+                                                text=f'Efficiency Change: {doublevar_operat_eff_variation.get()}%')
+    lbl_efficiency_variation_num.place(relx=0.5, rely=0.845, anchor=ctk.CENTER)
+    
+
+    # Procurement Length Frame
+    # Todo: add Full Procurement length for Scenario and the variation (in days) of Efficiency Gain/Loss from slider.
+    # To do: A new frame (right) to show fixed: Efficient/HYpothetical difference savings, Additional Savings/Costs (red/green) considering WACC and efficiency slider
     
     
     
