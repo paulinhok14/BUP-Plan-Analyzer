@@ -1450,10 +1450,18 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         if doublevar_operat_eff_variation.get() >= 0:
             lbl_efficiency_variation_num.configure(text=f'Efficiency Gain: +{doublevar_operat_eff_variation.get()}%',
                                                    text_color='green')
+            # Calculating Efficiency Gain and new Procurement Length
+            procur_len_simulated = int(137 * (1 - (doublevar_operat_eff_variation.get()/100))) # mock
+            procur_len_gain = int(137 * (0 + (doublevar_operat_eff_variation.get()/100))) # mock
+            lbl_procur_len_simul_num.configure(text=f'{procur_len_simulated} (-{procur_len_gain})', text_color='green')
         # If negative
         else:
             lbl_efficiency_variation_num.configure(text=f'Efficiency Loss: {doublevar_operat_eff_variation.get()}%',
                                                    text_color='red')
+            # Calculating Efficiency Loss and new Procurement Length
+            procur_len_simulated = int(137 * (1 - (doublevar_operat_eff_variation.get()/100))) # mock
+            procur_len_loss = int(137 * (0 + (doublevar_operat_eff_variation.get()/100))) # mock
+            lbl_procur_len_simul_num.configure(text=f'{procur_len_simulated} ({procur_len_loss})', text_color='red')
 
     # GUI Elements
     
@@ -1506,7 +1514,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
                                              font=ctk.CTkFont('open sans', size=11, weight='bold'))
     lbl_procur_len_simulation.place(relx=0.5, rely=0.52, anchor=ctk.CENTER)
     # Procurement Length Simulation number
-    lbl_procur_len_simul_num = ctk.CTkLabel(procur_length_frame, text='121 (-16)', #mock
+    lbl_procur_len_simul_num = ctk.CTkLabel(procur_length_frame, text='137', #mock
                                              font=ctk.CTkFont('open sans', size=22, weight='bold'))
     lbl_procur_len_simul_num.place(relx=0.5, rely=0.72, anchor=ctk.CENTER)
 
@@ -1514,10 +1522,17 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
     cost_avoidance_frame = ctk.CTkFrame(cost_avoidance_screen, width=180, height=170,
                                        corner_radius=20)
     cost_avoidance_frame.place(relx=0.85, rely=0.8, anchor=ctk.CENTER)
+
+    # Efficient Curve Savings
     # To do: A new frame (right) to show fixed: Efficient/Hypothetical difference savings, Additional Savings/Costs (red/green) considering WACC and efficiency slider
     lbl_efficient_curve_savings = ctk.CTkLabel(cost_avoidance_frame, text='Efficient Curve Savings:',
                                                font=ctk.CTkFont('open sans', size=11, weight='bold'))
     lbl_efficient_curve_savings.place(relx=0.5, rely=0.12, anchor=ctk.CENTER)
+
+    # Additional Savings
+    lbl_add_savings_and_costs = ctk.CTkLabel(cost_avoidance_frame, text='Additional Savings/Costs:',
+                                             font=ctk.CTkFont('open sans', size=11, weight='bold'))
+    lbl_add_savings_and_costs.place(relx=0.5, rely=0.52, anchor=ctk.CENTER)
     
     
     
