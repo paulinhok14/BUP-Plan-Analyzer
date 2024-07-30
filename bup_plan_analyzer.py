@@ -705,7 +705,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         img_eff_chart, img_hyp_chart = bup_eff_chart_whitebg, bup_hyp_chart_whitebg
 
         # Calling function to generate Cost Avoidance Chart
-        generate_cost_avoidance_screen(cost_avoidance_window)
+        generate_cost_avoidance_screen(cost_avoidance_window, scenario_dataframes, scenarios_list)
 
         # Adding 1 to IntVar with the Scenarios count
         var_scenarios_count.set(var_scenarios_count.get() + 1)
@@ -1417,12 +1417,15 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 
 
 @function_timer
-def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame):
-    
+def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario_dataframes: dict, scenarios_list: list):
+
     # WACC
     wacc_value = 5.42 # Mock 29/07/24 as analyzed in cost of debt proportion. Cost of equity are 13,41% as beta for ERJ is 1.54, 10-Year Tresury rates are 4.1% and 6% ERP. 
     # Equity to Debt ratio is 63/37% so full WACC, considering equity, would be 10.48%. Only Debt Cost was mocked (5.42).
     doublevar_wacc = ctk.DoubleVar(cost_avoidance_screen, value=wacc_value)
+
+    # Colors list, so that each Scenario has a specific color and facilitates differentiation
+    colors_array = ['blue', 'orange', 'black', 'green', 'purple']
 
     # WACC Elements
     lbl_wacc = ctk.CTkLabel(cost_avoidance_screen, text=r'WACC (% in US$): ',
@@ -1451,7 +1454,6 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame):
         else:
             lbl_efficiency_variation_num.configure(text=f'Efficiency Loss: {doublevar_operat_eff_variation.get()}%',
                                                    text_color='red')
-
 
     # GUI Elements
     
@@ -1484,10 +1486,38 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame):
     lbl_efficiency_variation_num.place(relx=0.5, rely=0.845, anchor=ctk.CENTER)
     
 
-    # Procurement Length Frame
+    # --------------------- Procurement Length Frame ---------------------
     # Todo: add Full Procurement length for Scenario and the variation (in days) of Efficiency Gain/Loss from slider.
-    # To do: A new frame (right) to show fixed: Efficient/HYpothetical difference savings, Additional Savings/Costs (red/green) considering WACC and efficiency slider
-    
+    procur_length_frame = ctk.CTkFrame(cost_avoidance_screen, width=180, height=170,
+                                       corner_radius=20)
+    procur_length_frame.place(relx=0.15, rely=0.8, anchor=ctk.CENTER)
+
+    # Scenario Procurement Length label
+    lbl_scen_procur_length = ctk.CTkLabel(procur_length_frame, text="Procurement Length (days):",
+                                          font=ctk.CTkFont('open sans', size=11, weight='bold'))
+    lbl_scen_procur_length.place(relx=0.5, rely=0.12, anchor=ctk.CENTER)
+    # Procurement Length Fixed Number label
+    lbl_scen_procur_length_num = ctk.CTkLabel(procur_length_frame, text="137", #mock
+                                          font=ctk.CTkFont('open sans', size=22, weight='bold'))
+    lbl_scen_procur_length_num.place(relx=0.5, rely=0.32, anchor=ctk.CENTER)
+
+    # Procurement Length Simulation label
+    lbl_procur_len_simulation = ctk.CTkLabel(procur_length_frame, text='Simulation (days):',
+                                             font=ctk.CTkFont('open sans', size=11, weight='bold'))
+    lbl_procur_len_simulation.place(relx=0.5, rely=0.52, anchor=ctk.CENTER)
+    # Procurement Length Simulation number
+    lbl_procur_len_simul_num = ctk.CTkLabel(procur_length_frame, text='121 (-16)', #mock
+                                             font=ctk.CTkFont('open sans', size=22, weight='bold'))
+    lbl_procur_len_simul_num.place(relx=0.5, rely=0.72, anchor=ctk.CENTER)
+
+    #  --------------------- Cost Avoidance Frame ---------------------
+    cost_avoidance_frame = ctk.CTkFrame(cost_avoidance_screen, width=180, height=170,
+                                       corner_radius=20)
+    cost_avoidance_frame.place(relx=0.85, rely=0.8, anchor=ctk.CENTER)
+    # To do: A new frame (right) to show fixed: Efficient/Hypothetical difference savings, Additional Savings/Costs (red/green) considering WACC and efficiency slider
+    lbl_efficient_curve_savings = ctk.CTkLabel(cost_avoidance_frame, text='Efficient Curve Savings:',
+                                               font=ctk.CTkFont('open sans', size=11, weight='bold'))
+    lbl_efficient_curve_savings.place(relx=0.5, rely=0.12, anchor=ctk.CENTER)
     
     
     

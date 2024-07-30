@@ -350,6 +350,9 @@ def main():
             cbx_selected_scenario_eff.configure(values=list(bup.scenario_dataframes.keys()))
             cbx_selected_scenario_hyp.configure(values=list(bup.scenario_dataframes.keys()))
 
+            # Cost Avoidance ComboBox
+            cbx_cost_avoidance.configure(values=list(bup.scenario_dataframes.keys()))
+
 
             if scenarios_count.get() == 1:
                 # Show the Export to Excel/Save Image buttons and hide the Scenario Creation message
@@ -551,7 +554,6 @@ def main():
                                             state='readonly')
 
         # Tab 4 - Stock Analysis
-
         btn_read_stock_data = ctk.CTkButton(tbvmenu.tab("Stock Analysis"), text='Read Stock Data',
                                       command=lambda: print('Stock read!'),
                                       font=ctk.CTkFont('open sans', size=12, weight='bold'),
