@@ -32,8 +32,8 @@ img_eff_chart, img_hyp_chart = None, None
 # Creating also a dictionary to store scenario DataFrames
 df_scope_with_scenarios, scenario_dataframes = None, {}
 
-# Global variables to store FigureCanvasTkAgg objects to be toggled in SwitchButton. Changing Build-Up curves from Parts/AcqCost
-canvas_eff, canvas_hyp, canvas_list_acqcost_eff, canvas_list_acqcost_hyp = None, None, [], []
+# Global variables to store FigureCanvasTkAgg objects to be toggled in SwitchButton. Changing Build-Up curves from Parts/AcqCost and also Cost Avoidance
+canvas_eff, canvas_hyp, canvas_list_acqcost_eff, canvas_list_acqcost_hyp, canvas_list_cost_avoidance = None, None, [], [], []
 
 # Log Configs
 open('execution_info.log', 'w').close()  # Clean log file before system execution
@@ -292,7 +292,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
     '''
     This is the function that handles Scenarios creating. Here will be created the Scenarios creation window, and also will be
     the function that calls all other functions that executes subsequently after creating a Scenario. That is:
-    [generate_efficient_curve_buildup_chart(), generate_hypothetical_curve_buildup_chart(), generate_acqcost_curve(), generate_cost_avoidance_chart()]
+    [generate_efficient_curve_buildup_chart(), generate_hypothetical_curve_buildup_chart(), generate_acqcost_curve(), generate_cost_avoidance_screen()]
     :param scenario_window:
     :param var_scenarios_count:
     :param bup_scope:
@@ -686,6 +686,10 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
                                  "Invalid character. Please enter a valid number for Outbound Logistic.")
             return
 
+        # Summing up full Procurement Length values
+        scenario['full_procurement_length'] = (scenario['pr_release_approval_vss'] + scenario['po_commercial_condition'] + scenario['po_conversion'] + 
+                                               scenario['export_license'] + scenario['buffer'] + scenario['outbound_logistic'])
+        
         # Including the scenario in the global Dicts list and closing the screen
         scenarios_list.append(scenario)
         scenario_window.destroy()
@@ -695,8 +699,9 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         # Calling the function to generate the Efficient Build-Up chart. The return of the function is the chart in a
         # figure (Image object), in addition to the DataFrames/Variables created in the function, as a return to be used
         # in the Hypothetical chart
-        canvas_eff, bup_eff_chart_whitebg, df_scope_with_scenarios, scenario_dataframes = generate_efficient_curve_buildup_chart(bup_scope, scenarios_list, efficient_curve_window,
-                                                                                                                                 hypothetical_curve_window)
+        canvas_eff, bup_eff_chart_whitebg, df_scope_with_scenarios, scenario_dataframes, df_dates_eff, df_dates_hyp = generate_efficient_curve_buildup_chart(bup_scope, scenarios_list, 
+                                                                                                                                                             efficient_curve_window,
+                                                                                                                                                             hypothetical_curve_window)
 
         # Calling the function to generate Hypothetical Build-Up chart.
         bup_hyp_chart_whitebg, canvas_hyp = generate_hypothetical_curve_buildup_chart(df_scope_with_scenarios, scenario_dataframes, hypothetical_curve_window)
@@ -705,7 +710,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         img_eff_chart, img_hyp_chart = bup_eff_chart_whitebg, bup_hyp_chart_whitebg
 
         # Calling function to generate Cost Avoidance Chart
-        generate_cost_avoidance_screen(cost_avoidance_window, scenario_dataframes, scenarios_list)
+        generate_cost_avoidance_screen(cost_avoidance_window, scenario_dataframes, scenarios_list, df_scope_with_scenarios, df_dates_eff, df_dates_hyp)
 
         # Adding 1 to IntVar with the Scenarios count
         var_scenarios_count.set(var_scenarios_count.get() + 1)
@@ -854,8 +859,8 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios: l
         if scenario != -1:  # Scenario -1 is only indicative of nullity, it is not a real scenario
 
             '''
-            Creating the list associated to each Scenario in the dict. This list should have 2 elements.
-            First one is Efficient DF and Second one is Hypothetical DF
+            Creating the list associated to each Scenario in the dict. This list should have a DataFrame as each element.
+            First one is Efficient DF and Second one is Hypothetical DF (parts), Third and Fourth are Eff and Hyp for Acq Cost, subsequently
             '''
             scenario_dataframes[f'Scenario_{int(scenario)}'] = []
 
@@ -992,7 +997,7 @@ def generate_efficient_curve_buildup_chart(bup_scope: pd.DataFrame, scenarios: l
     # ----------- At last, calling function to Generate Charts with Acq Cost ----------- #
     generate_acqcost_curve(df_scope_with_scenarios, df_dates_eff, df_dates_hyp, scenario_dataframes, efficient_curve_window, hypothetical_curve_window)
 
-    return canvas_eff, bup_eff_chart_whitebg, df_scope_with_scenarios, scenario_dataframes
+    return canvas_eff, bup_eff_chart_whitebg, df_scope_with_scenarios, scenario_dataframes, df_dates_eff, df_dates_hyp
 
 
 @function_timer
@@ -1417,7 +1422,11 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 
 
 @function_timer
-def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario_dataframes: dict, scenarios_list: list):
+def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario_dataframes: dict, scenarios_list: list, df_scope_with_scenarios: pd.DataFrame,
+                                   df_dates_eff, df_dates_hyp):
+
+    # Global variable to store charts Canvas (each Scenario produces a particular Chart)
+    global canvas_list_cost_avoidance
 
     # WACC
     wacc_value = 5.42 # Mock 29/07/24 as analyzed in cost of debt proportion. Cost of equity are 13,41% as beta for ERJ is 1.54, 10-Year Tresury rates are 4.1% and 6% ERP. 
@@ -1426,6 +1435,8 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
 
     # Colors list, so that each Scenario has a specific color and facilitates differentiation
     colors_array = ['blue', 'orange', 'black', 'green', 'purple']
+
+    # --------------------- GUI Elements ---------------------
 
     # WACC Elements
     lbl_wacc = ctk.CTkLabel(cost_avoidance_screen, text=r'WACC (% in US$): ',
@@ -1462,8 +1473,6 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
             procur_len_simulated = int(137 * (1 - (doublevar_operat_eff_variation.get()/100))) # mock
             procur_len_loss = int(137 * (0 + (doublevar_operat_eff_variation.get()/100))) # mock
             lbl_procur_len_simul_num.configure(text=f'{procur_len_simulated} ({procur_len_loss})', text_color='red')
-
-    # GUI Elements
     
     # Operational Efficiency Parameters - Full Supply Chain steps
     lbl_operat_eff = ctk.CTkLabel(cost_avoidance_screen,
@@ -1481,7 +1490,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
                            progress_color='green',
                            button_color='#009898',
                            button_hover_color='#009898',
-                           fg_color='red',
+                           fg_color='red'
                            )
     
     slider.place(relx=0.5, rely=0.79, anchor=ctk.CENTER)
@@ -1534,6 +1543,66 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
                                              font=ctk.CTkFont('open sans', size=11, weight='bold'))
     lbl_add_savings_and_costs.place(relx=0.5, rely=0.52, anchor=ctk.CENTER)
     
+    # --------------------- Cost Avoidance Chart Generation ---------------------
+    consolidated_dates = pd.concat([df_dates_eff, df_dates_hyp], axis=0).drop_duplicates()
+
+    # Creating Cost Avoidance DataFrame for each Scenario
+    for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
+        # scenario_df_list[2].to_excel('scenario_df_list_2_.xlsx')
+        # scenario_df_list[3].to_excel('scenario_df_list_3_.xlsx')
+
+        # Adding Efficient Accumulated info - Acq Cost
+        scenario_df_costavoid = consolidated_dates.merge(right=scenario_df_list[2][['Order Date (Eff)', 'Accum. Acq Cost']], how='left',
+                                                         left_on='Date', right_on='Order Date (Eff)')
+        # Renaming Accum. Acq Cost column and droping Order Date (Eff) column
+        scenario_df_costavoid.rename(columns={'Accum. Acq Cost': 'Accum. Acq Cost (Eff)'}, inplace=True)
+        scenario_df_costavoid = scenario_df_costavoid.drop(['Order Date (Eff)'], axis=1)
+
+        # Adding Hypothetical Accumulated info - Acq Cost
+        scenario_df_costavoid = scenario_df_costavoid.merge(right=scenario_df_list[3][['Delivery Date (Hyp)', 'Accum. Acq Cost']], how='left',
+                                                         left_on='Date', right_on='Delivery Date (Hyp)')
+        # Renaming Accum. Acq Cost column and droping Order Date (Eff) column
+        scenario_df_costavoid.rename(columns={'Accum. Acq Cost': 'Accum. Acq Cost (Hyp)'}, inplace=True)
+        scenario_df_costavoid = scenario_df_costavoid.drop(['Delivery Date (Hyp)'], axis=1)
+
+
+        scenario_df_costavoid.to_excel('scenario_df_costavoid.xlsx')
+        
+
+        # Storing the DataFrame in the dictionary with the scenario name
+        scenario_dataframes[f'Scenario_{int(index)}'].append(scenario_df_costavoid)
+
+    # Creating Chart Canvas for each Scenario, separately
+    '''
+    The Canvas objects should be passed as a list, as each Scenario demands a particular Chart (Canvas Object).
+    Everytime that a new Scenario is created, this list is cleared and the object created for each scenario will be appended to list
+    '''
+    canvas_list_cost_avoidance.clear()
+
+    # Image Size
+    width, height = 600, 235
+
+    for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
+        # Creating a figure and axes to insert the chart
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')
+        # Keeping background transparent
+        fig.patch.set_facecolor("None")
+        fig.patch.set_alpha(0)
+        ax.set_facecolor('None')
+
+        # Configuring the axis
+        plt.xticks(scenario_df_list[2].index[::3], scenario_df_list[2]['Order Date (Eff)'][::3], rotation=45, ha='right')
+
+        # Efficient Accumulated Line - Acq Cost
+        eff_axs = ax.plot(scenario_df_list[2]['Order Date (Eff)'], scenario_df_list[2]['Accum. Acq Cost'], label=f'Scen. {index}', color=colors_array[index])
+        # Efficient Accumulated Line - Acq Cost
+        hyp_axs = ax.plot(scenario_df_list[3]['Delivery Date (Hyp)'], scenario_df_list[3]['Accum. Acq Cost'], label=f'Scen. {index}', color=colors_array[index])
+
+        # fig.show()
+
+
+
+
     
     
 

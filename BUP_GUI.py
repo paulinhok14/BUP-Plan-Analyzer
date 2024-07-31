@@ -31,7 +31,7 @@ readme_url = r'https://github.com/paulinhok14/BUP-Plan-Analyzer/blob/master/READ
 # TO DO: Make README.md open local file using default web browser (or specific), independent of default ".md" openers from user OS
 
 # These variables will keep the Last Acq Cost canvas showed, so that I can handle it on CTkSwitch toggle (AcqCost/Parts)
-last_acq_cost_canvas_eff, last_acq_cost_canvas_hyp = None, None
+last_acq_cost_canvas_eff, last_acq_cost_canvas_hyp, last_cost_avoidance_canvas = None, None, None
 
 def main():
 
@@ -373,6 +373,8 @@ def main():
                 # Also only when a first Scenario is created, I assign this first scenario charts to Acq Cost last showed charts
                 last_acq_cost_canvas_eff = bup.canvas_list_acqcost_eff[0]
                 last_acq_cost_canvas_hyp = bup.canvas_list_acqcost_hyp[0]
+                # Same for Cost Avoidance chart
+                # last_cost_avoidance_canvas =
 
                 # Placing Cost Avoidance Screen elements
                 cbx_cost_avoidance.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)
@@ -453,6 +455,18 @@ def main():
                     last_acq_cost_canvas_hyp.get_tk_widget().place_forget()
                     list_acqcost_hyp_charts[chart_index].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
                     last_acq_cost_canvas_hyp =  list_acqcost_hyp_charts[chart_index]
+
+
+        def callback_func_costavoid_cbx(cbx_selected, costavoid_canvas_list: list):
+            '''
+            This function will handle charts/components exhibition based on selected Scenario on Cost Avoidance screen ComboBox
+            '''
+
+            # Getting the index to search on the list, based on the last char of value, ex: 0 for 'Scenario_0'
+            chart_index = int(cbx_selected[-1])
+
+            print('Cost Avoidance ComboBox was triggered!')
+            print(cbx_selected)
 
 
         # Tracing Scenario creation variable and calling the respective functions every time the variable changes
@@ -551,7 +565,10 @@ def main():
                                             height=20, width=130,
                                             font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                             dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                            state='readonly')
+                                            state='readonly',
+                                            command=lambda value: (callback_func_costavoid_cbx(cbx_selected=value,
+                                                                                               costavoid_canvas_list=bup.canvas_list_cost_avoidance))
+                                            )
 
         # Tab 4 - Stock Analysis
         btn_read_stock_data = ctk.CTkButton(tbvmenu.tab("Stock Analysis"), text='Read Stock Data',
