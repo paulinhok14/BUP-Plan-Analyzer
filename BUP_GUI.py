@@ -349,7 +349,6 @@ def main():
             # When a Scenario is created, the ComboBox values will also be updated
             cbx_selected_scenario_eff.configure(values=list(bup.scenario_dataframes.keys()))
             cbx_selected_scenario_hyp.configure(values=list(bup.scenario_dataframes.keys()))
-
             # Cost Avoidance ComboBox
             cbx_cost_avoidance.configure(values=list(bup.scenario_dataframes.keys()))
 
@@ -374,7 +373,7 @@ def main():
                 last_acq_cost_canvas_eff = bup.canvas_list_acqcost_eff[0]
                 last_acq_cost_canvas_hyp = bup.canvas_list_acqcost_hyp[0]
                 # Same for Cost Avoidance chart
-                # last_cost_avoidance_canvas =
+                last_cost_avoidance_canvas = bup.canvas_list_cost_avoidance[0]
 
                 # Placing Cost Avoidance Screen elements
                 cbx_cost_avoidance.place(relx=0.13, rely=0.02, anchor=ctk.CENTER)

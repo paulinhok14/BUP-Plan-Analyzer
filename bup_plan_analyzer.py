@@ -1548,8 +1548,6 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
 
     # Creating Cost Avoidance DataFrame for each Scenario
     for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
-        # scenario_df_list[2].to_excel('scenario_df_list_2_.xlsx')
-        # scenario_df_list[3].to_excel('scenario_df_list_3_.xlsx')
 
         # Adding Efficient Accumulated info - Acq Cost
         scenario_df_costavoid = consolidated_dates.merge(right=scenario_df_list[2][['Order Date (Eff)', 'Accum. Acq Cost']], how='left',
@@ -1564,10 +1562,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         # Renaming Accum. Acq Cost column and droping Order Date (Eff) column
         scenario_df_costavoid.rename(columns={'Accum. Acq Cost': 'Accum. Acq Cost (Hyp)'}, inplace=True)
         scenario_df_costavoid = scenario_df_costavoid.drop(['Delivery Date (Hyp)'], axis=1)
-
-
-        scenario_df_costavoid.to_excel('scenario_df_costavoid.xlsx')
-        
+       
 
         # Storing the DataFrame in the dictionary with the scenario name
         scenario_dataframes[f'Scenario_{int(index)}'].append(scenario_df_costavoid)
@@ -1580,7 +1575,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
     canvas_list_cost_avoidance.clear()
 
     # Image Size
-    width, height = 600, 235
+    width, height = 680, 280
 
     for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
         # Creating a figure and axes to insert the chart
@@ -1591,14 +1586,42 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         ax.set_facecolor('None')
 
         # Configuring the axis
-        plt.xticks(scenario_df_list[2].index[::3], scenario_df_list[2]['Order Date (Eff)'][::3], rotation=45, ha='right')
+        plt.xticks(scenario_df_list[4].index[::3], scenario_df_list[4]['Date'][::3], rotation=45, ha='right')
 
         # Efficient Accumulated Line - Acq Cost
-        eff_axs = ax.plot(scenario_df_list[2]['Order Date (Eff)'], scenario_df_list[2]['Accum. Acq Cost'], label=f'Scen. {index}', color=colors_array[index])
+        eff_axs = ax.plot(scenario_df_list[4]['Date'], scenario_df_list[4]['Accum. Acq Cost (Eff)'], label='Efficient Curve', color=colors_array[index],
+                          ls='dashed')
         # Efficient Accumulated Line - Acq Cost
-        hyp_axs = ax.plot(scenario_df_list[3]['Delivery Date (Hyp)'], scenario_df_list[3]['Accum. Acq Cost'], label=f'Scen. {index}', color=colors_array[index])
+        hyp_axs = ax.plot(scenario_df_list[4]['Date'], scenario_df_list[4]['Accum. Acq Cost (Hyp)'], label=f'Hypothetical Curve', color=colors_array[index],
+                          ls='dashdot')
+
+        # Chart Settings
+        ax.set_ylabel('Acq Cost (US$) Delivered Qty')
+        ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
+        ax.set_title(f'Cost Avoidance (Efficient Asset Allocation): {scenario_name}', color=colors_array[index], fontweight='bold')
+        ax.grid(True)
+        ax.legend(loc='upper left', fontsize=7, framealpha=0.8)
+
+        # Function to format y-axis (float) to money format in million (US$ X M)
+        def y_axis_acqcost_fmt(x, _):
+            return f'U$ {x/1e6:.2f}M'
+        
+        # Setting formatter function for y axis
+        ax.yaxis.set_major_formatter(FuncFormatter(y_axis_acqcost_fmt))
 
         # fig.show()
+
+        # Inserting chart into Canvas
+        canvas_cost_avoidance = FigureCanvasTkAgg(fig, master=cost_avoidance_screen)
+        canvas_cost_avoidance.draw()
+        # Configuring Canvas background
+        canvas_cost_avoidance.get_tk_widget().configure(background='#cfcfcf')
+        canvas_cost_avoidance.get_tk_widget().place(relx=0.5, rely=0.33, anchor=ctk.CENTER)
+
+        # Appending to List
+        canvas_list_cost_avoidance.append(canvas_cost_avoidance)
+
+        
 
 
 
