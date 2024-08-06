@@ -7,7 +7,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 from PIL import Image
 from io import BytesIO
-import json
 import customtkinter as ctk
 from tkinter import messagebox
 import time
@@ -16,6 +15,22 @@ import mplcursors as mpc
 
 warnings.filterwarnings("ignore")
 
+'''
+** VARIABLE REFERENCE DOC **:
+
+scenario_dataframes (dict) has a list for each scenario, ex:
+scenario_dataframes['Scenario_0'] = []
+scenario_dataframes['Scenario_1'] = []
+
+In which, each element of this list, by order, is a specific pandas dataframe:
+
+for (scenario_name, scenario_df_list) in scenario_dataframes.items():
+1- scenario_df_list[0]: Efficient Chart DataFrame (Parts)
+2- scenario_df_list[1]: Hypothetical Chart DataFrame (Parts)
+3- scenario_df_list[2]: Efficient Chart DataFrame (Acq Cost)
+4- scenario_df_list[3]: Hypothetical Chart DataFrame (Acq Cost)
+5- scenario_df_list[4]: (Cost Avoidance) - Efficient and Hypothetical Accum. Acq Cost Chart DataFrame. Both plots should have same reference Date (Order/Delivery)
+'''
 
 # Scenarios list
 scenarios_list = []
@@ -1547,7 +1562,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
     consolidated_dates = pd.concat([df_dates_eff, df_dates_hyp], axis=0).drop_duplicates()
 
     # Creating Cost Avoidance DataFrame for each Scenario
-    for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
+    for scenario, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
 
         # Adding Efficient Accumulated info - Acq Cost
         scenario_df_costavoid = consolidated_dates.merge(right=scenario_df_list[2][['Order Date (Eff)', 'Accum. Acq Cost']], how='left',
@@ -1565,7 +1580,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
        
 
         # Storing the DataFrame in the dictionary with the scenario name
-        scenario_dataframes[f'Scenario_{int(index)}'].append(scenario_df_costavoid)
+        scenario_dataframes[f'Scenario_{int(scenario)}'].append(scenario_df_costavoid)
 
     # Creating Chart Canvas for each Scenario, separately
     '''
@@ -1578,6 +1593,12 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
     width, height = 680, 280
 
     for index, (scenario_name, scenario_df_list) in enumerate(scenario_dataframes.items()):
+        # print('0\n---------', scenario_df_list[0])
+        # print('1\n---------', scenario_df_list[1])
+        # print('2\n---------', scenario_df_list[2])
+        # print('3\n---------', scenario_df_list[3])
+        # print('4\n---------', scenario_df_list[4])
+        
         # Creating a figure and axes to insert the chart
         fig, ax = plt.subplots(figsize=(width / 100, height / 100), layout='constrained')
         # Keeping background transparent
@@ -1591,14 +1612,30 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         # Efficient Accumulated Line - Acq Cost
         eff_axs = ax.plot(scenario_df_list[4]['Date'], scenario_df_list[4]['Accum. Acq Cost (Eff)'], label='Efficient Curve', color=colors_array[index],
                           ls='dashed')
-        # Efficient Accumulated Line - Acq Cost
-        hyp_axs = ax.plot(scenario_df_list[4]['Date'], scenario_df_list[4]['Accum. Acq Cost (Hyp)'], label=f'Hypothetical Curve', color=colors_array[index],
-                          ls='dashdot')
+        
+        # Hypothetical Order Qty (Acq Cost) happens all in 'T0+X' Date. This is the concept of Hypothetical curve. Buying everything all at once, with no cadence, when Planning starts.
+        
+        # Getting 't0+X' date for current Scenario iterated
+        scenario_pln_start_date = (scenarios_list[index]['t0'] + pd.DateOffset(months=scenarios_list[index]['hyp_t0_start'])).strftime('%m/%Y')
+        print(scenario_pln_start_date)
+        scenario_pln_months_from_t0 = scenarios_list[index]['hyp_t0_start']
+        # Getting Build-Up List Total Cost
+        bup_cost = scenario_df_list[4]['Accum. Acq Cost (Hyp)'].max()
+        # Adding Info to pandas dataframe
+        scenario_df_list[4]['Acq Amount Hyp'] = np.nan
+        scenario_df_list[4].loc[scenario_df_list[4]['Date'] == scenario_pln_start_date, 'Acq Amount Hyp'] = bup_cost
+
+        hyp_axs = ax.bar(scenario_df_list[4]['Date'], scenario_df_list[4]['Acq Amount Hyp'], 
+                         label=f"Hypothetical t0+{str(scenario_pln_months_from_t0)} Purchase", 
+                         color=colors_array[index])
+
+        # hyp_axs = ax.plot(scenario_df_list[4]['Date'], scenario_df_list[4]['Accum. Acq Cost (Hyp)'], label=f'Hypothetical Curve', color=colors_array[index],
+        #                   ls='dashdot')
 
         # Chart Settings
         ax.set_ylabel('Acq Cost (US$) Delivered Qty')
         ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
-        ax.set_title(f'Cost Avoidance (Efficient Asset Allocation): {scenario_name}', color=colors_array[index], fontweight='bold')
+        ax.set_title(f'Cost Avoidance (Efficient Asset Allocation)', color=colors_array[index], fontweight='bold')
         ax.grid(True)
         ax.legend(loc='upper left', fontsize=7, framealpha=0.8)
 
