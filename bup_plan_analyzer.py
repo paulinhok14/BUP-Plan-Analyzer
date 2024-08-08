@@ -1612,32 +1612,75 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         # Efficient Accumulated Line - Acq Cost
         eff_axs = ax.plot(scenario_df_list[4]['Date'], scenario_df_list[4]['Accum. Acq Cost (Eff)'], label='Efficient Curve', color=colors_array[index],
                           ls='dashed')
-        
-        # Hypothetical Order Qty (Acq Cost) happens all in 'T0+X' Date. This is the concept of Hypothetical curve. Buying everything all at once, with no cadence, when Planning starts.
-        
+                
         # Getting 't0+X' date for current Scenario iterated
         scenario_pln_start_date = (scenarios_list[index]['t0'] + pd.DateOffset(months=scenarios_list[index]['hyp_t0_start'])).strftime('%m/%Y')
-        print(scenario_pln_start_date)
         scenario_pln_months_from_t0 = scenarios_list[index]['hyp_t0_start']
         # Getting Build-Up List Total Cost
         bup_cost = scenario_df_list[4]['Accum. Acq Cost (Hyp)'].max()
         # Adding Info to pandas dataframe
-        scenario_df_list[4]['Acq Amount Hyp'] = np.nan
+        scenario_df_list[4]['Acq Amount Hyp'] = 0 # It should not be NaN in order to compare in fill_between() method
         scenario_df_list[4].loc[scenario_df_list[4]['Date'] == scenario_pln_start_date, 'Acq Amount Hyp'] = bup_cost
 
+        # Making every 'Accum. Acq Cost (Eff)' NaN values be 0
+        scenario_df_list[4]['Accum. Acq Cost (Eff)'] = scenario_df_list[4]['Accum. Acq Cost (Eff)'].fillna(0)
+
+
+        # Hypothetical Order Qty (Acq Cost) happens all in 'T0+X' Date. This is the concept of Hypothetical curve. Buying everything all at once, with no cadence, when Planning starts.
         hyp_axs = ax.bar(scenario_df_list[4]['Date'], scenario_df_list[4]['Acq Amount Hyp'], 
                          label=f"Hypothetical t0+{str(scenario_pln_months_from_t0)} Purchase", 
                          color=colors_array[index])
+        
+        # Filling area between Hypothetical only Purchase and Efficient Purchase line
+        # ax.fill_between(x=scenario_df_list[4]['Date'], y1=scenario_df_list[4]['Acq Amount Hyp'].max(), y2=scenario_df_list[4]['Accum. Acq Cost (Eff)'],
+        #                 where=(scenario_df_list[4]['Accum. Acq Cost (Eff)'] > scenario_df_list[4]['Acq Amount Hyp']), interpolate=True,
+        #                 color=colors_array[index], alpha=0.2, label='Cash Saved')
+        
+        
+        # TEST
+        scenario_df_list[4]['Fill Between Ctrl Variable'] = 0
+        # First Acq Cost Amount
+        eff_first_acq_amount = scenario_df_list[4].loc[scenario_df_list[4]['Accum. Acq Cost (Eff)'] != 0, 'Accum. Acq Cost (Eff)'].iloc[0]
+        # Filling Control Variable
+        scenario_df_list[4].loc[scenario_df_list[4]['Acq Amount Hyp'] != 0, 'Fill Between Ctrl Variable'] = eff_first_acq_amount  # In Hyp Purchase date
+        scenario_df_list[4].loc[scenario_df_list[4]['Fill Between Ctrl Variable'] == 0, 
+                                'Fill Between Ctrl Variable'] = scenario_df_list[4]['Accum. Acq Cost (Eff)']  # For all 0 values, get the Accumulated Value (Efficient Line)
+        # Filling all 0's between first Hypothetical purchase date and the start of Efficient Line with the first Efficient value
+        first_nonzero_idx_ctrl_var = scenario_df_list[4][scenario_df_list[4]['Fill Between Ctrl Variable'] != 0].index[0]
+        # Updating Fill Between Ctrl Variable with 0's but only when its after the first value allocated
+        scenario_df_list[4].loc[(scenario_df_list[4].index > first_nonzero_idx_ctrl_var) & (scenario_df_list[4]['Fill Between Ctrl Variable'] == 0),
+                                'Fill Between Ctrl Variable'] = eff_first_acq_amount
 
-        # hyp_axs = ax.plot(scenario_df_list[4]['Date'], scenario_df_list[4]['Accum. Acq Cost (Hyp)'], label=f'Hypothetical Curve', color=colors_array[index],
-        #                   ls='dashdot')
+
+        # scenario_df_list[4].to_excel('excel.xlsx')
+
+        # ax.fill_between(x=scenario_df_list[4]['Date'], y1=scenario_df_list[4]['Acq Amount Hyp'].max(), y2=scenario_df_list[4]['Accum. Acq Cost (Eff)'],
+        #                 where=(scenario_df_list[4]['Accum. Acq Cost (Eff)'] > scenario_df_list[4]['Acq Amount Hyp']), interpolate=True,
+        #                 color=colors_array[index], alpha=0.2, hatch='\\', label='Cash Saved')
+        ax.fill_between(x=scenario_df_list[4]['Date'], y1=scenario_df_list[4]['Acq Amount Hyp'].max(), y2=scenario_df_list[4]['Fill Between Ctrl Variable'],
+                        where=(scenario_df_list[4]['Fill Between Ctrl Variable'] > 0), interpolate=True, 
+                        color=colors_array[index], alpha=0.2, hatch='\\', label='Cash Saved')
+        
+        # Adding horizontal fill in order to complement space between Hypothetical purchase and Efficient line start, if needed.
+        start_date = scenario_pln_start_date
+        end_date = scenario_df_list[4].loc[scenario_df_list[4]['Accum. Acq Cost (Eff)'] != 0, 'Date'].iloc[0] # Efficient curve Start Date (first month different than 0)
+        # Getting axes value percentile to define ymax and ymin to axvspan
+        y_min, y_max = ax.get_ylim()
+        y_upper_limit = bup_cost / y_max
+        y_lower_limit = scenario_df_list[4].loc[scenario_df_list[4]['Accum. Acq Cost (Eff)'] != 0, 'Accum. Acq Cost (Eff)'].iloc[0] / y_max
+        # Control variable to avoid overlap
+        overlap_control = 0.01
+        # Filling
+        # ax.axvspan(xmin=start_date, xmax=end_date, alpha=0.2, color=colors_array[index],
+        #            ymin=y_lower_limit, ymax=y_upper_limit)
+
 
         # Chart Settings
         ax.set_ylabel('Acq Cost (US$) Delivered Qty')
         ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
         ax.set_title(f'Cost Avoidance (Efficient Asset Allocation)', color=colors_array[index], fontweight='bold')
         ax.grid(True)
-        ax.legend(loc='upper left', fontsize=7, framealpha=0.8)
+        ax.legend(loc='lower right', fontsize=7, framealpha=0.8)
 
         # Function to format y-axis (float) to money format in million (US$ X M)
         def y_axis_acqcost_fmt(x, _):
@@ -1645,8 +1688,6 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         
         # Setting formatter function for y axis
         ax.yaxis.set_major_formatter(FuncFormatter(y_axis_acqcost_fmt))
-
-        # fig.show()
 
         # Inserting chart into Canvas
         canvas_cost_avoidance = FigureCanvasTkAgg(fig, master=cost_avoidance_screen)
