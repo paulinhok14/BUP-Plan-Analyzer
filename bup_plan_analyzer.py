@@ -1642,31 +1642,39 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         # If the Hypothetical Purchase happens before Efficient Curve Start, I assign the first Efficient Curve purchase to the same date and fill following 0's
         # with the same value until reaching the Efficient Curve construction
         # scenario_df_list[4].loc[scenario_df_list[4]['Acq Amount Hyp'] != 0, 'Fill Between Ctrl Variable'] = eff_first_acq_amount  # In Hyp Purchase date
-        print()
         
+        # Hypothetical Purchase Date
+        hyp_purchase_date = pd.to_datetime(scenario_pln_start_date, format='%m/%Y')
+        print(hyp_purchase_date)
+        # Efficient Curve Start Date
+        eff_purchase_start_date = scenario_df_list[4].loc[scenario_df_list[4]['Accum. Acq Cost (Eff)'] != 0, 'Date_dt'].iloc[0]
+        print(eff_purchase_start_date)
+        
+        # Above mentioned Conditional. If not True, nothing is done
+        if hyp_purchase_date < eff_purchase_start_date:
+            # Assigning first Efficient Curve Purchase to the Hypothetical Purchase date
+            scenario_df_list[4].loc[scenario_df_list[4]['Date_dt'] == hyp_purchase_date, 'Fill Between Ctrl Variable'] = eff_first_acq_amount
+            # Filling forward 0's with this value until reaching Efficient Curve construction
+            first_nonzero_idx_ctrl_var = scenario_df_list[4][scenario_df_list[4]['Fill Between Ctrl Variable'] != 0].index[0]
+            # Updating Fill Between Ctrl Variable with 0's but only when its after the first value allocated
+            scenario_df_list[4].loc[(scenario_df_list[4].index > first_nonzero_idx_ctrl_var) & (scenario_df_list[4]['Fill Between Ctrl Variable'] == 0),
+                                    'Fill Between Ctrl Variable'] = eff_first_acq_amount
+        else:
+            pass
 
-        # Filling all 0's between first Hypothetical purchase date and the start of Efficient Line with the first Efficient value
-        first_nonzero_idx_ctrl_var = scenario_df_list[4][scenario_df_list[4]['Fill Between Ctrl Variable'] != 0].index[0]
-        # Updating Fill Between Ctrl Variable with 0's but only when its after the first value allocated
-        scenario_df_list[4].loc[(scenario_df_list[4].index > first_nonzero_idx_ctrl_var) & (scenario_df_list[4]['Fill Between Ctrl Variable'] == 0),
-                                'Fill Between Ctrl Variable'] = eff_first_acq_amount
 
         # Creating Start Date and End Date for Efficient Curve in order to condition 'where' arg on fill_between() method
         start_date = pd.to_datetime(scenario_pln_start_date, format='%m/%Y')
         end_date = pd.to_datetime(
             scenario_df_list[4].loc[scenario_df_list[4]['Accum. Acq Cost (Eff)'] != 0, 'Date'].iloc[-1]
-            , format='%m/%Y') # Efficient curve Start Date (first month different than 0)
+            , format='%m/%Y') # Efficient curve End Date (last month different than 0)
   
-
-        # scenario_df_list[4].to_excel('excel.xlsx')
-
         # Filling Cost Avoidance area
         ax.fill_between(x=scenario_df_list[4]['Date'], y1=scenario_df_list[4]['Acq Amount Hyp'].max(), y2=scenario_df_list[4]['Fill Between Ctrl Variable'],
                         where=((scenario_df_list[4]['Date_dt'] >= start_date) & (scenario_df_list[4]['Date_dt']<= end_date)), interpolate=True, 
                         color=colors_array[index], alpha=0.2, hatch='\\', label='Cash Saved')
         
     
-
         # Chart Settings
         ax.set_ylabel('Acq Cost (US$) Delivered Qty')
         ax.tick_params(axis='both', labelsize=9)  # Adjusting labels size
