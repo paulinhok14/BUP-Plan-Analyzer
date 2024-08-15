@@ -1645,10 +1645,8 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         
         # Hypothetical Purchase Date
         hyp_purchase_date = pd.to_datetime(scenario_pln_start_date, format='%m/%Y')
-        print(hyp_purchase_date)
         # Efficient Curve Start Date
         eff_purchase_start_date = scenario_df_list[4].loc[scenario_df_list[4]['Accum. Acq Cost (Eff)'] != 0, 'Date_dt'].iloc[0]
-        print(eff_purchase_start_date)
         
         # Above mentioned Conditional. If not True, nothing is done
         if hyp_purchase_date < eff_purchase_start_date:
@@ -1661,7 +1659,6 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
                                     'Fill Between Ctrl Variable'] = eff_first_acq_amount
         else:
             pass
-
 
         # Creating Start Date and End Date for Efficient Curve in order to condition 'where' arg on fill_between() method
         start_date = pd.to_datetime(scenario_pln_start_date, format='%m/%Y')
@@ -1696,12 +1693,39 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         canvas_cost_avoidance.get_tk_widget().configure(background='#cfcfcf')
         canvas_cost_avoidance.get_tk_widget().place(relx=0.5, rely=0.33, anchor=ctk.CENTER)
 
-        # Appending to List
+        # Appending Canvas to List
         canvas_list_cost_avoidance.append(canvas_cost_avoidance)
 
+        # --------------------------------------------------- SAVINGS CALCULATION ---------------------------------------------------
+
+        # Calculating Scenario Savings between Efficient Curve x Hypothetical t0+X purchase
+
+        # Creating Raw Postponed Column (US$) with Efficient Curve
+        scenario_df_list[4]['Raw Postponed Amount'] = 0
+        # Creating the condition in which the values will be applied (Beginning in the date when Hypothetical Purchase was done)
+        condition = scenario_df_list[4]['Date_dt'] >= hyp_purchase_date
+        # Subtracting the Hypothetical Purchase Amount (Acq Cost) from Efficient Curve to get the difference on each month
+        scenario_df_list[4].loc[condition, 'Raw Postponed Amount'] = bup_cost - scenario_df_list[4].loc[condition, 'Accum. Acq Cost (Eff)']
+
+        # Calculating monthly Cost of Capital based on WACC variable (compounded mode)
+        monthly_wacc = ((1+(wacc_value/100))**(1/12)-1)*100
+        # Calculating Monthly Savings
+        scenario_df_list[4]['Postponed Savings (US$)'] = scenario_df_list[4]['Raw Postponed Amount'] * (monthly_wacc/100)
         
+        # Total Savings Efficient x Hypothetical purchase
+        total_savings_eff = round(scenario_df_list[4]['Postponed Savings (US$)'].sum(), 2)
 
+        # Function to format Cost Avoidance Frame values
+        def format_k_pattern(x):
+            return f'US$ {x/1e3:.2f}K'
 
+        # Label object
+        lbl_savings_eff = ctk.CTkLabel(cost_avoidance_frame, text=f'{format_k_pattern(total_savings_eff)}',
+                            font=ctk.CTkFont('open sans', size=22, weight='bold'),
+                            text_color='green',
+                            )
+        # Label Positioning
+        lbl_savings_eff.place(relx=0.5, rely=0.32, anchor=ctk.CENTER)
 
 
     
