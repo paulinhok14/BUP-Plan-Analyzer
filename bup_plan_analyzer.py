@@ -303,7 +303,7 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
 
 @function_timer
 def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntVar, bup_scope: pd.DataFrame,
-                    efficient_curve_window: ctk.CTkFrame, hypothetical_curve_window: ctk.CTkFrame, cost_avoidance_window: ctk.CTkFrame):
+                    efficient_curve_window: ctk.CTkFrame, hypothetical_curve_window: ctk.CTkFrame, cost_avoidance_window: ctk.CTkFrame, bup_cost: float):
     '''
     This is the function that handles Scenarios creating. Here will be created the Scenarios creation window, and also will be
     the function that calls all other functions that executes subsequently after creating a Scenario. That is:
@@ -725,7 +725,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         img_eff_chart, img_hyp_chart = bup_eff_chart_whitebg, bup_hyp_chart_whitebg
 
         # Calling function to generate Cost Avoidance Chart
-        generate_cost_avoidance_screen(cost_avoidance_window, scenario_dataframes, scenarios_list, df_scope_with_scenarios, df_dates_eff, df_dates_hyp)
+        generate_cost_avoidance_screen(cost_avoidance_window, scenario_dataframes, scenarios_list, df_scope_with_scenarios, df_dates_eff, df_dates_hyp, bup_cost)
 
         # Adding 1 to IntVar with the Scenarios count
         var_scenarios_count.set(var_scenarios_count.get() + 1)
@@ -1438,7 +1438,7 @@ def generate_acqcost_curve(df_scope_with_scenarios: pd.DataFrame, df_dates_eff: 
 
 @function_timer
 def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario_dataframes: dict, scenarios_list: list, df_scope_with_scenarios: pd.DataFrame,
-                                   df_dates_eff, df_dates_hyp):
+                                   df_dates_eff, df_dates_hyp, bup_cost: float):
 
     # Global variable to store charts Canvas (each Scenario produces a particular Chart)
     global canvas_list_cost_avoidance
@@ -1447,6 +1447,11 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
     wacc_value = 5.42 # Mock 29/07/24 as analyzed in cost of debt proportion. Cost of equity are 13,41% as beta for ERJ is 1.54, 10-Year Tresury rates are 4.1% and 6% ERP. 
     # Equity to Debt ratio is 63/37% so full WACC, considering equity, would be 10.48%. Only Debt Cost was mocked (5.42).
     doublevar_wacc = ctk.DoubleVar(cost_avoidance_screen, value=wacc_value)
+    # Calculating monthly Cost of Capital based on WACC variable (compounded mode)
+    monthly_wacc = ((1+(wacc_value/100))**(1/12)-1)*100
+    # Daily Cost of Capital
+    daily_wacc = ((1+(monthly_wacc/100))**(1/30)-1)*100
+
 
     # Colors list, so that each Scenario has a specific color and facilitates differentiation
     colors_array = ['blue', 'orange', 'black', 'green', 'purple']
@@ -1470,6 +1475,10 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
     steps = 100
     doublevar_operat_eff_variation = ctk.DoubleVar(value=0)
 
+    # Function to format Cost Avoidance Frame values
+    def format_k_pattern(x):
+        return f'US$ {x/1e3:.2f}K'
+
     # Slider callback function to update Label text
     def update_label(value):
         # If value is positive
@@ -1480,6 +1489,12 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
             procur_len_simulated = int(137 * (1 - (doublevar_operat_eff_variation.get()/100))) # mock
             procur_len_gain = int(137 * (0 + (doublevar_operat_eff_variation.get()/100))) # mock
             lbl_procur_len_simul_num.configure(text=f'{procur_len_simulated} (-{procur_len_gain})', text_color='green')
+
+            # Calculating Additional Savings based on daily Cost of Capital
+            additional_savings = (procur_len_gain * (daily_wacc/100)) * bup_cost
+            # Updating Additional Savings/Cost label
+            lbl_additional_savings_simul.configure(text=f'{format_k_pattern(additional_savings)}', text_color='green')
+
         # If negative
         else:
             lbl_efficiency_variation_num.configure(text=f'Efficiency Loss: {doublevar_operat_eff_variation.get()}%',
@@ -1488,6 +1503,12 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
             procur_len_simulated = int(137 * (1 - (doublevar_operat_eff_variation.get()/100))) # mock
             procur_len_loss = int(137 * (0 + (doublevar_operat_eff_variation.get()/100))) # mock
             lbl_procur_len_simul_num.configure(text=f'{procur_len_simulated} ({procur_len_loss})', text_color='red')
+
+            # Calculating Additional Costs based on daily Cost of Capital
+            additional_costs = (procur_len_loss * (daily_wacc/100)) * bup_cost
+            # Updating Additional Savings/Cost label
+            lbl_additional_savings_simul.configure(text=f'-{format_k_pattern(additional_costs)}', text_color='red')
+
     
     # Operational Efficiency Parameters - Full Supply Chain steps
     lbl_operat_eff = ctk.CTkLabel(cost_avoidance_screen,
@@ -1615,7 +1636,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         scenario_pln_start_date = (scenarios_list[index]['t0'] + pd.DateOffset(months=scenarios_list[index]['hyp_t0_start'])).strftime('%m/%Y')
         scenario_pln_months_from_t0 = scenarios_list[index]['hyp_t0_start']
         # Getting Build-Up List Total Cost
-        bup_cost = scenario_df_list[4]['Accum. Acq Cost (Hyp)'].max()
+        #bup_cost = scenario_df_list[4]['Accum. Acq Cost (Hyp)'].max()
         # Adding Info to pandas dataframe
         scenario_df_list[4]['Acq Amount Hyp'] = 0 # It should not be NaN in order to compare in fill_between() method
         scenario_df_list[4].loc[scenario_df_list[4]['Date'] == scenario_pln_start_date, 'Acq Amount Hyp'] = bup_cost
@@ -1707,25 +1728,27 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         # Subtracting the Hypothetical Purchase Amount (Acq Cost) from Efficient Curve to get the difference on each month
         scenario_df_list[4].loc[condition, 'Raw Postponed Amount'] = bup_cost - scenario_df_list[4].loc[condition, 'Accum. Acq Cost (Eff)']
 
-        # Calculating monthly Cost of Capital based on WACC variable (compounded mode)
-        monthly_wacc = ((1+(wacc_value/100))**(1/12)-1)*100
         # Calculating Monthly Savings
         scenario_df_list[4]['Postponed Savings (US$)'] = scenario_df_list[4]['Raw Postponed Amount'] * (monthly_wacc/100)
         
         # Total Savings Efficient x Hypothetical purchase
         total_savings_eff = round(scenario_df_list[4]['Postponed Savings (US$)'].sum(), 2)
 
-        # Function to format Cost Avoidance Frame values
-        def format_k_pattern(x):
-            return f'US$ {x/1e3:.2f}K'
 
-        # Label object
+        # Label Efficient Purchase Savings
         lbl_savings_eff = ctk.CTkLabel(cost_avoidance_frame, text=f'{format_k_pattern(total_savings_eff)}',
                             font=ctk.CTkFont('open sans', size=22, weight='bold'),
                             text_color='green',
                             )
         # Label Positioning
         lbl_savings_eff.place(relx=0.5, rely=0.32, anchor=ctk.CENTER)
+
+        # Label Dynamic Additional Savings/Cost based on Efficiency Gain/Loss
+        lbl_additional_savings_simul = ctk.CTkLabel(cost_avoidance_frame, text='0',
+                            font=ctk.CTkFont('open sans', size=22, weight='bold'),
+                            text_color='green'
+                            )
+        lbl_additional_savings_simul.place(relx=0.5, rely=0.72, anchor=ctk.CENTER)
 
 
     

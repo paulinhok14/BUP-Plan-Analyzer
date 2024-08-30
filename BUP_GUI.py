@@ -14,7 +14,7 @@ active_user = os.getlogin()
 ctk.set_appearance_mode("light")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 # Version
-app_version: str = 'Release: ' + 'v1.2'
+app_version: str = 'Release: ' + 'v2.0'
 
 # Reference Variables
 logo_path = r'src\images\logo.png'
@@ -191,11 +191,12 @@ def main():
                                                                   "closed and you have access to the Downloads folder.")
 
         # Tab 1 - Scope
-        bup_cost = "List Value: US$ " + str("{:.2f}".format(
-            bup_scope.apply(lambda linha: linha['Acq Cost'] * linha['Qty'], axis=1).sum() / 1000000
+        bup_cost: float = bup_scope.apply(lambda linha: linha['Acq Cost'] * linha['Qty'], axis=1).sum()
+        bup_cost_label = "List Value: US$ " + str("{:.2f}".format(
+            bup_cost
         )) + " MM"
 
-        label_cost = ctk.CTkLabel(tbvmenu.tab("Scope"), text=bup_cost,
+        label_cost = ctk.CTkLabel(tbvmenu.tab("Scope"), text=bup_cost_label,
                                   font=ctk.CTkFont('open sans', size=14, weight='bold'),
                                   text_color='#000000')
         label_cost.pack(anchor="e")
@@ -545,7 +546,7 @@ def main():
             Function that handles Scenarios creation, creates the window elements and interacts with the Scenario List.
             It will also return the Canvas for each Chart, enabling toggle function to handle the exhibition
             '''
-            bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window, cost_avoidance_window)
+            bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window, cost_avoidance_window, bup_cost)
 
         # Create Scenario button
         btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
