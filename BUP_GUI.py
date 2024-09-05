@@ -192,9 +192,7 @@ def main():
 
         # Tab 1 - Scope
         bup_cost: float = bup_scope.apply(lambda linha: linha['Acq Cost'] * linha['Qty'], axis=1).sum()
-        bup_cost_label = "List Value: US$ " + str("{:.2f}".format(
-            bup_cost
-        )) + " MM"
+        bup_cost_label = f'List Value: US$ {(bup_cost/1000000):.2f} MM'
 
         label_cost = ctk.CTkLabel(tbvmenu.tab("Scope"), text=bup_cost_label,
                                   font=ctk.CTkFont('open sans', size=14, weight='bold'),
