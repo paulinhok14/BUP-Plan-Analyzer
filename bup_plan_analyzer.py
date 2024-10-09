@@ -1444,8 +1444,8 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
     global canvas_list_cost_avoidance
 
     # WACC
-    wacc_value = 5.42 # Mock 29/07/24 as analyzed in cost of debt proportion. Cost of equity are 13,41% as beta for ERJ is 1.54, 10-Year Tresury rates are 4.1% and 6% ERP. 
-    # Equity to Debt ratio is 63/37% so full WACC, considering equity, would be 10.48%. Only Debt Cost was mocked (5.42).
+    wacc_value = 5.42 # Mock 07/10/24 as analyzed in cost of debt proportion. Cost of equity are 13,41% as beta for ERJ is 1.54, 10-Year Tresury rates are 4.1% and 6% ERP.
+    # Equity to Debt ratio is 63/37% so full WACC, considering equity, would be higher as Cost of Equity considers Equity Risk Premium
     doublevar_wacc = ctk.DoubleVar(cost_avoidance_screen, value=wacc_value)
     # Calculating monthly Cost of Capital based on WACC variable (compounded mode)
     monthly_wacc = ((1+(wacc_value/100))**(1/12)-1)*100
@@ -1475,9 +1475,15 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
     steps = 100
     doublevar_operat_eff_variation = ctk.DoubleVar(value=0)
 
-    # Function to format Cost Avoidance Frame values
-    def format_k_pattern(x):
-        return f'US$ {x/1e3:.2f}K'
+    # Function to format Cost Avoidance Frame values depending on digits qty
+    def format_k_m_pattern(x):
+        if x >= 1_000_000:
+            formatted_string = f'US$ {x / 1e6:.2f}M'
+        elif x >= 1_000:
+            formatted_string = f'US$ {x / 1e3:.2f}K'
+        else:
+            formatted_string = x
+        return formatted_string
 
     # Slider callback function to update Label text
     def update_label(value):
@@ -1486,28 +1492,28 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
             lbl_efficiency_variation_num.configure(text=f'Efficiency Gain: +{doublevar_operat_eff_variation.get()}%',
                                                    text_color='green')
             # Calculating Efficiency Gain and new Procurement Length
-            procur_len_simulated = int(137 * (1 - (doublevar_operat_eff_variation.get()/100))) # mock
-            procur_len_gain = int(137 * (0 + (doublevar_operat_eff_variation.get()/100))) # mock
+            procur_len_simulated = int(355 * (1 - (doublevar_operat_eff_variation.get()/100))) # mock
+            procur_len_gain = int(355 * (0 + (doublevar_operat_eff_variation.get()/100))) # mock
             lbl_procur_len_simul_num.configure(text=f'{procur_len_simulated} (-{procur_len_gain})', text_color='green')
 
             # Calculating Additional Savings based on daily Cost of Capital
             additional_savings = (procur_len_gain * (daily_wacc/100)) * bup_cost
             # Updating Additional Savings/Cost label
-            lbl_additional_savings_simul.configure(text=f'{format_k_pattern(additional_savings)}', text_color='green')
+            lbl_additional_savings_simul.configure(text=f'{format_k_m_pattern(additional_savings)}', text_color='green')
 
         # If negative
         else:
             lbl_efficiency_variation_num.configure(text=f'Efficiency Loss: {doublevar_operat_eff_variation.get()}%',
                                                    text_color='red')
             # Calculating Efficiency Loss and new Procurement Length
-            procur_len_simulated = int(137 * (1 - (doublevar_operat_eff_variation.get()/100))) # mock
-            procur_len_loss = int(137 * (0 + (doublevar_operat_eff_variation.get()/100))) # mock
+            procur_len_simulated = int(355 * (1 - (doublevar_operat_eff_variation.get()/100))) # mock
+            procur_len_loss = int(355 * (0 + (doublevar_operat_eff_variation.get()/100))) # mock
             lbl_procur_len_simul_num.configure(text=f'{procur_len_simulated} ({procur_len_loss})', text_color='red')
 
             # Calculating Additional Costs based on daily Cost of Capital
             additional_costs = (procur_len_loss * (daily_wacc/100)) * bup_cost
             # Updating Additional Savings/Cost label
-            lbl_additional_savings_simul.configure(text=f'-{format_k_pattern(additional_costs)}', text_color='red')
+            lbl_additional_savings_simul.configure(text=f'-{format_k_m_pattern(additional_costs)}', text_color='red')
 
     
     # Operational Efficiency Parameters - Full Supply Chain steps
@@ -1550,7 +1556,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
                                           font=ctk.CTkFont('open sans', size=11, weight='bold'))
     lbl_scen_procur_length.place(relx=0.5, rely=0.12, anchor=ctk.CENTER)
     # Procurement Length Fixed Number label
-    lbl_scen_procur_length_num = ctk.CTkLabel(procur_length_frame, text="137", #mock
+    lbl_scen_procur_length_num = ctk.CTkLabel(procur_length_frame, text="355", #mock
                                           font=ctk.CTkFont('open sans', size=22, weight='bold'))
     lbl_scen_procur_length_num.place(relx=0.5, rely=0.32, anchor=ctk.CENTER)
 
@@ -1559,7 +1565,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
                                              font=ctk.CTkFont('open sans', size=11, weight='bold'))
     lbl_procur_len_simulation.place(relx=0.5, rely=0.52, anchor=ctk.CENTER)
     # Procurement Length Simulation number
-    lbl_procur_len_simul_num = ctk.CTkLabel(procur_length_frame, text='137', #mock
+    lbl_procur_len_simul_num = ctk.CTkLabel(procur_length_frame, text='355', #mock
                                              font=ctk.CTkFont('open sans', size=22, weight='bold'))
     lbl_procur_len_simul_num.place(relx=0.5, rely=0.72, anchor=ctk.CENTER)
 
@@ -1683,6 +1689,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
 
         # Creating Start Date and End Date for Efficient Curve in order to condition 'where' arg on fill_between() method
         start_date = pd.to_datetime(scenario_pln_start_date, format='%m/%Y')
+
         end_date = pd.to_datetime(
             scenario_df_list[4].loc[scenario_df_list[4]['Accum. Acq Cost (Eff)'] != 0, 'Date'].iloc[-1]
             , format='%m/%Y') # Efficient curve End Date (last month different than 0)
@@ -1736,7 +1743,7 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
 
 
         # Label Efficient Purchase Savings
-        lbl_savings_eff = ctk.CTkLabel(cost_avoidance_frame, text=f'{format_k_pattern(total_savings_eff)}',
+        lbl_savings_eff = ctk.CTkLabel(cost_avoidance_frame, text=f'{format_k_m_pattern(total_savings_eff)}',
                             font=ctk.CTkFont('open sans', size=22, weight='bold'),
                             text_color='green',
                             )

@@ -115,7 +115,7 @@ def main():
         tbvmenu.add("Scope")
         tbvmenu.add("Leadtime Analysis")
         tbvmenu.add("Scenarios")
-        tbvmenu.add("Stock Analysis")
+        # tbvmenu.add("Stock Analysis")
 
         @bup.function_timer
         def export_data(xl_spreadsheet: str) -> None:
@@ -569,13 +569,13 @@ def main():
                                             )
 
         # Tab 4 - Stock Analysis
-        btn_read_stock_data = ctk.CTkButton(tbvmenu.tab("Stock Analysis"), text='Read Stock Data',
-                                      command=lambda: print('Stock read!'),
-                                      font=ctk.CTkFont('open sans', size=12, weight='bold'),
-                                      bg_color="#dbdbdb", fg_color="#009898", hover_color="#006464",
-                                      width=200, height=30, corner_radius=30
-                                      )
-        btn_read_stock_data.pack()
+        # btn_read_stock_data = ctk.CTkButton(tbvmenu.tab("Stock Analysis"), text='Read Stock Data',
+        #                               command=lambda: print('Stock read!'),
+        #                               font=ctk.CTkFont('open sans', size=12, weight='bold'),
+        #                               bg_color="#dbdbdb", fg_color="#009898", hover_color="#006464",
+        #                               width=200, height=30, corner_radius=30
+        #                               )
+        # btn_read_stock_data.pack()
 
         # Hiding Main Screen
         main_screen.withdraw()
