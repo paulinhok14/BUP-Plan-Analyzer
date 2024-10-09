@@ -1,5 +1,5 @@
 # Build-Up Plan Analyzer
-###### Version 1.0
+###### Version 2.0
 ### What Is?
 
 
@@ -39,7 +39,7 @@ You can make it a desktop shortcut if you want. Run it doubleclicking.
 
 The main screen should appear after a while:
 
-![Main Screen](docs/main_screen.jpg)
+![Main Screen](docs/main_screen_v2.png)
 
 Click on 'Search Scope File'
 
@@ -51,22 +51,24 @@ A window with explorer will appear. Choose your scope file and click Open:
 
 It may take a while since complementary information is fetched at this moment in the application. You can check the average time elapsed for this function in the 'execution_info.log' file, also in the application folder.
 
-![Loading Reading Scope](docs/loading_reading_scope.jpg)
+![Loading Reading Scope](docs/loading_reading_scope_v2.png)
 ![Log File](docs/log_file.png)
 
 Having it done, another screen should appear, in the first tab called "Scope", where you can see all loaded parts with their respective complementary information.  
 You can also make sure that the file loaded is correct by checking file name, rows quantity and Contract Value (US$):
 
-![Scope Tab](docs/scope_tab.png)
+![Scope Tab](docs/scope_tab_v2.png)
 
 In the second tab, called "Leadtime Analysis", is presented two charts in order to evaluate Leadtime distribution:
 
-![Leadtime Analysis Tab](docs/leadtime_analysis_tab.png)
+![Leadtime Analysis Tab](docs/leadtime_analysis_tab_v2.png)
+
+![Leadtime Analysis Tab 2](docs/leadtime_analysis_tab_v2_2.png)
 
 The third tab "Scenarios" is where the simulation charts for Efficient Chart and Hypothetical Chart will be presented.  
 First you need to click on "Create Scenario" to create a forecast scenario.
 
-![Scenarios Tab](docs/scenarios_tab.png)
+![Scenarios Tab](docs/scenarios_tab_v2.png)
 
 ![Button Create Scenario](docs/btn_create_scenario.png)
 
@@ -116,7 +118,18 @@ This chart plots the **best date to issue the Purchase documents**, considering 
 
 That's why it is entitled **Efficient**, from the cash point of view. **It is the most optimized capital allocation considering the current operational parameters.**
 
+Two Scenarios can be created in order to compare their curves:
+
+(v1.0 charts comparison)
 ![Efficient Curve Chart](docs/efficient_curve_chart.png)
+
+Or the Curves can be evaluated in terms of **Parts (orange)** and **Cash (green)**, and it can be toggled using upper switch.
+
+(v2.0 Charts Screen)
+![Efficient Curve Chart v2 Parts](docs/efficient_curve_v2_parts.png)
+
+![Efficient Curve Chart v2 Cash](docs/efficient_curve_v2_cash.png)
+
 
 #### **Hypothetical Curve:**
 
@@ -126,7 +139,31 @@ The line represents **materials delivery**, along with a circle marker of when a
 
 This is why it is called **Hypothetical**, as it is based on the hypothesis of starting the entire build-up from a specific date, purchasing all materials at once in a date indicated when creating the scenario.
 
+Same for this Hypothetical, Scenarios can be created in order to compare their curves: 
+
+(v1.0 charts comparison)
 ![Hypothetical Curve Chart](docs/hypothetical_curve_chart.png)
+
+Or the Curves can be evaluated in terms of **Parts (orange)** and **Cash (green)**.
+
+(v2.0 Charts Screen)
+![Hypothetical Curve Chart v2 Parts](docs/hyp_curve_v2_parts.png)
+
+![Hypothetical Curve Chart v2 Cash](docs/hyp_curve_v2_cash.png)
+
+#### **Cost Avoidance Curve:**
+
+**This is where the savings between Hypothetical and Efficient asset allocation is compared.** 
+
+A Cost of Capital label are allowed in order to simulate between different financial scenarios.
+
+Also, a Cost Savings/Loss is calculated considering a simulation of X% Efficient Gain/Loss, based on days quantity for Procurement Length (operational parameters).
+
+![Cost Avoidance Curve](docs/cost_avoidance_Curve.png)
+
+![Cost Avoidance Curve with Gains](docs/cost_avoidance_Curve_with_savings.png)
+
+![Cost Avoidance Curve with Losses](docs/cost_avoidance_Curve_with_losses.png)
 
 ___
 ### Exporting Data

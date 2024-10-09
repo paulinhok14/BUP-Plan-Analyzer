@@ -1477,12 +1477,12 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
 
     # Function to format Cost Avoidance Frame values depending on digits qty
     def format_k_m_pattern(x):
-        if x >= 1_000_000:
-            formatted_string = f'US$ {x / 1e6:.2f}M'
-        elif x >= 1_000:
-            formatted_string = f'US$ {x / 1e3:.2f}K'
+        if abs(x) >= 1_000_000:
+            formatted_string = f'US$ {abs(x) / 1e6:.2f}M'
+        elif abs(x) >= 1_000:
+            formatted_string = f'US$ {abs(x) / 1e3:.2f}K'
         else:
-            formatted_string = x
+            formatted_string = round(abs(x), 2)
         return formatted_string
 
     # Slider callback function to update Label text
