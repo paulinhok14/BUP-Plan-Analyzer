@@ -1,5 +1,7 @@
 import pandas as pd
 import warnings
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import matplotlib.lines as mlines
@@ -304,7 +306,8 @@ def generate_histogram(bup_scope: pd.DataFrame, root: ctk.CTkFrame):
 
 @function_timer
 def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntVar, bup_scope: pd.DataFrame,
-                    efficient_curve_window: ctk.CTkFrame, hypothetical_curve_window: ctk.CTkFrame, cost_avoidance_window: ctk.CTkFrame, bup_cost: float):
+                    efficient_curve_window: ctk.CTkFrame, hypothetical_curve_window: ctk.CTkFrame, cost_avoidance_window: ctk.CTkFrame, 
+                    batches_curve_window: ctk.CTkFrame, bup_cost: float):
     '''
     This is the function that handles Scenarios creating. Here will be created the Scenarios creation window, and also will be
     the function that calls all other functions that executes subsequently after creating a Scenario. That is:
@@ -575,7 +578,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
     lbl_qty_batches.grid(row=1, column=1, sticky="e", padx=12)
 
     entry_batches_date = ctk.CTkEntry(batch_frame, width=250)
-    entry_batches_date.configure(placeholder_text='DD/MM/YYYY ; DD/MM/YYYY ; etc')
+    entry_batches_date.configure(placeholder_text='DD/MM/YYYY , DD/MM/YYYY , etc')
     entry_batches_date.configure(state='disabled')
     entry_batches_date.grid(row=2, column=1, padx=10, sticky="e", pady=(0, 20))
 
@@ -592,7 +595,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         if current_batch_switch_status == 'disabled':
             swt_batches_opt.configure(button_color='#004b00', progress_color='green')
             entry_batches.configure(state='normal', placeholder_text='Nº of Batches (ex: 4)')
-            entry_batches_date.configure(state='normal', placeholder_text='DD/MM/YYYY ; DD/MM/YYYY ; etc')
+            entry_batches_date.configure(state='normal', placeholder_text='DD/MM/YYYY , DD/MM/YYYY , etc')
             
         else:      
             swt_batches_opt.configure(button_color='#7c1f27', fg_color='red')    
@@ -800,7 +803,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         scenarios_list.append(scenario)
         scenario_window.destroy()
 
-        # ----------- Calling the chart generation function -----------
+        # ----------- Calling the chart generation functions -----------
 
         # Calling the function to generate the Efficient Build-Up chart. The return of the function is the chart in a
         # figure (Image object), in addition to the DataFrames/Variables created in the function, as a return to be used
@@ -817,6 +820,9 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
 
         # Calling function to generate Cost Avoidance Chart
         generate_cost_avoidance_screen(cost_avoidance_window, scenario_dataframes, scenarios_list, df_scope_with_scenarios, df_dates_eff, df_dates_hyp, bup_cost)
+
+        # Calling function to generate Batches Build-Up chart
+        generate_batches_curve(batches_curve_window, scenarios_list, df_scope_with_scenarios)
 
         # Adding 1 to IntVar with the Scenarios count
         var_scenarios_count.set(var_scenarios_count.get() + 1)
@@ -1851,8 +1857,62 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
 
 
 @function_timer
-def generate_batches_curve():
-    pass    
+def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: list, df_scope_with_scenarios: pd.DataFrame) :
+    '''
+    Function that receives the input so as to generate the Build-Up Curve based on batches.
+    '''
+
+    # If there's Batch Information, creates the chart, Else: it shows an alert label
+    if scenarios_list[0]['batches_dates'] !=  None:
+        lbl_bathes_created = ctk.CTkLabel(batches_curve_window,
+                                            text="Batches were created.",
+                                            font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'),
+                                            fg_color='#cfcfcf',
+                                            bg_color='#cfcfcf',
+                                            text_color='#000000')
+        lbl_bathes_created.place(rely=0.5, relx=0.5, anchor=ctk.CENTER)
+
+        # Batches List
+        batches_dates_list = scenarios_list[0]['batches_dates'].split(',')
+        # Convert batches_dates_list to datetime format and sort it ascending
+        batches_dates_list = [datetime.strptime(date, "%d/%m/%Y") for date in batches_dates_list]
+        batches_dates_list.sort()
+
+        # Creating DataFrame with specific columns for Batch assignment
+        pns_full_procurement_length = df_scope_with_scenarios[['PN', 'Ecode', 'Qty', 't0', 'hyp_t0_start', 'PN Procurement Length']]
+        pns_full_procurement_length['planning_start_date'] = pns_full_procurement_length.apply(lambda row: row['t0'] + relativedelta(months=row['hyp_t0_start']), axis=1) 
+
+        # Assigning Part Numbers to specific Batches, being tested on ascending order
+        def assign_batch(row):
+            for i, batch_date in enumerate(batches_dates_list):
+                if row['PN Procurement Length'] <= (batch_date - row['planning_start_date']).days:
+                    return int(i + 1)
+            return 'No Batch Assigned'
+        
+        pns_full_procurement_length['Batch'] = pns_full_procurement_length.apply(assign_batch, axis=1)
+
+        # Create a new column 'Batch Date' based on the Batch number or 'No Batch Assigned'
+        def assign_batch_date(row):
+            if row['Batch'] == 'No Batch Assigned':
+                return 'No Batch Assigned'
+            else:
+                # return batches_dates_list[row['Batch'] - 1]
+                return batches_dates_list[row['Batch'] - 1].strftime("%d/%m/%Y")
+
+        pns_full_procurement_length['Batch Date'] = pns_full_procurement_length.apply(assign_batch_date, axis=1)
+
+        # pns_full_procurement_length.to_excel('pns_full_procurement_length.xlsx', index=False)
+
+
+    else:
+        # Label with the instruction to create a Scenario
+        lbl_no_batches_curve = ctk.CTkLabel(batches_curve_window,
+                                            text="No Batches Curve were defined on Scenario creation.",
+                                            font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'),
+                                            fg_color='#cfcfcf',
+                                            bg_color='#cfcfcf',
+                                            text_color='#000000')
+        lbl_no_batches_curve.place(rely=0.5, relx=0.5, anchor=ctk.CENTER)  
     
 
 

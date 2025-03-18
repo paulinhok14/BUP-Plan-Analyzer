@@ -524,6 +524,7 @@ def main():
             efficient_curve_window = tbv_curve_charts.tab("Efficient Curve")
             hypothetical_curve_window = tbv_curve_charts.tab("Hypothetical Curve")
             cost_avoidance_window = tbv_curve_charts.tab("Cost Avoidance")
+            batches_curve_window = tbv_curve_charts.tab("Batch Curve")
 
             # Window settings
             scenario_window.title("Add New Scenario")
@@ -546,7 +547,8 @@ def main():
             Function that handles Scenarios creation, creates the window elements and interacts with the Scenario List.
             It will also return the Canvas for each Chart, enabling toggle function to handle the exhibition
             '''
-            bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window, cost_avoidance_window, bup_cost)
+            bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window, cost_avoidance_window, 
+                                batches_curve_window, bup_cost)
 
         # Create Scenario button
         btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
