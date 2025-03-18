@@ -252,6 +252,7 @@ def main():
         tbv_curve_charts.add("Efficient Curve")
         tbv_curve_charts.add("Hypothetical Curve")
         tbv_curve_charts.add("Cost Avoidance")
+        tbv_curve_charts.add("Batch Curve")
 
         # Image with Excel icon
         excel_icon = ctk.CTkImage(light_image=Image.open(excel_icon_path),
@@ -530,7 +531,7 @@ def main():
 
             # Window geometry
             sw_width = 480
-            sw_height = 550
+            sw_height = 680
             total_window_width = scenario_window.winfo_screenwidth()  # Width of the screen
             total_window_height = new_window.winfo_screenheight()  # Height of the screen
             # Calculates the initial X and Y to position the screen

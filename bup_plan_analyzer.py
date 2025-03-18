@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image
 from io import BytesIO
 import customtkinter as ctk
+import tkinter as tk
 from tkinter import messagebox
 import time
 import logging
@@ -542,6 +543,72 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
                                            placeholder_text="Default: 30 days")
     entry_outbound_logistic.grid(row=6, column=1, padx=10, sticky="e", pady=(0, 20))
 
+    # ----------------- Batch Config -----------------
+
+    # Internal frame Procurement Length
+    batch_frame = ctk.CTkFrame(scenario_window, width=440, corner_radius=20)
+    batch_frame.pack(pady=(15, 0), expand=False)
+
+     # Label title Batch
+    lbl_batch = ctk.CTkLabel(batch_frame, text="Batch Settings",
+                                          font=ctk.CTkFont('open sans', size=14, weight='bold')
+                                          )
+    lbl_batch.grid(row=0, columnspan=2, sticky="n", pady=(10, 10))
+
+    # --- Batches Settings ---
+
+    # Batches Qty
+    lbl_qty_batches = ctk.CTkLabel(batch_frame, text="Batches Quantity",
+                                               font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                               )
+    lbl_qty_batches.grid(row=1, column=0, sticky="w", padx=12)
+
+    entry_batches = ctk.CTkEntry(batch_frame, width=150)
+    entry_batches.configure(placeholder_text='Nº of Batches (ex: 4)')
+    entry_batches.configure(state='disabled')
+    entry_batches.grid(row=2, column=0, padx=10, sticky="w", pady=(0, 20))
+
+    # Batches Date
+    lbl_qty_batches = ctk.CTkLabel(batch_frame, text="Batches Date",
+                                               font=ctk.CTkFont('open sans', size=11, weight='bold')
+                                               )
+    lbl_qty_batches.grid(row=1, column=1, sticky="e", padx=12)
+
+    entry_batches_date = ctk.CTkEntry(batch_frame, width=250)
+    entry_batches_date.configure(placeholder_text='DD/MM/YYYY ; DD/MM/YYYY ; etc')
+    entry_batches_date.configure(state='disabled')
+    entry_batches_date.grid(row=2, column=1, padx=10, sticky="e", pady=(0, 20))
+
+    # Batch Option Switch
+
+    def toggle_batch_mode_selection() -> None:
+        '''
+        This function handles the Enabled option for Batch information Entry
+        '''
+        # Get current State
+        current_batch_switch_status = entry_batches.cget(attribute_name='state')
+        
+        # Conditional toggling
+        if current_batch_switch_status == 'disabled':
+            swt_batches_opt.configure(button_color='#004b00', progress_color='green')
+            entry_batches.configure(state='normal', placeholder_text='Nº of Batches (ex: 4)')
+            entry_batches_date.configure(state='normal', placeholder_text='DD/MM/YYYY ; DD/MM/YYYY ; etc')
+            
+        else:      
+            swt_batches_opt.configure(button_color='#7c1f27', fg_color='red')    
+            entry_batches.configure(state='disabled', placeholder_text=' ')
+            entry_batches_date.configure(state='disabled', placeholder_text=' ')
+            
+        
+
+    swt_batches_opt = ctk.CTkSwitch(batch_frame,
+                                    text="",
+                                    width=45, height=12, button_color='#7c1f27', fg_color='red', progress_color='green',
+                                    command= toggle_batch_mode_selection
+                                    )
+    swt_batches_opt.grid(row=0, column=1, sticky='e')
+
+
     # ----------------- Label: (*) Required Information -----------------
 
     lbl_required_infornation = ctk.CTkLabel(scenario_window, text="(*) Required Information",
@@ -737,7 +804,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
                            bg_color="#ebebeb", fg_color="#009898", hover_color="#006464",
                            width=100, height=30, corner_radius=30, cursor="hand2"
                            )
-    btn_ok.place(relx=0.3, rely=0.92, anchor=ctk.CENTER)
+    btn_ok.place(relx=0.3, rely=0.95, anchor=ctk.CENTER)
 
     # Cancel button
     btn_cancel = ctk.CTkButton(scenario_window, text='Cancel', command=scenario_window.destroy,
@@ -745,7 +812,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
                                bg_color="#ebebeb", fg_color="#ff0000", hover_color="#af0003",
                                width=100, height=30, corner_radius=30, cursor="hand2"
                                )
-    btn_cancel.place(relx=0.7, rely=0.92, anchor=ctk.CENTER)
+    btn_cancel.place(relx=0.7, rely=0.95, anchor=ctk.CENTER)
 
 
 
