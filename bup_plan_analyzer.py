@@ -767,6 +767,30 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
             messagebox.showerror("Error",
                                  "Invalid character. Please enter a valid number for Outbound Logistic.")
             return
+        
+        # ------------- Batch Settings -------------
+
+        # --- Batch Qty ---
+        try:
+            if entry_batches.get().strip() != "":
+                scenario['batches_qty'] = int(entry_batches.get())
+            else:
+                scenario['batches_qty'] = None
+        except ValueError:
+            messagebox.showerror("Error",
+                                 "Invalid character. Please enter a valid number for Batches Quantity.")
+            return
+        
+        # --- Batch Dates ---
+        try:
+            if entry_batches_date.get().strip() != "":
+                scenario['batches_dates'] = str(entry_batches_date.get())
+            else:
+                scenario['batches_dates'] = None
+        except ValueError:
+            messagebox.showerror("Error",
+                                 "Invalid text. Please enter Batch Dates in specified format.")
+            return
 
         # Summing up full Procurement Length values
         scenario['full_procurement_length'] = (scenario['pr_release_approval_vss'] + scenario['po_commercial_condition'] + scenario['po_conversion'] + 
@@ -1825,7 +1849,10 @@ def generate_cost_avoidance_screen(cost_avoidance_screen: ctk.CTkFrame, scenario
         lbl_additional_savings_simul.place(relx=0.5, rely=0.72, anchor=ctk.CENTER)
 
 
-    
+
+@function_timer
+def generate_batches_curve():
+    pass    
     
 
 
