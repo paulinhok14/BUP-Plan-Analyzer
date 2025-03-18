@@ -1875,7 +1875,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Batches List
         batches_dates_list = scenarios_list[0]['batches_dates'].split(',')
         # Convert batches_dates_list to datetime format and sort it ascending
-        batches_dates_list = [datetime.strptime(date, "%d/%m/%Y") for date in batches_dates_list]
+        batches_dates_list = [datetime.strptime(date.strip(), "%d/%m/%Y") for date in batches_dates_list]
         batches_dates_list.sort()
 
         # Creating DataFrame with specific columns for Batch assignment
