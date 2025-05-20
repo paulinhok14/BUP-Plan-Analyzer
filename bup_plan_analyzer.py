@@ -572,7 +572,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
     entry_batches.grid(row=2, column=0, padx=10, sticky="w", pady=(0, 20))
 
     # Batches Date
-    lbl_qty_batches = ctk.CTkLabel(batch_frame, text="Batches Date",
+    lbl_qty_batches = ctk.CTkLabel(batch_frame, text="Batches Date (comma-separated values)",
                                                font=ctk.CTkFont('open sans', size=11, weight='bold')
                                                )
     lbl_qty_batches.grid(row=1, column=1, sticky="e", padx=12)
@@ -1901,8 +1901,57 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
 
         pns_full_procurement_length['Batch Date'] = pns_full_procurement_length.apply(assign_batch_date, axis=1)
 
-        # pns_full_procurement_length.to_excel('pns_full_procurement_length.xlsx', index=False)
 
+        # Based on Batches spreasheet, generates Chart Images for batch feature
+        def create_batch_charts():
+            # Image size
+            width, height = 600, 235
+
+            # Creating figure and axes to insert the chart: Batch Line Items
+            fig, ax = plt.subplots(figsize=(width / 100, height / 100),
+                                   layout='constrained')  # Layout property that handles "cutting" axes labels
+            # Keeping background transparent
+            fig.patch.set_facecolor("None")
+            fig.patch.set_alpha(0)
+            ax.set_facecolor('None')
+
+            # Configuring the axis
+            # ax.bar(x=
+            #
+            #        )
+            #
+            # ax.axvline(x=avg_leadtimes, linestyle='--', color='black', label=f'Average: {round(avg_leadtimes)}')
+            # ax.axvspan(avg_leadtimes - sd_leadtimes, avg_leadtimes + sd_leadtimes, alpha=0.4, color='#fccf03',
+            #            label=f'Std: {round(sd_leadtimes)}', hatch='/', edgecolor='black')
+            #
+            # # Creating Histogram and saving the information in control variables
+            # n, bins, patches = ax.hist(bup_scope['Leadtime'], bins=20, edgecolor='k', color='#1fa9a4', linewidth=0.7,
+            #                            alpha=0.9)
+
+            # Batch Chart Settings
+            ax.set_ylabel('PNs Count')
+            ax.set_xlabel('Date', loc='right')
+            ax.set_title('PNs - All Line Items', fontsize=10)
+
+            # Inserting chart into Canvas
+            canvas_batch_chart = FigureCanvasTkAgg(fig, master=root)
+            canvas_histogram.draw()
+            # Configuring Canvas background
+            canvas_histogram.get_tk_widget().configure(background='#dbdbdb')
+            canvas_histogram.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
+
+            # --- Saving the chart image in BytesIO() (memory) so it is not necessary to save as a file ---
+            tmp_img_histogram_chart = BytesIO()
+            fig.savefig(tmp_img_histogram_chart, format='png', transparent=True)
+            tmp_img_histogram_chart.seek(0)
+
+            # Keeping the image in an Image object
+            histogram_chart = Image.open(tmp_img_histogram_chart)
+
+            # Loading into a CTk Image object
+            histogram_image = ctk.CTkImage(histogram_chart,
+                                           dark_image=histogram_chart,
+                                           size=(600, 220))
 
     else:
         # Label with the instruction to create a Scenario
