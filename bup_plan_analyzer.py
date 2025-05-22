@@ -1879,7 +1879,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         batches_dates_list.sort()
 
         # Creating DataFrame with specific columns for Batch assignment
-        pns_full_procurement_length = df_scope_with_scenarios[['PN', 'Ecode', 'Qty', 't0', 'hyp_t0_start', 'PN Procurement Length']]
+        pns_full_procurement_length = df_scope_with_scenarios[['PN', 'Ecode', 'Qty', 't0', 'hyp_t0_start', 'PN Procurement Length', 'Delivery Date Hypothetical']]
         pns_full_procurement_length['planning_start_date'] = pns_full_procurement_length.apply(lambda row: row['t0'] + relativedelta(months=row['hyp_t0_start']), axis=1) 
 
         # Assigning Part Numbers to specific Batches, being tested on ascending order
@@ -1900,13 +1900,28 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                 return batches_dates_list[row['Batch'] - 1].strftime("%d/%m/%Y")
 
         pns_full_procurement_length['Batch Date'] = pns_full_procurement_length.apply(assign_batch_date, axis=1)
+        # Creating Delivery Month Date, so as to be the X-axis of Batches charts
+        pns_full_procurement_length['Delivery Month Hyp'] = pns_full_procurement_length['Delivery Date Hypothetical'].dt.to_period('M')
+
+
+        # Creating Grouped Sum Qty DataFrame to Generate Batches bar chart
+        # df_grouped_qty_delivery_date = pns_full_procurement_length.groupby('Delivery Month Hyp')['Qty'].sum().sort_index()
+        df_grouped_qty_delivery_date = (
+            pns_full_procurement_length
+            .groupby('Delivery Month Hyp')['Qty']
+            .sum()
+            .sort_index()
+            .reset_index()
+        )
+
+        # Creating Cumulative Sum Qty to Generate Batches line chart
+        df_grouped_qty_delivery_date['Cumulative Sum Qty'] = df_grouped_qty_delivery_date['Qty'].cumsum()
 
 
         # Based on Batches spreasheet, generates Chart Images for batch feature
-        def create_batch_charts():
+        def create_batch_charts(df_grouped_qty_delivery_date: pd.DataFrame):
             # Image size
-            width, height = 600, 235
-
+            width, height = 680, 435
             # Creating figure and axes to insert the chart: Batch Line Items
             fig, ax = plt.subplots(figsize=(width / 100, height / 100),
                                    layout='constrained')  # Layout property that handles "cutting" axes labels
@@ -1915,8 +1930,24 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             fig.patch.set_alpha(0)
             ax.set_facecolor('None')
 
-            # Configuring the axis
-            # ax.bar(x=
+            # Common index (X-Axis) for all charts in the figure
+            idx_delivery_date  = df_grouped_qty_delivery_date.index.astype(str)
+
+            # Colors list, so that each Batch has one distinct axvspan
+            colors_array = ['blue', 'orange', 'black', 'green', 'purple']
+
+            # Bar Chart
+            ax.bar(x=idx_delivery_date,
+                   height=df_grouped_qty_delivery_date['Qty'],
+                   color='steelblue'
+                   )
+
+            # Line Chart (Cumulative)
+            ax.plot(idx_delivery_date,
+                    df_grouped_qty_delivery_date['Cumulative Sum Qty'],
+                    color='black',
+                    marker='o')
+
             #
             #        )
             #
@@ -1932,26 +1963,34 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             ax.set_ylabel('PNs Count')
             ax.set_xlabel('Date', loc='right')
             ax.set_title('PNs - All Line Items', fontsize=10)
+            # Rotating X labels
+            ax.tick_params(axis='x', rotation=45)
+            # Adjusting axis spacing to avoid cutting off labels
+            plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
 
             # Inserting chart into Canvas
-            canvas_batch_chart = FigureCanvasTkAgg(fig, master=root)
-            canvas_histogram.draw()
+            canvas_batch_chart_items = FigureCanvasTkAgg(fig, master=batches_curve_window)
+            canvas_batch_chart_items.draw()
             # Configuring Canvas background
-            canvas_histogram.get_tk_widget().configure(background='#dbdbdb')
-            canvas_histogram.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
+            canvas_batch_chart_items.get_tk_widget().configure(background='#cfcfcf')
+            canvas_batch_chart_items.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
 
             # --- Saving the chart image in BytesIO() (memory) so it is not necessary to save as a file ---
-            tmp_img_histogram_chart = BytesIO()
-            fig.savefig(tmp_img_histogram_chart, format='png', transparent=True)
-            tmp_img_histogram_chart.seek(0)
+            tmp_img_batch_chart_items = BytesIO()
+            fig.savefig(tmp_img_batch_chart_items, format='png', transparent=True)
+            tmp_img_batch_chart_items.seek(0)
 
             # Keeping the image in an Image object
-            histogram_chart = Image.open(tmp_img_histogram_chart)
+            batch_items_chart = Image.open(tmp_img_batch_chart_items)
 
             # Loading into a CTk Image object
-            histogram_image = ctk.CTkImage(histogram_chart,
-                                           dark_image=histogram_chart,
+            batch_items_image = ctk.CTkImage(batch_items_chart,
+                                           dark_image=batch_items_chart,
                                            size=(600, 220))
+
+        df_grouped_qty_delivery_date.to_excel('df_grouped_qty_delivery_date.xlsx')
+        # Calling create_batch_charts() function
+        create_batch_charts(df_grouped_qty_delivery_date)
 
     else:
         # Label with the instruction to create a Scenario
