@@ -1905,17 +1905,17 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
 
 
         # Creating Grouped Sum Qty DataFrame to Generate Batches bar chart
-        # df_grouped_qty_delivery_date = pns_full_procurement_length.groupby('Delivery Month Hyp')['Qty'].sum().sort_index()
         df_grouped_qty_delivery_date = (
             pns_full_procurement_length
-            .groupby('Delivery Month Hyp')['Qty']
-            .sum()
+            .groupby('Delivery Month Hyp')['PN']
+            .nunique()
             .sort_index()
             .reset_index()
+            .rename(columns={'PN': 'Distinct PNs Count'})
         )
 
         # Creating Cumulative Sum Qty to Generate Batches line chart
-        df_grouped_qty_delivery_date['Cumulative Sum Qty'] = df_grouped_qty_delivery_date['Qty'].cumsum()
+        df_grouped_qty_delivery_date['Cumulative Sum Qty'] = df_grouped_qty_delivery_date['Distinct PNs Count'].cumsum()
 
 
         # Based on Batches spreasheet, generates Chart Images for batch feature
@@ -1931,22 +1931,25 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             ax.set_facecolor('None')
 
             # Common index (X-Axis) for all charts in the figure
-            idx_delivery_date  = df_grouped_qty_delivery_date.index.astype(str)
+            x_labels  = df_grouped_qty_delivery_date['Delivery Month Hyp'].astype(str)
 
             # Colors list, so that each Batch has one distinct axvspan
             colors_array = ['blue', 'orange', 'black', 'green', 'purple']
 
             # Bar Chart
-            ax.bar(x=idx_delivery_date,
-                   height=df_grouped_qty_delivery_date['Qty'],
+            ax.bar(x=x_labels,
+                   height=df_grouped_qty_delivery_date['Distinct PNs Count'],
                    color='steelblue'
                    )
 
             # Line Chart (Cumulative)
-            ax.plot(idx_delivery_date,
+            ax.plot(x_labels,
                     df_grouped_qty_delivery_date['Cumulative Sum Qty'],
                     color='black',
                     marker='o')
+
+            # AXVSpan Chart (Vertical Dintinction of Batches) - It needs some transformation first
+
 
             #
             #        )
