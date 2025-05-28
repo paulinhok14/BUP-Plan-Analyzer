@@ -1903,7 +1903,6 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Creating Delivery Month Date, so as to be the X-axis of Batches charts
         pns_full_procurement_length['Delivery Month Hyp'] = pns_full_procurement_length['Delivery Date Hypothetical'].dt.to_period('M')
 
-
         # Creating Grouped Sum Qty DataFrame to Generate Batches bar chart
         df_grouped_qty_delivery_date = (
             pns_full_procurement_length
@@ -1917,6 +1916,31 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Creating Cumulative Sum Qty to Generate Batches line chart
         df_grouped_qty_delivery_date['Cumulative Sum Qty'] = df_grouped_qty_delivery_date['Distinct PNs Count'].cumsum()
 
+        # For AXVSpan Batches chart insertion, further transformation is necessary
+        df_batches = pns_full_procurement_length[['Batch', 'Batch Date']].drop_duplicates().reset_index(drop=True)
+        # As it is for visualizing purposes only, I remove 'No Batch Assigned' rows
+        df_batches = df_batches[df_batches['Batch'] != 'No Batch Assigned'].reset_index(drop=True)
+
+        # Initializing new Batch Start Date column as a variable at first
+        batch_start_date = []
+        # Now I create the column Batch Start Date (date of Last Batch end or Planning Start)
+        for i in range(len(df_batches)):
+            # First Batch will have the Planning Date as Start Date
+            if i == 0:
+                start_date = pns_full_procurement_length.loc[0, 'planning_start_date'].strftime('%d/%m/%Y')
+            # Other rows: use previous batch date
+            else:
+                start_date = df_batches.loc[i - 1, 'Batch Date']
+
+            # Appending to list
+            batch_start_date.append(start_date)
+
+        # Creating Batch Start Date column
+        df_batches['Batch Start Date'] = batch_start_date
+        # Converting to datetime so as to match the other charts format
+        df_batches[['Batch Start Date', 'Batch Date']] = df_batches[['Batch Start Date', 'Batch Date']].apply(
+            lambda col: pd.to_datetime(col, format='%d/%m/%Y')
+        )
 
         # Based on Batches spreasheet, generates Chart Images for batch feature
         def create_batch_charts(df_grouped_qty_delivery_date: pd.DataFrame):
@@ -1931,10 +1955,21 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             ax.set_facecolor('None')
 
             # Common index (X-Axis) for all charts in the figure
-            x_labels  = df_grouped_qty_delivery_date['Delivery Month Hyp'].astype(str)
+            x_labels = df_grouped_qty_delivery_date['Delivery Month Hyp'].dt.to_timestamp()
 
             # Colors list, so that each Batch has one distinct axvspan
-            colors_array = ['blue', 'orange', 'black', 'green', 'purple']
+            colors_array = ['blue', 'orange', 'black', 'green', 'purple', 'gray']
+
+            # For each Batch, create a AXVSpan Chart (Vertical Dintinction of Batches)
+            for i, row in df_batches.iterrows():
+                ax.axvspan(
+                    xmin=row['Batch Start Date'],
+                    xmax=row['Batch Date'],
+                    ymin=0, ymax=1,
+                    color=colors_array[i],
+                    alpha=0.3,
+                    label=f"Batch {row['Batch']}"
+                )
 
             # Bar Chart
             ax.bar(x=x_labels,
@@ -1948,24 +1983,13 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                     color='black',
                     marker='o')
 
-            # AXVSpan Chart (Vertical Dintinction of Batches) - It needs some transformation first
-
-
-            #
-            #        )
-            #
-            # ax.axvline(x=avg_leadtimes, linestyle='--', color='black', label=f'Average: {round(avg_leadtimes)}')
-            # ax.axvspan(avg_leadtimes - sd_leadtimes, avg_leadtimes + sd_leadtimes, alpha=0.4, color='#fccf03',
-            #            label=f'Std: {round(sd_leadtimes)}', hatch='/', edgecolor='black')
-            #
-            # # Creating Histogram and saving the information in control variables
-            # n, bins, patches = ax.hist(bup_scope['Leadtime'], bins=20, edgecolor='k', color='#1fa9a4', linewidth=0.7,
-            #                            alpha=0.9)
 
             # Batch Chart Settings
             ax.set_ylabel('PNs Count')
             ax.set_xlabel('Date', loc='right')
             ax.set_title('PNs - All Line Items', fontsize=10)
+            ax.grid(True)
+            plt.legend()
             # Rotating X labels
             ax.tick_params(axis='x', rotation=45)
             # Adjusting axis spacing to avoid cutting off labels
