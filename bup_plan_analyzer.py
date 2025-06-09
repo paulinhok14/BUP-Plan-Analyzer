@@ -1917,7 +1917,13 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         df_grouped_qty_delivery_date['Cumulative Sum Qty'] = df_grouped_qty_delivery_date['Distinct PNs Count'].cumsum()
 
         # For AXVSpan Batches chart insertion, further transformation is necessary
-        df_batches = pns_full_procurement_length[['Batch', 'Batch Date']].drop_duplicates().reset_index(drop=True)
+        df_batches = (
+            pns_full_procurement_length
+            .groupby(['Batch', 'Batch Date'])['Ecode']
+            .nunique()
+            .reset_index()
+            .rename(columns={'Ecode': 'PNs Qty'})
+        )
         # As it is for visualizing purposes only, I remove 'No Batch Assigned' rows
         df_batches = df_batches[df_batches['Batch'] != 'No Batch Assigned'].reset_index(drop=True)
 
@@ -1941,6 +1947,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         df_batches[['Batch Start Date', 'Batch Date']] = df_batches[['Batch Start Date', 'Batch Date']].apply(
             lambda col: pd.to_datetime(col, format='%d/%m/%Y')
         )
+        # Adding Qty of Parts Delivered that was fit on each Batch
 
         # Based on Batches spreasheet, generates Chart Images for batch feature
         def create_batch_charts(df_grouped_qty_delivery_date: pd.DataFrame):
@@ -1958,7 +1965,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             x_labels = df_grouped_qty_delivery_date['Delivery Month Hyp'].dt.to_timestamp()
 
             # Colors list, so that each Batch has one distinct axvspan
-            colors_array = ['blue', 'orange', 'black', 'green', 'purple', 'gray']
+            colors_array = ['blue', 'orange', 'green', 'black', 'purple', 'gray']
 
             # For each Batch, create a AXVSpan Chart (Vertical Dintinction of Batches)
             for i, row in df_batches.iterrows():
@@ -1968,28 +1975,31 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                     ymin=0, ymax=1,
                     color=colors_array[i],
                     alpha=0.3,
-                    label=f"Batch {row['Batch']}"
+                    label=f"B{row['Batch']} ({row['Batch Date'].strftime('%m/%Y')}) - {row['PNs Qty']} PNs"
                 )
 
             # Bar Chart
-            ax.bar(x=x_labels,
+            bar = ax.bar(x=x_labels,
                    height=df_grouped_qty_delivery_date['Distinct PNs Count'],
-                   color='steelblue'
+                   color='steelblue',
+                   width=22,
+                   edgecolor='black',
+                   linewidth=0.4
                    )
 
             # Line Chart (Cumulative)
-            ax.plot(x_labels,
+            line = ax.plot(x_labels,
                     df_grouped_qty_delivery_date['Cumulative Sum Qty'],
                     color='black',
-                    marker='o')
-
+                    marker='o',
+                    markersize=4)
 
             # Batch Chart Settings
             ax.set_ylabel('PNs Count')
             ax.set_xlabel('Date', loc='right')
-            ax.set_title('PNs - All Line Items', fontsize=10)
+            ax.set_title(f'PNs - All Line Items ({max(df_grouped_qty_delivery_date["Cumulative Sum Qty"])} PNs)', fontsize=10)
             ax.grid(True)
-            plt.legend()
+            plt.legend(loc='upper left', fontsize=8)
             # Rotating X labels
             ax.tick_params(axis='x', rotation=45)
             # Adjusting axis spacing to avoid cutting off labels
@@ -2015,7 +2025,42 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                                            dark_image=batch_items_chart,
                                            size=(600, 220))
 
-        df_grouped_qty_delivery_date.to_excel('df_grouped_qty_delivery_date.xlsx')
+            # Annotation functions to connect with mplcursors
+            def set_annotations_bar(sel):
+                # Extracting month from parameters of Annotation text
+                annotation_text = sel.annotation.get_text()
+                # Extracting value after x= and before \n (in annotation params)
+                if 'x=' in annotation_text:
+                    start = annotation_text.find('x=') +2
+                    end = annotation_text.find('\n', start)
+                    x_value = annotation_text[start:end]
+                    # Formatting Data from YYYY-MM to MM/YYYY
+                    formatted_date = '/'.join(x_value.split('-')[::-1])
+                # Setting text
+                sel.annotation.set_text(
+                    'Date: ' + str(formatted_date) + "\n" +
+                    'PNs Qty: ' + str(round(sel.target[1]))
+                )
+            def set_annotations_line(sel):
+                # Extracting month from parameters of Annotation text
+                annotation_text = sel.annotation.get_text()
+                # Extracting value after x= and before \n (in annotation params)
+                if 'x=' in annotation_text:
+                    start = annotation_text.find('x=') + 2
+                    end = annotation_text.find('\n', start)
+                    x_value = annotation_text[start:end]
+                    # Formatting Data from YYYY-MM to MM/YYYY
+                    formatted_date = '/'.join(x_value.split('-')[::-1])
+                # Setting text
+                sel.annotation.set_text(
+                    'Date: ' + str(formatted_date) + "\n" +
+                    'PNs Qty (Accumulated): ' + str(round(sel.target[1]))
+                )
+
+            # Inserting Hover with mplcursors
+            mpc.cursor(bar, hover=True).connect('add', lambda sel: set_annotations_bar(sel))
+            mpc.cursor(line, hover=True).connect('add', lambda sel: set_annotations_line(sel))
+
         # Calling create_batch_charts() function
         create_batch_charts(df_grouped_qty_delivery_date)
 
