@@ -1862,15 +1862,22 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
     Function that receives the input so as to generate the Build-Up Curve based on batches.
     '''
 
+    # Adding 2 tabs to Batch Charts: Parts Qty & Acq Cost
+    # TabView - Batch Charts
+    tbv_batch_charts = ctk.CTkTabview(batches_curve_window, width=620, height=470, corner_radius=15,
+                                      segmented_button_fg_color="#009898",
+                                      segmented_button_unselected_color="#009898",
+                                      segmented_button_selected_color="#006464",
+                                      bg_color='#cfcfcf', fg_color='#cfcfcf')
+    tbv_batch_charts.pack()
+    tbv_batch_charts.add('Parts Qty')
+    tbv_batch_charts.add('Acq Cost')
+    # Naming Frames
+    batch_qty_frame = tbv_batch_charts.tab('Parts Qty')
+    batch_cost_frame = tbv_batch_charts.tab('Acq Cost')
+
     # If there's Batch Information, creates the chart, Else: it shows an alert label
     if scenarios_list[0]['batches_dates'] !=  None:
-        lbl_bathes_created = ctk.CTkLabel(batches_curve_window,
-                                            text="Batches were created.",
-                                            font=ctk.CTkFont('open sans', size=16, weight='bold', slant='italic'),
-                                            fg_color='#cfcfcf',
-                                            bg_color='#cfcfcf',
-                                            text_color='#000000')
-        lbl_bathes_created.place(rely=0.5, relx=0.5, anchor=ctk.CENTER)
 
         # Batches List
         batches_dates_list = scenarios_list[0]['batches_dates'].split(',')
@@ -1879,7 +1886,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         batches_dates_list.sort()
 
         # Creating DataFrame with specific columns for Batch assignment
-        pns_full_procurement_length = df_scope_with_scenarios[['PN', 'Ecode', 'Qty', 't0', 'hyp_t0_start', 'PN Procurement Length', 'Delivery Date Hypothetical']]
+        pns_full_procurement_length = df_scope_with_scenarios[['PN', 'Ecode', 'Qty', 'Acq Cost','t0', 'hyp_t0_start', 'PN Procurement Length', 'Delivery Date Hypothetical']]
         pns_full_procurement_length['planning_start_date'] = pns_full_procurement_length.apply(lambda row: row['t0'] + relativedelta(months=row['hyp_t0_start']), axis=1) 
 
         # Assigning Part Numbers to specific Batches, being tested on ascending order
@@ -1902,6 +1909,8 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         pns_full_procurement_length['Batch Date'] = pns_full_procurement_length.apply(assign_batch_date, axis=1)
         # Creating Delivery Month Date, so as to be the X-axis of Batches charts
         pns_full_procurement_length['Delivery Month Hyp'] = pns_full_procurement_length['Delivery Date Hypothetical'].dt.to_period('M')
+        # Creating Total Part Acq Cost column (Acq Cost * Qty)
+        pns_full_procurement_length['Total Part Acq Cost'] = round(pns_full_procurement_length['Acq Cost'] * pns_full_procurement_length['Qty'], 2)
 
         # Creating Grouped Sum Qty DataFrame to Generate Batches bar chart
         df_grouped_qty_delivery_date = (
@@ -1916,6 +1925,20 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Creating Cumulative Sum Qty to Generate Batches line chart
         df_grouped_qty_delivery_date['Cumulative Sum Qty'] = df_grouped_qty_delivery_date['Distinct PNs Count'].cumsum()
 
+        # Creating Grouped Acq Cost DataFrame to Generate Batches bar chart
+        df_grouped_acqcost_delivery_date = (
+            pns_full_procurement_length
+            .assign(AcqCostQty= lambda x: round(x['Acq Cost'] * x['Qty'], 2))
+            .groupby('Delivery Month Hyp')['AcqCostQty']
+            .sum()
+            .sort_index()
+            .reset_index()
+            .rename(columns={'AcqCostQty': 'Total Acq Cost'})
+        )
+
+        # Creating Cumulative Sum Qty to Generate Acq Cost Batches line chart
+        df_grouped_acqcost_delivery_date['Cumulative Acq Cost Qty'] = df_grouped_acqcost_delivery_date['Total Acq Cost'].cumsum()
+
         # For AXVSpan Batches chart insertion, further transformation is necessary
         df_batches = (
             pns_full_procurement_length
@@ -1924,6 +1947,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             .reset_index()
             .rename(columns={'Ecode': 'PNs Qty'})
         )
+
         # As it is for visualizing purposes only, I remove 'No Batch Assigned' rows
         df_batches = df_batches[df_batches['Batch'] != 'No Batch Assigned'].reset_index(drop=True)
 
@@ -1947,10 +1971,18 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         df_batches[['Batch Start Date', 'Batch Date']] = df_batches[['Batch Start Date', 'Batch Date']].apply(
             lambda col: pd.to_datetime(col, format='%d/%m/%Y')
         )
-        # Adding Qty of Parts Delivered that was fit on each Batch
-
-        # Based on Batches spreasheet, generates Chart Images for batch feature
-        def create_batch_charts(df_grouped_qty_delivery_date: pd.DataFrame):
+        # Making a copy of df_batches without dropping "No Batch Assigned" Parts
+        df_batches_full_info = df_batches.copy()
+        # Adding Acq Cost (US$) per Batch info
+        total_acq_cost_batch = pns_full_procurement_length.groupby('Batch Date')['Total Part Acq Cost'].sum().reset_index()
+        total_acq_cost_batch = total_acq_cost_batch[total_acq_cost_batch['Batch Date'] != 'No Batch Assigned']
+        # Forcing datetime type on Batch Date
+        total_acq_cost_batch['Batch Date'] = pd.to_datetime(total_acq_cost_batch['Batch Date'])
+        # Merging with df_batches
+        df_batches = df_batches.merge(total_acq_cost_batch, on='Batch Date', how='left')
+        df_batches.to_excel('df_batches.xlsx')
+        # Based on Batches spreasheet, generates Chart Images for Parts Qty batch feature
+        def create_qty_batch_chart(df_grouped_qty_delivery_date: pd.DataFrame):
             # Image size
             width, height = 680, 435
             # Creating figure and axes to insert the chart: Batch Line Items
@@ -2006,7 +2038,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
 
             # Inserting chart into Canvas
-            canvas_batch_chart_items = FigureCanvasTkAgg(fig, master=batches_curve_window)
+            canvas_batch_chart_items = FigureCanvasTkAgg(fig, master=batch_qty_frame)
             canvas_batch_chart_items.draw()
             # Configuring Canvas background
             canvas_batch_chart_items.get_tk_widget().configure(background='#cfcfcf')
@@ -2061,8 +2093,123 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             mpc.cursor(bar, hover=True).connect('add', lambda sel: set_annotations_bar(sel))
             mpc.cursor(line, hover=True).connect('add', lambda sel: set_annotations_line(sel))
 
-        # Calling create_batch_charts() function
-        create_batch_charts(df_grouped_qty_delivery_date)
+        # Based on Batches spreasheet, generates Chart Images for Acq Cost batch feature
+        def create_acqcost_batch_chart(df_grouped_acqcost_delivery_date: pd.DataFrame):
+            # Image size
+            width, height = 680, 435
+            # Creating figure and axes to insert the chart: Batch Line Items
+            fig, ax = plt.subplots(figsize=(width / 100, height / 100),
+                                   layout='constrained')  # Layout property that handles "cutting" axes labels
+            # Keeping background transparent
+            fig.patch.set_facecolor("None")
+            fig.patch.set_alpha(0)
+            ax.set_facecolor('None')
+
+            # Common index (X-Axis) for all charts in the figure
+            x_labels = df_grouped_acqcost_delivery_date['Delivery Month Hyp'].dt.to_timestamp()
+
+            # Colors list, so that each Batch has one distinct axvspan
+            colors_array = ['blue', 'orange', 'green', 'black', 'purple', 'gray']
+            # For each Batch, create a AXVSpan Chart (Vertical Dintinction of Batches)
+            for i, row in df_batches.iterrows():
+                ax.axvspan(
+                    xmin=row['Batch Start Date'],
+                    xmax=row['Batch Date'],
+                    ymin=0, ymax=1,
+                    color=colors_array[i],
+                    alpha=0.3,
+                    label=f"B{row['Batch']} ({row['Batch Date'].strftime('%m/%Y')}) - {row['Total Part Acq Cost']} PNs"
+                )
+
+            # Bar Chart
+            bar = ax.bar(x=x_labels,
+                         height=df_grouped_acqcost_delivery_date['Total Acq Cost'],
+                         color='steelblue',
+                         width=22,
+                         edgecolor='black',
+                         linewidth=0.4
+                         )
+
+            # Line Chart (Cumulative)
+            line = ax.plot(x_labels,
+                           df_grouped_acqcost_delivery_date['Cumulative Acq Cost Qty'],
+                           color='black',
+                           marker='o',
+                           markersize=4)
+
+            # Batch Chart Settings
+            ax.set_ylabel('Acq Cost (US$)')
+            ax.set_xlabel('Date', loc='right')
+            ax.set_title(f'PNs - Acq Cost (US$ {max(df_grouped_acqcost_delivery_date["Cumulative Acq Cost Qty"])/1_000_000:.2f} M)',
+                         fontsize=10)
+            ax.grid(True)
+            plt.legend(loc='upper left', fontsize=8)
+            # Rotating X labels
+            ax.tick_params(axis='x', rotation=45)
+            # Adjusting axis spacing to avoid cutting off labels
+            plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
+
+            # Inserting chart into Canvas
+            canvas_batch_chart_items = FigureCanvasTkAgg(fig, master=batch_cost_frame)
+            canvas_batch_chart_items.draw()
+            # Configuring Canvas background
+            canvas_batch_chart_items.get_tk_widget().configure(background='#cfcfcf')
+            canvas_batch_chart_items.get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
+
+            # --- Saving the chart image in BytesIO() (memory) so it is not necessary to save as a file ---
+            tmp_img_batch_chart_items = BytesIO()
+            fig.savefig(tmp_img_batch_chart_items, format='png', transparent=True)
+            tmp_img_batch_chart_items.seek(0)
+
+            # Keeping the image in an Image object
+            batch_items_chart = Image.open(tmp_img_batch_chart_items)
+
+            # Loading into a CTk Image object
+            batch_items_image = ctk.CTkImage(batch_items_chart,
+                                             dark_image=batch_items_chart,
+                                             size=(600, 220))
+
+            # Annotation functions to connect with mplcursors
+            def set_annotations_bar(sel):
+                # Extracting month from parameters of Annotation text
+                annotation_text = sel.annotation.get_text()
+                # Extracting value after x= and before \n (in annotation params)
+                if 'x=' in annotation_text:
+                    start = annotation_text.find('x=') + 2
+                    end = annotation_text.find('\n', start)
+                    x_value = annotation_text[start:end]
+                    # Formatting Data from YYYY-MM to MM/YYYY
+                    formatted_date = '/'.join(x_value.split('-')[::-1])
+                # Setting text
+                sel.annotation.set_text(
+                    'Date: ' + str(formatted_date) + "\n" +
+                    'Acq Cost (US$): ' + str(round(sel.target[1]/1_000, 2)) + " K"
+                )
+
+            def set_annotations_line(sel):
+                # Extracting month from parameters of Annotation text
+                annotation_text = sel.annotation.get_text()
+                # Extracting value after x= and before \n (in annotation params)
+                if 'x=' in annotation_text:
+                    start = annotation_text.find('x=') + 2
+                    end = annotation_text.find('\n', start)
+                    x_value = annotation_text[start:end]
+                    # Formatting Data from YYYY-MM to MM/YYYY
+                    formatted_date = '/'.join(x_value.split('-')[::-1])
+                # Setting text
+                sel.annotation.set_text(
+                    'Date: ' + str(formatted_date) + "\n" +
+                    'Acq Cost US$ (Accumulated): ' + str(round(sel.target[1]/1_000, 2)) + " K"
+                )
+
+            # Inserting Hover with mplcursors
+            mpc.cursor(bar, hover=True).connect('add', lambda sel: set_annotations_bar(sel))
+            mpc.cursor(line, hover=True).connect('add', lambda sel: set_annotations_line(sel))
+
+        # Calling create_qty_batch_chart() function
+        create_qty_batch_chart(df_grouped_qty_delivery_date)
+        # Calling create_acqcost_batch_chart() function
+        create_acqcost_batch_chart(df_grouped_acqcost_delivery_date)
 
     else:
         # Label with the instruction to create a Scenario

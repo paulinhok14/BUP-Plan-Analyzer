@@ -320,7 +320,6 @@ def main():
                                           font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                           text_color='#ad7102')
 
-
         # ComboBoxes in order to handle the Acq Cost for different Scenarios. Each scenario produces a unique Acq Cost Chart.
         cbx_selected_scenario_eff = ctk.CTkComboBox(tbv_curve_charts.tab("Efficient Curve"),
                                                     height=20, width=130,
