@@ -1977,10 +1977,10 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         total_acq_cost_batch = pns_full_procurement_length.groupby('Batch Date')['Total Part Acq Cost'].sum().reset_index()
         total_acq_cost_batch = total_acq_cost_batch[total_acq_cost_batch['Batch Date'] != 'No Batch Assigned']
         # Forcing datetime type on Batch Date
-        total_acq_cost_batch['Batch Date'] = pd.to_datetime(total_acq_cost_batch['Batch Date'])
+        total_acq_cost_batch['Batch Date'] = pd.to_datetime(total_acq_cost_batch['Batch Date'], format='%d/%m/%Y')
         # Merging with df_batches
         df_batches = df_batches.merge(total_acq_cost_batch, on='Batch Date', how='left')
-        df_batches.to_excel('df_batches.xlsx')
+
         # Based on Batches spreasheet, generates Chart Images for Parts Qty batch feature
         def create_qty_batch_chart(df_grouped_qty_delivery_date: pd.DataFrame):
             # Image size
@@ -2093,6 +2093,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             mpc.cursor(bar, hover=True).connect('add', lambda sel: set_annotations_bar(sel))
             mpc.cursor(line, hover=True).connect('add', lambda sel: set_annotations_line(sel))
 
+
         # Based on Batches spreasheet, generates Chart Images for Acq Cost batch feature
         def create_acqcost_batch_chart(df_grouped_acqcost_delivery_date: pd.DataFrame):
             # Image size
@@ -2118,7 +2119,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                     ymin=0, ymax=1,
                     color=colors_array[i],
                     alpha=0.3,
-                    label=f"B{row['Batch']} ({row['Batch Date'].strftime('%m/%Y')}) - {row['Total Part Acq Cost']} PNs"
+                    label=f"B{row['Batch']} ({row['Batch Date'].strftime('%m/%Y')}) - US$ {row['Total Part Acq Cost']/1_000_000:.2f} M"
                 )
 
             # Bar Chart

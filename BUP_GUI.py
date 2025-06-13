@@ -340,7 +340,6 @@ def main():
                                                                                                       cbx_triggered=True,
                                                                                                       cbx_selected=value)))
 
-
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
         def callback_func_scenario_add(scenarios_count) -> None:
 
@@ -351,7 +350,6 @@ def main():
             cbx_selected_scenario_hyp.configure(values=list(bup.scenario_dataframes.keys()))
             # Cost Avoidance ComboBox
             cbx_cost_avoidance.configure(values=list(bup.scenario_dataframes.keys()))
-
 
             if scenarios_count.get() == 1:
                 # Show the Export to Excel/Save Image buttons and hide the Scenario Creation message
