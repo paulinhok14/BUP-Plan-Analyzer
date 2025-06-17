@@ -1,20 +1,26 @@
-import pandas as pd
-import warnings
-from datetime import datetime
+# Data Wrangling
+import pandas as pd, numpy as np
 from dateutil.relativedelta import relativedelta
+from datetime import datetime
+
+# Data Viz
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+from matplotlib.dates import DateFormatter
 import matplotlib.lines as mlines
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import numpy as np
+import mplcursors as mpc
+
+# System
+import warnings, time, logging
+
+# Extras
 from PIL import Image
 from io import BytesIO
 import customtkinter as ctk
 import tkinter as tk
 from tkinter import messagebox
-import time
-import logging
-import mplcursors as mpc
+
 
 warnings.filterwarnings("ignore")
 
@@ -2036,6 +2042,8 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             ax.tick_params(axis='x', rotation=45)
             # Adjusting axis spacing to avoid cutting off labels
             plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
+            # Formatting x-axis from YYYY-MM to MM/YYYY
+            ax.xaxis.set_major_formatter(DateFormatter('%m/%Y'))
 
             # Inserting chart into Canvas
             canvas_batch_chart_items = FigureCanvasTkAgg(fig, master=batch_qty_frame)
@@ -2138,7 +2146,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                            marker='o',
                            markersize=4)
 
-            # Batch Chart Settings
+            # Acq Cost Batch Chart Settings
             ax.set_ylabel('Acq Cost (US$)')
             ax.set_xlabel('Date', loc='right')
             ax.set_title(f'PNs - Acq Cost (US$ {max(df_grouped_acqcost_delivery_date["Cumulative Acq Cost Qty"])/1_000_000:.2f} M)',
@@ -2149,6 +2157,13 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             ax.tick_params(axis='x', rotation=45)
             # Adjusting axis spacing to avoid cutting off labels
             plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
+            # Formatting y-axis to show Millions (US$)
+            def millions_formatter(x, pos):
+                return f'{x/1_000_000:.2f}M' if x >= 1_000_000 else f'{x/1_000:.2f}K' if x >= 1_000 else f'{x:.0f}'
+
+            ax.yaxis.set_major_formatter(FuncFormatter(millions_formatter))
+            # Formatting x-axis from YYYY-MM to MM/YYYY
+            ax.xaxis.set_major_formatter(DateFormatter('%m/%Y'))
 
             # Inserting chart into Canvas
             canvas_batch_chart_items = FigureCanvasTkAgg(fig, master=batch_cost_frame)
