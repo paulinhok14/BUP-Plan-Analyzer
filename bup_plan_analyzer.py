@@ -1872,7 +1872,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
     '''
     Function that receives the input so as to generate the Build-Up Curve based on batches.
     '''
-
+    df_scope_with_scenarios.to_excel('df_scope_with_scenarios.xlsx')
     # Adding 2 tabs to Batch Charts: Parts Qty & Acq Cost
     # TabView - Batch Charts
     tbv_batch_charts = ctk.CTkTabview(batches_curve_window, width=620, height=470, corner_radius=15,
@@ -2037,10 +2037,13 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                     marker='o',
                     markersize=4)
 
+            # debug
+            df_grouped_qty_delivery_date.to_excel('df_grouped_qty_delivery_date.xlsx')
+
             # Batch Chart Settings
             ax.set_ylabel('PNs Count')
             ax.set_xlabel('Date', loc='right')
-            ax.set_title(f'PNs - All Line Items ({max(df_grouped_qty_delivery_date["Cumulative Sum Qty"])} PNs)', fontsize=10)
+            ax.set_title(f'PNs - All Line Items ({df_scope_with_scenarios["Ecode"].count()} PNs)', fontsize=10)
             ax.grid(True)
             plt.legend(loc='upper left', fontsize=8)
             # Rotating X labels
@@ -2151,6 +2154,8 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                            marker='o',
                            markersize=4)
 
+            #debug
+            df_grouped_acqcost_delivery_date.to_excel('df_grouped_acqcost_delivery_date.xlsx')
             # Acq Cost Batch Chart Settings
             ax.set_ylabel('Acq Cost (US$)')
             ax.set_xlabel('Date', loc='right')
@@ -2220,7 +2225,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                 # Setting text
                 sel.annotation.set_text(
                     'Date: ' + str(formatted_date) + "\n" +
-                    'Acq Cost US$ (Accumulated): ' + str(round(sel.target[1]/1_000, 2)) + " K"
+                    'Acq Cost US$ (Accumulated): ' + str(round(sel.target[1]/1_000_000, 2)) + " M"
                 )
 
             # Inserting Hover with mplcursors
