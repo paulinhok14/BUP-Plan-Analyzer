@@ -82,8 +82,19 @@ def function_timer(func):
 
 
 @function_timer
-def read_scope_file(file_full_path: str) -> pd.DataFrame:
+def read_scope_file(file_full_path: str, load_mode: str) -> pd.DataFrame:
     # Function that reads scope file and complementary info
+
+    # Defines local or network path for reading Ecode Data and MARCSA (SAP, Leadtimes) - Complementary Info source
+    if load_mode == 'local':
+        ecode_data_path = r'DB_Ecode-Data.txt'
+        marcsa_path = r'marcsa.txt'
+    elif load_mode == 'network':
+        ecode_data_path = r'\\egmap20038-new\Databases\DB_Ecode-Data.txt'
+        marcsa_path = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
+    else:
+        pass
+        # TO DO: RETURN ANY KIND OF BREAK EXPLAINING LOAD_MODE NOT IDENTIFIED. ALLOWED MODES: 'LOCAL' AND 'NETWORK'
 
     # Resetting the list of scenarios every time the e-mail is read
     global scenarios_list
@@ -91,12 +102,6 @@ def read_scope_file(file_full_path: str) -> pd.DataFrame:
 
     # Columns to read from the Scope file (essential)
     colunas = ['PN', 'ECODE', 'QTY', 'EIS', 'SPC']
-
-    # Complementary info Source
-    # leadtime_source = r'\\sjkfs05\vss\GMT\40. Stock Efficiency\J - Operational Efficiency\006 - Srcfiles\003 - SAP\marcsa.txt'
-    leadtime_source = r'marcsa.txt'
-    # ecode_data_path = r'\\egmap20038-new\Databases\DB_Ecode-Data.txt'
-    ecode_data_path = r'DB_Ecode-Data.txt'
 
     # File reading
     scope = pd.read_excel(file_full_path, usecols=colunas)
@@ -114,7 +119,7 @@ def read_scope_file(file_full_path: str) -> pd.DataFrame:
     # Columns to read from SAP
     sap_source_columns = ['Material(MATNR)', 'PrzEntrPrev.(PLIFZ)']
     # Reading leadtime database (SAP)
-    leadtimes = pd.read_csv(leadtime_source, usecols=sap_source_columns, encoding='latin', sep='|', low_memory=False)
+    leadtimes = pd.read_csv(marcsa_path, usecols=sap_source_columns, encoding='latin', sep='|', low_memory=False)
     # Removing nulls
     leadtimes = leadtimes.dropna()
     # Renaming columns

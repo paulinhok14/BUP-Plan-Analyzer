@@ -75,7 +75,7 @@ def main():
         full_file_path = select_file()  # Selecting Scope file
 
         # Executing the function that reads complementary info and organizes DataFrame
-        bup_scope = bup.read_scope_file(full_file_path)
+        bup_scope = bup.read_scope_file(full_file_path, 'local')
 
         # Resets the Execution label to empty text
         lbl_loading.configure(text="")
