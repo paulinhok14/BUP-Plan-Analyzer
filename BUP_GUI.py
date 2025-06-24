@@ -33,8 +33,8 @@ readme_url = r'https://github.com/paulinhok14/BUP-Plan-Analyzer/blob/master/READ
 # These variables will keep the Last Acq Cost canvas showed, so that I can handle it on CTkSwitch toggle (AcqCost/Parts)
 last_acq_cost_canvas_eff, last_acq_cost_canvas_hyp, last_cost_avoidance_canvas = None, None, None
 
-def main():
 
+def main():
     main_screen = ctk.CTk()  # Main Screen
 
     # Main Screen settings
@@ -50,8 +50,8 @@ def main():
     screen_width = main_screen.winfo_screenwidth()  # Width of the screen
     screen_height = main_screen.winfo_screenheight()  # Height of the screen
     # Calculates the initial X and Y to position the screen
-    x = (screen_width/2) - (ms_width/2)
-    y = (screen_height/2) - (ms_height/2)
+    x = (screen_width / 2) - (ms_width / 2)
+    y = (screen_height / 2) - (ms_height / 2)
     main_screen.geometry('%dx%d+%d+%d' % (ms_width, ms_height, x, y))
 
     def select_file() -> str:  # Function to select the Scope file and return its path
@@ -115,6 +115,7 @@ def main():
         tbvmenu.add("Scope")
         tbvmenu.add("Leadtime Analysis")
         tbvmenu.add("Scenarios")
+
         # tbvmenu.add("Stock Analysis")
 
         @bup.function_timer
@@ -134,8 +135,9 @@ def main():
 
                             eff_consolidated_scenarios = pd.DataFrame()
                             for scenario_name, scenario_df_list in bup.scenario_dataframes.items():
-                                eff_consolidated_scenarios = pd.concat([eff_consolidated_scenarios, scenario_df_list[0]],
-                                                                       ignore_index=True)
+                                eff_consolidated_scenarios = pd.concat(
+                                    [eff_consolidated_scenarios, scenario_df_list[0]],
+                                    ignore_index=True)
 
                             eff_consolidated_scenarios.to_excel(writer, sheet_name='Efficient Chart Data', index=False)
                         messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
@@ -156,7 +158,8 @@ def main():
                                     [hyp_consolidated_scenarios, scenario_df_list[1]],
                                     ignore_index=True)
 
-                            hyp_consolidated_scenarios.to_excel(writer, sheet_name='Hypothetical Chart Data', index=False)
+                            hyp_consolidated_scenarios.to_excel(writer, sheet_name='Hypothetical Chart Data',
+                                                                index=False)
                         messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
 
                     except Exception as ex:
@@ -174,7 +177,8 @@ def main():
                             full_path = export_output_path + r'\BUP_Scope_Data.xlsx'
                             with pd.ExcelWriter(full_path) as writer:
                                 bup_scope.to_excel(writer, sheet_name='Scope', index=False)
-                            messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+                            messagebox.showinfo(title="Success!",
+                                                message=str("Excel sheet was exported to: " + full_path))
                         except Exception as ex:
                             messagebox.showinfo(title="Error!",
                                                 message=str(ex) + "\n\nPlease make sure that the Excel file is "
@@ -183,23 +187,26 @@ def main():
                         try:
                             full_path = export_output_path + r'\BUP_Scope_with_Scenarios_Data.xlsx'
                             with pd.ExcelWriter(full_path) as writer:
-                                bup.df_scope_with_scenarios.to_excel(writer, sheet_name='Scope with Scenarios', index=False)
-                            messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+                                bup.df_scope_with_scenarios.to_excel(writer, sheet_name='Scope with Scenarios',
+                                                                     index=False)
+                            messagebox.showinfo(title="Success!",
+                                                message=str("Excel sheet was exported to: " + full_path))
                         except Exception as ex:
                             messagebox.showinfo(title="Error!",
                                                 message=str(ex) + "\n\nPlease make sure that the Excel file is "
                                                                   "closed and you have access to the Downloads folder.")
 
                 case 'batches':
+                    print('exported batches')
 
                     try:
                         full_path = export_output_path + r'\BUP_Analyzer_Batches_Data.xlsx'
                         with pd.ExcelWriter(full_path) as writer:
 
                             df_export_batches_data = pd.DataFrame()
-                            for scenario_name, scenario_df_list in bup.scenario_dataframes.items():
-                                df_export_batches_data = pd.concat([df_export_batches_data, scenario_df_list[0]],
-                                                                       ignore_index=True)
+                            # for scenario_name, scenario_df_list in bup.scenario_dataframes.items():
+                            #     df_export_batches_data = pd.concat([df_export_batches_data, scenario_df_list[0]],
+                            #                                            ignore_index=True)
 
                             # eff_consolidated_scenarios.to_excel(writer, sheet_name='Batches Data', index=False)
                         messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
@@ -212,7 +219,7 @@ def main():
         # Tab 1 - Scope
         bup_cost: float = bup_scope.apply(lambda linha: linha['Acq Cost'] * linha['Qty'], axis=1).sum()
         # print(bup_cost)
-        bup_cost_label = f'List Value: US$ {(bup_cost/1000000):.2f} MM'
+        bup_cost_label = f'List Value: US$ {(bup_cost / 1000000):.2f} MM'
 
         label_cost = ctk.CTkLabel(tbvmenu.tab("Scope"), text=bup_cost_label,
                                   font=ctk.CTkFont('open sans', size=14, weight='bold'),
@@ -221,8 +228,8 @@ def main():
 
         # Image with Excel icon for Label
         img_xl_icon_label = ctk.CTkImage(light_image=Image.open(excel_icon_path),
-                                  dark_image=Image.open(excel_icon_path),
-                                  size=(20, 20))
+                                         dark_image=Image.open(excel_icon_path),
+                                         size=(20, 20))
 
         # Export to Excel Label
         lbl_export_xl = ctk.CTkLabel(tbvmenu.tab("Scope"),
@@ -271,7 +278,7 @@ def main():
         tbv_curve_charts.add("Efficient Curve")
         tbv_curve_charts.add("Hypothetical Curve")
         tbv_curve_charts.add("Cost Avoidance")
-        tbv_curve_charts.add("Batch Curve")
+        tbv_curve_charts.add("Batches Curve")
 
         # Image with Excel icon
         excel_icon = ctk.CTkImage(light_image=Image.open(excel_icon_path),
@@ -280,8 +287,8 @@ def main():
 
         # Image with Download Icon
         download_icon = ctk.CTkImage(light_image=Image.open(download_icon_path),
-                                  dark_image=Image.open(download_icon_path),
-                                  size=(34, 34))
+                                     dark_image=Image.open(download_icon_path),
+                                     size=(34, 34))
 
         def toggle_chart_mode_selection(str_var: ctk.StringVar, chart_name: str) -> None:
             '''
@@ -316,16 +323,22 @@ def main():
         # Switch in order to toggle between Parts/Acq Cost chart visualization
         swt_toggle_parts_acqcost_eff = ctk.CTkSwitch(tbv_curve_charts.tab("Efficient Curve"),
                                                      text="",
-                                                     command=lambda: (toggle_chart_mode_selection(chart_mode_selection_eff, 'eff'),
-                                                                      callback_func_chart_mode_toggle(chart_mode_selection_eff, 'eff',
-                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_list_acqcost_eff, bup.canvas_list_acqcost_hyp])),
+                                                     command=lambda: (
+                                                     toggle_chart_mode_selection(chart_mode_selection_eff, 'eff'),
+                                                     callback_func_chart_mode_toggle(chart_mode_selection_eff, 'eff',
+                                                                                     [bup.canvas_eff, bup.canvas_hyp,
+                                                                                      bup.canvas_list_acqcost_eff,
+                                                                                      bup.canvas_list_acqcost_hyp])),
                                                      width=45, height=12, button_color='orange', fg_color='#ad7102',
                                                      )
         swt_toggle_parts_acqcost_hyp = ctk.CTkSwitch(tbv_curve_charts.tab("Hypothetical Curve"),
                                                      text="",
-                                                     command=lambda: (toggle_chart_mode_selection(chart_mode_selection_hyp, 'hyp'),
-                                                                      callback_func_chart_mode_toggle(chart_mode_selection_hyp, 'hyp',
-                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_list_acqcost_eff, bup.canvas_list_acqcost_hyp])),
+                                                     command=lambda: (
+                                                     toggle_chart_mode_selection(chart_mode_selection_hyp, 'hyp'),
+                                                     callback_func_chart_mode_toggle(chart_mode_selection_hyp, 'hyp',
+                                                                                     [bup.canvas_eff, bup.canvas_hyp,
+                                                                                      bup.canvas_list_acqcost_eff,
+                                                                                      bup.canvas_list_acqcost_hyp])),
                                                      width=45, height=12, button_color='orange', fg_color='#ad7102'
                                                      )
 
@@ -345,19 +358,25 @@ def main():
                                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                                     dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                                     state='readonly',
-                                                    command=lambda value: (callback_func_chart_mode_toggle(chart_mode_selection_eff, 'eff',
-                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_list_acqcost_eff, bup.canvas_list_acqcost_hyp],
-                                                                                                      cbx_triggered=True,
-                                                                                                      cbx_selected=value)))
+                                                    command=lambda value: (
+                                                        callback_func_chart_mode_toggle(chart_mode_selection_eff, 'eff',
+                                                                                        [bup.canvas_eff, bup.canvas_hyp,
+                                                                                         bup.canvas_list_acqcost_eff,
+                                                                                         bup.canvas_list_acqcost_hyp],
+                                                                                        cbx_triggered=True,
+                                                                                        cbx_selected=value)))
         cbx_selected_scenario_hyp = ctk.CTkComboBox(tbv_curve_charts.tab("Hypothetical Curve"),
                                                     height=20, width=130,
                                                     font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                                     dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                                     state='readonly',
-                                                    command=lambda value: (callback_func_chart_mode_toggle(chart_mode_selection_hyp, 'hyp',
-                                                                                                      [bup.canvas_eff, bup.canvas_hyp, bup.canvas_list_acqcost_eff, bup.canvas_list_acqcost_hyp],
-                                                                                                      cbx_triggered=True,
-                                                                                                      cbx_selected=value)))
+                                                    command=lambda value: (
+                                                        callback_func_chart_mode_toggle(chart_mode_selection_hyp, 'hyp',
+                                                                                        [bup.canvas_eff, bup.canvas_hyp,
+                                                                                         bup.canvas_list_acqcost_eff,
+                                                                                         bup.canvas_list_acqcost_hyp],
+                                                                                        cbx_triggered=True,
+                                                                                        cbx_selected=value)))
 
         # Function that will be called to evaluate the control variable and Show/Hide buttons (Export Date/Save Image)
         def callback_func_scenario_add(scenarios_count) -> None:
@@ -372,15 +391,19 @@ def main():
 
             if scenarios_count.get() == 1:
                 # Show the Export to Excel/Save Image buttons and hide the Scenario Creation message
-                btn_export_data_eff.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
-                btn_export_data_hyp.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
-                btn_save_image_eff.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
-                btn_save_image_hyp.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
-                swt_toggle_parts_acqcost_eff.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
-                swt_toggle_parts_acqcost_hyp.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
-                lbl_chart_mode_eff.place(relx=0.88, rely=0.02, anchor="e")
-                lbl_chart_mode_hyp.place(relx=0.88, rely=0.02, anchor="e")
                 lbl_pending_scenario.place_forget()
+                # Efficient Curve Screen
+                btn_export_data_eff.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
+                btn_save_image_eff.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
+                swt_toggle_parts_acqcost_eff.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
+                lbl_chart_mode_eff.place(relx=0.88, rely=0.02, anchor="e")
+                # Hypothetical Curve Screen
+                btn_export_data_hyp.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
+                btn_save_image_hyp.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
+                swt_toggle_parts_acqcost_hyp.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
+                lbl_chart_mode_hyp.place(relx=0.88, rely=0.02, anchor="e")
+                # Batches Screen
+                btn_export_data_batches.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
 
                 # Only in the first time, the ComboBox 'placeholder' will have the first Scenario
                 cbx_selected_scenario_eff.set(list(bup.scenario_dataframes.keys())[0])
@@ -400,8 +423,8 @@ def main():
             else:
                 pass
 
-
-        def callback_func_chart_mode_toggle(chart_mode: ctk.StringVar, chart_name: str, mpl_canvas_list: list, cbx_triggered:bool=False, cbx_selected:str=None) -> None:
+        def callback_func_chart_mode_toggle(chart_mode: ctk.StringVar, chart_name: str, mpl_canvas_list: list,
+                                            cbx_triggered: bool = False, cbx_selected: str = None) -> None:
             '''
             This is the function that will handle the Charts in different mode exhibition.
             It will be called whenever a CTkSwitch is toggled, and based on the variable, it decides what Chart to show (Parts/Acq Cost)
@@ -455,7 +478,7 @@ def main():
                             # Remove Scenario ComboBox and Acq Cost Chart
                             cbx_selected_scenario_hyp.place_forget()
                             last_acq_cost_canvas_hyp.get_tk_widget().place_forget()
-                        
+
             elif cbx_triggered == True:
                 # Getting the index to search on the list, based on the last char of value, ex: 0 for 'Scenario_0'
                 chart_index = int(cbx_selected[-1])
@@ -470,8 +493,7 @@ def main():
                 elif chart_name == 'hyp':
                     last_acq_cost_canvas_hyp.get_tk_widget().place_forget()
                     list_acqcost_hyp_charts[chart_index].get_tk_widget().place(relx=0.5, rely=0.46, anchor=ctk.CENTER)
-                    last_acq_cost_canvas_hyp =  list_acqcost_hyp_charts[chart_index]
-
+                    last_acq_cost_canvas_hyp = list_acqcost_hyp_charts[chart_index]
 
         def callback_func_costavoid_cbx(cbx_selected, costavoid_canvas_list: list):
             '''
@@ -481,9 +503,9 @@ def main():
             # Getting the index to search on the list, based on the last char of value, ex: 0 for 'Scenario_0'
             chart_index = int(cbx_selected[-1])
 
-            print('Cost Avoidance ComboBox was triggered!')
-            print(cbx_selected)
-
+            # TO DO: Cost Avoidance screen with different scenarios
+            # print('Cost Avoidance ComboBox was triggered!')
+            # print(cbx_selected)
 
         # Tracing Scenario creation variable and calling the respective functions every time the variable changes
         var_scenarios_count.trace_add("write", callback=lambda *args: callback_func_scenario_add(var_scenarios_count))
@@ -512,17 +534,24 @@ def main():
 
         # Export data button - Efficient
         btn_export_data_eff = ctk.CTkButton(tbv_curve_charts.tab("Efficient Curve"), text="Export to Excel",
-                                        font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                        image=excel_icon, compound="top", fg_color="transparent",
-                                        text_color="#000000", hover=False, border_spacing=1,
-                                        command=lambda: (export_data('efficient_chart')))
+                                            font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                            image=excel_icon, compound="top", fg_color="transparent",
+                                            text_color="#000000", hover=False, border_spacing=1,
+                                            command=lambda: (export_data('efficient_chart')))
 
         # Export data button - Hypothetical
         btn_export_data_hyp = ctk.CTkButton(tbv_curve_charts.tab("Hypothetical Curve"), text="Export to Excel",
-                                        font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                        image=excel_icon, compound="top", fg_color="transparent",
-                                        text_color="#000000", hover=False, border_spacing=1,
-                                        command=lambda: (export_data('hypothetical_chart')))
+                                            font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                            image=excel_icon, compound="top", fg_color="transparent",
+                                            text_color="#000000", hover=False, border_spacing=1,
+                                            command=lambda: (export_data('hypothetical_chart')))
+
+        # Export data button - Batches
+        btn_export_data_batches = ctk.CTkButton(tbv_curve_charts.tab("Batches Curve"), text="Export to Excel",
+                                                font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                                image=excel_icon, compound="top", fg_color="transparent",
+                                                text_color="#000000", hover=False, border_spacing=1,
+                                                command=lambda: (export_data('batches')))
 
         # Label with the instruction to create a Scenario
         lbl_pending_scenario = ctk.CTkLabel(tbvmenu.tab("Scenarios"),
@@ -540,7 +569,7 @@ def main():
             efficient_curve_window = tbv_curve_charts.tab("Efficient Curve")
             hypothetical_curve_window = tbv_curve_charts.tab("Hypothetical Curve")
             cost_avoidance_window = tbv_curve_charts.tab("Cost Avoidance")
-            batches_curve_window = tbv_curve_charts.tab("Batch Curve")
+            batches_curve_window = tbv_curve_charts.tab("Batches Curve")
 
             # Window settings
             scenario_window.title("Add New Scenario")
@@ -563,15 +592,16 @@ def main():
             Function that handles Scenarios creation, creates the window elements and interacts with the Scenario List.
             It will also return the Canvas for each Chart, enabling toggle function to handle the exhibition
             '''
-            bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window, hypothetical_curve_window, cost_avoidance_window, 
+            bup.create_scenario(scenario_window, var_scenarios_count, bup_scope, efficient_curve_window,
+                                hypothetical_curve_window, cost_avoidance_window,
                                 batches_curve_window, bup_cost)
 
         # Create Scenario button
         btn_create_scenario = ctk.CTkButton(tbvmenu.tab("Scenarios"), text='Create Scenario',
-                                      command=lambda: (open_form_add_new_scenario()),
-                                      font=ctk.CTkFont('open sans', size=12, weight='bold'),
-                                      bg_color="#cfcfcf", fg_color="#009898", hover_color="#006464",
-                                      width=200, height=30, corner_radius=30
+                                            command=lambda: (open_form_add_new_scenario()),
+                                            font=ctk.CTkFont('open sans', size=12, weight='bold'),
+                                            bg_color="#cfcfcf", fg_color="#009898", hover_color="#006464",
+                                            width=200, height=30, corner_radius=30
                                             )
         btn_create_scenario.place(relx=0.5, rely=0.93, anchor=ctk.CENTER)
 
@@ -580,13 +610,13 @@ def main():
 
         # Scenarios ComboBox
         cbx_cost_avoidance = ctk.CTkComboBox(cost_avoidance_screen,
-                                            height=20, width=130,
-                                            font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                            dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                            state='readonly',
-                                            command=lambda value: (callback_func_costavoid_cbx(cbx_selected=value,
-                                                                                               costavoid_canvas_list=bup.canvas_list_cost_avoidance))
-                                            )
+                                             height=20, width=130,
+                                             font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                             dropdown_font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                             state='readonly',
+                                             command=lambda value: (callback_func_costavoid_cbx(cbx_selected=value,
+                                                                                                costavoid_canvas_list=bup.canvas_list_cost_avoidance))
+                                             )
 
         # Tab 4 - Stock Analysis
         # btn_read_stock_data = ctk.CTkButton(tbvmenu.tab("Stock Analysis"), text='Read Stock Data',
@@ -622,23 +652,23 @@ def main():
 
     # Logo object CTkImage
     image_logo = ctk.CTkImage(light_image=Image.open(logo_path),
-                          dark_image=Image.open(logo_path),
-                          size=(270, 235))
+                              dark_image=Image.open(logo_path),
+                              size=(270, 235))
 
     # Logo put into the Label
     lblLogo = ctk.CTkLabel(main_screen, image=image_logo, text="",
-                        bg_color="#242424")
+                           bg_color="#242424")
     lblLogo.place(relx=0.5, rely=0.45, anchor=ctk.CENTER)
 
     # Title CTkImage object
     image_title = ctk.CTkImage(light_image=Image.open(title_path),
-                          dark_image=Image.open(title_path),
-                          size=(620, 110))
+                               dark_image=Image.open(title_path),
+                               size=(620, 110))
 
     # Title put into the Label
     lblMainTitle = ctk.CTkLabel(main_screen, image=image_title,
-                             text="",
-                             bg_color="#242424")
+                                text="",
+                                bg_color="#242424")
     lblMainTitle.place(relx=0.5, rely=0.1, anchor=ctk.CENTER)
 
     # Version Label
@@ -656,12 +686,12 @@ def main():
                               size=(60, 60))
     # "Help button"
     btn_help = ctk.CTkButton(main_screen, image=image_help,
-                                    text="", width=60, height=60,
-                                    bg_color="#242424",
-                                    fg_color='#242424',
-                                    hover=False,
-                                    # command=lambda: webbrowser.open(f'file:///{readme_path}', new=2)
-                                    command=lambda: webbrowser.open(readme_url, new=2)
+                             text="", width=60, height=60,
+                             bg_color="#242424",
+                             fg_color='#242424',
+                             hover=False,
+                             # command=lambda: webbrowser.open(f'file:///{readme_path}', new=2)
+                             command=lambda: webbrowser.open(readme_url, new=2)
                              )
     btn_help.place(relx=0.885, rely=0.87)
 

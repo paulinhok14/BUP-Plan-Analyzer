@@ -832,8 +832,8 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         # Calling function to generate Cost Avoidance Chart
         generate_cost_avoidance_screen(cost_avoidance_window, scenario_dataframes, scenarios_list, df_scope_with_scenarios, df_dates_eff, df_dates_hyp, bup_cost)
 
-        # Calling function to generate Batches Build-Up chart
-        generate_batches_curve(batches_curve_window, scenarios_list, df_scope_with_scenarios)
+        # Calling function to generate Batches Build-Up chart and return the frames
+        batch_qty_frame, batch_cost_frame = generate_batches_curve(batches_curve_window, scenarios_list, df_scope_with_scenarios)
 
         # Adding 1 to IntVar with the Scenarios count
         var_scenarios_count.set(var_scenarios_count.get() + 1)
@@ -1872,10 +1872,9 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
     '''
     Function that receives the input so as to generate the Build-Up Curve based on batches.
     '''
-    df_scope_with_scenarios.to_excel('df_scope_with_scenarios.xlsx')
-    # Adding 2 tabs to Batch Charts: Parts Qty & Acq Cost
+    # Adding 2 tabs to Batch Charts: Parts Qty & Acq Cost (its inside this function because this screen is generated only if Batches feature was selected)
     # TabView - Batch Charts
-    tbv_batch_charts = ctk.CTkTabview(batches_curve_window, width=620, height=470, corner_radius=15,
+    tbv_batch_charts = ctk.CTkTabview(batches_curve_window, width=600, height=450, corner_radius=15,
                                       segmented_button_fg_color="#009898",
                                       segmented_button_unselected_color="#009898",
                                       segmented_button_selected_color="#006464",
@@ -1958,6 +1957,8 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             .reset_index()
             .rename(columns={'Ecode': 'PNs Qty'})
         )
+        #debug
+        pns_full_procurement_length.to_excel('pns_full_procurement_length.xlsx')
 
         # As it is for visualizing purposes only, I remove 'No Batch Assigned' rows
         df_batches = df_batches[df_batches['Batch'] != 'No Batch Assigned'].reset_index(drop=True)
@@ -1995,7 +1996,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Based on Batches spreasheet, generates Chart Images for Parts Qty batch feature
         def create_qty_batch_chart(df_grouped_qty_delivery_date: pd.DataFrame):
             # Image size
-            width, height = 680, 435
+            width, height = 680, 415
             # Creating figure and axes to insert the chart: Batch Line Items
             fig, ax = plt.subplots(figsize=(width / 100, height / 100),
                                    layout='constrained')  # Layout property that handles "cutting" axes labels
@@ -2037,12 +2038,9 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                     marker='o',
                     markersize=4)
 
-            # debug
-            df_grouped_qty_delivery_date.to_excel('df_grouped_qty_delivery_date.xlsx')
 
             # Batch Chart Settings
             ax.set_ylabel('PNs Count')
-            ax.set_xlabel('Date', loc='right')
             ax.set_title(f'PNs - All Line Items ({df_scope_with_scenarios["Ecode"].count()} PNs)', fontsize=10)
             ax.grid(True)
             plt.legend(loc='upper left', fontsize=8)
@@ -2113,7 +2111,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Based on Batches spreasheet, generates Chart Images for Acq Cost batch feature
         def create_acqcost_batch_chart(df_grouped_acqcost_delivery_date: pd.DataFrame):
             # Image size
-            width, height = 680, 435
+            width, height = 680, 415
             # Creating figure and axes to insert the chart: Batch Line Items
             fig, ax = plt.subplots(figsize=(width / 100, height / 100),
                                    layout='constrained')  # Layout property that handles "cutting" axes labels
@@ -2154,11 +2152,8 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                            marker='o',
                            markersize=4)
 
-            #debug
-            df_grouped_acqcost_delivery_date.to_excel('df_grouped_acqcost_delivery_date.xlsx')
             # Acq Cost Batch Chart Settings
             ax.set_ylabel('Acq Cost (US$)')
-            ax.set_xlabel('Date', loc='right')
             ax.set_title(f'PNs - Acq Cost (US$ {max(df_grouped_acqcost_delivery_date["Cumulative Acq Cost Qty"])/1_000_000:.2f} M)',
                          fontsize=10)
             ax.grid(True)
@@ -2169,7 +2164,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
             # Formatting y-axis to show Millions (US$)
             def millions_formatter(x, pos):
-                return f'{x/1_000_000:.2f}M' if x >= 1_000_000 else f'{x/1_000:.2f}K' if x >= 1_000 else f'{x:.0f}'
+                return f'{x/1_000_000:.0f}M' if x >= 1_000_000 else f'{x/1_000:.0f}K' if x >= 1_000 else f'{x:.0f}'
 
             ax.yaxis.set_major_formatter(FuncFormatter(millions_formatter))
             # Formatting x-axis from YYYY-MM to MM/YYYY
@@ -2246,7 +2241,9 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                                             bg_color='#cfcfcf',
                                             text_color='#000000')
         lbl_no_batches_curve.place(rely=0.5, relx=0.5, anchor=ctk.CENTER)  
-    
+
+    # Returning to create_scenario() scope the Batches Chart Frames so as to place Export Data button in BUP_GUI
+    return batch_qty_frame, batch_cost_frame
 
 
 @function_timer
