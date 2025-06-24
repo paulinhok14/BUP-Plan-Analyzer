@@ -1872,9 +1872,9 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
     '''
     Function that receives the input so as to generate the Build-Up Curve based on batches.
     '''
-    # Adding 2 tabs to Batch Charts: Parts Qty & Acq Cost
+    # Adding 2 tabs to Batch Charts: Parts Qty & Acq Cost (its inside this function because this screen is generated only if Batches feature was selected)
     # TabView - Batch Charts
-    tbv_batch_charts = ctk.CTkTabview(batches_curve_window, width=620, height=470, corner_radius=15,
+    tbv_batch_charts = ctk.CTkTabview(batches_curve_window, width=600, height=450, corner_radius=15,
                                       segmented_button_fg_color="#009898",
                                       segmented_button_unselected_color="#009898",
                                       segmented_button_selected_color="#006464",
@@ -1957,6 +1957,8 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             .reset_index()
             .rename(columns={'Ecode': 'PNs Qty'})
         )
+        #debug
+        pns_full_procurement_length.to_excel('pns_full_procurement_length.xlsx')
 
         # As it is for visualizing purposes only, I remove 'No Batch Assigned' rows
         df_batches = df_batches[df_batches['Batch'] != 'No Batch Assigned'].reset_index(drop=True)
@@ -1991,13 +1993,10 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Merging with df_batches
         df_batches = df_batches.merge(total_acq_cost_batch, on='Batch Date', how='left')
 
-        # debug
-        df_batches.to_excel('df_batches.xlsx')
-
         # Based on Batches spreasheet, generates Chart Images for Parts Qty batch feature
         def create_qty_batch_chart(df_grouped_qty_delivery_date: pd.DataFrame):
             # Image size
-            width, height = 680, 435
+            width, height = 680, 415
             # Creating figure and axes to insert the chart: Batch Line Items
             fig, ax = plt.subplots(figsize=(width / 100, height / 100),
                                    layout='constrained')  # Layout property that handles "cutting" axes labels
@@ -2042,7 +2041,6 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
 
             # Batch Chart Settings
             ax.set_ylabel('PNs Count')
-            ax.set_xlabel('Date', loc='right')
             ax.set_title(f'PNs - All Line Items ({df_scope_with_scenarios["Ecode"].count()} PNs)', fontsize=10)
             ax.grid(True)
             plt.legend(loc='upper left', fontsize=8)
@@ -2113,7 +2111,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Based on Batches spreasheet, generates Chart Images for Acq Cost batch feature
         def create_acqcost_batch_chart(df_grouped_acqcost_delivery_date: pd.DataFrame):
             # Image size
-            width, height = 680, 435
+            width, height = 680, 415
             # Creating figure and axes to insert the chart: Batch Line Items
             fig, ax = plt.subplots(figsize=(width / 100, height / 100),
                                    layout='constrained')  # Layout property that handles "cutting" axes labels
@@ -2156,7 +2154,6 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
 
             # Acq Cost Batch Chart Settings
             ax.set_ylabel('Acq Cost (US$)')
-            ax.set_xlabel('Date', loc='right')
             ax.set_title(f'PNs - Acq Cost (US$ {max(df_grouped_acqcost_delivery_date["Cumulative Acq Cost Qty"])/1_000_000:.2f} M)',
                          fontsize=10)
             ax.grid(True)
@@ -2167,7 +2164,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             plt.subplots_adjust(left=0.15, right=0.9, bottom=0.2, top=0.9)
             # Formatting y-axis to show Millions (US$)
             def millions_formatter(x, pos):
-                return f'{x/1_000_000:.2f}M' if x >= 1_000_000 else f'{x/1_000:.2f}K' if x >= 1_000 else f'{x:.0f}'
+                return f'{x/1_000_000:.0f}M' if x >= 1_000_000 else f'{x/1_000:.0f}K' if x >= 1_000 else f'{x:.0f}'
 
             ax.yaxis.set_major_formatter(FuncFormatter(millions_formatter))
             # Formatting x-axis from YYYY-MM to MM/YYYY

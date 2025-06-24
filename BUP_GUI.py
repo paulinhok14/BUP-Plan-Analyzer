@@ -272,8 +272,6 @@ def main():
         tbv_curve_charts.add("Efficient Curve")
         tbv_curve_charts.add("Hypothetical Curve")
         tbv_curve_charts.add("Cost Avoidance")
-
-        # Batches TabView
         tbv_curve_charts.add("Batches Curve")
 
         # Image with Excel icon
