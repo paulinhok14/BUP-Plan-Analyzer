@@ -1872,7 +1872,6 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
     '''
     Function that receives the input so as to generate the Build-Up Curve based on batches.
     '''
-    df_scope_with_scenarios.to_excel('df_scope_with_scenarios.xlsx')
     # Adding 2 tabs to Batch Charts: Parts Qty & Acq Cost
     # TabView - Batch Charts
     tbv_batch_charts = ctk.CTkTabview(batches_curve_window, width=620, height=470, corner_radius=15,
@@ -1992,6 +1991,9 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Merging with df_batches
         df_batches = df_batches.merge(total_acq_cost_batch, on='Batch Date', how='left')
 
+        # debug
+        df_batches.to_excel('df_batches.xlsx')
+
         # Based on Batches spreasheet, generates Chart Images for Parts Qty batch feature
         def create_qty_batch_chart(df_grouped_qty_delivery_date: pd.DataFrame):
             # Image size
@@ -2037,8 +2039,6 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                     marker='o',
                     markersize=4)
 
-            # debug
-            df_grouped_qty_delivery_date.to_excel('df_grouped_qty_delivery_date.xlsx')
 
             # Batch Chart Settings
             ax.set_ylabel('PNs Count')
@@ -2154,8 +2154,6 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                            marker='o',
                            markersize=4)
 
-            #debug
-            df_grouped_acqcost_delivery_date.to_excel('df_grouped_acqcost_delivery_date.xlsx')
             # Acq Cost Batch Chart Settings
             ax.set_ylabel('Acq Cost (US$)')
             ax.set_xlabel('Date', loc='right')

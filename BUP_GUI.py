@@ -191,15 +191,16 @@ def main():
                                                                   "closed and you have access to the Downloads folder.")
 
                 case 'batches':
+                    print('exported batches')
 
                     try:
                         full_path = export_output_path + r'\BUP_Analyzer_Batches_Data.xlsx'
                         with pd.ExcelWriter(full_path) as writer:
 
                             df_export_batches_data = pd.DataFrame()
-                            for scenario_name, scenario_df_list in bup.scenario_dataframes.items():
-                                df_export_batches_data = pd.concat([df_export_batches_data, scenario_df_list[0]],
-                                                                       ignore_index=True)
+                            # for scenario_name, scenario_df_list in bup.scenario_dataframes.items():
+                            #     df_export_batches_data = pd.concat([df_export_batches_data, scenario_df_list[0]],
+                            #                                            ignore_index=True)
 
                             # eff_consolidated_scenarios.to_excel(writer, sheet_name='Batches Data', index=False)
                         messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
@@ -271,7 +272,9 @@ def main():
         tbv_curve_charts.add("Efficient Curve")
         tbv_curve_charts.add("Hypothetical Curve")
         tbv_curve_charts.add("Cost Avoidance")
-        tbv_curve_charts.add("Batch Curve")
+
+        # Batches TabView
+        tbv_curve_charts.add("Batches Curve")
 
         # Image with Excel icon
         excel_icon = ctk.CTkImage(light_image=Image.open(excel_icon_path),
@@ -372,15 +375,19 @@ def main():
 
             if scenarios_count.get() == 1:
                 # Show the Export to Excel/Save Image buttons and hide the Scenario Creation message
-                btn_export_data_eff.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
-                btn_export_data_hyp.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
-                btn_save_image_eff.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
-                btn_save_image_hyp.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
-                swt_toggle_parts_acqcost_eff.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
-                swt_toggle_parts_acqcost_hyp.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
-                lbl_chart_mode_eff.place(relx=0.88, rely=0.02, anchor="e")
-                lbl_chart_mode_hyp.place(relx=0.88, rely=0.02, anchor="e")
                 lbl_pending_scenario.place_forget()
+                # Efficient Curve Screen
+                btn_export_data_eff.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
+                btn_save_image_eff.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
+                swt_toggle_parts_acqcost_eff.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
+                lbl_chart_mode_eff.place(relx=0.88, rely=0.02, anchor="e")
+                # Hypothetical Curve Screen
+                btn_export_data_hyp.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
+                btn_save_image_hyp.place(relx=0.08, rely=0.93, anchor=ctk.CENTER)
+                swt_toggle_parts_acqcost_hyp.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
+                lbl_chart_mode_hyp.place(relx=0.88, rely=0.02, anchor="e")
+                # Batches Screen
+                btn_export_data_batches.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
 
                 # Only in the first time, the ComboBox 'placeholder' will have the first Scenario
                 cbx_selected_scenario_eff.set(list(bup.scenario_dataframes.keys())[0])
@@ -524,6 +531,13 @@ def main():
                                         text_color="#000000", hover=False, border_spacing=1,
                                         command=lambda: (export_data('hypothetical_chart')))
 
+        # Export data button - Batches
+        btn_export_data_batches = ctk.CTkButton(tbv_curve_charts.tab("Batches Curve"), text="Export to Excel",
+                                            font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                            image=excel_icon, compound="top", fg_color="transparent",
+                                            text_color="#000000", hover=False, border_spacing=1,
+                                            command=lambda: (export_data('batches')))
+
         # Label with the instruction to create a Scenario
         lbl_pending_scenario = ctk.CTkLabel(tbvmenu.tab("Scenarios"),
                                             text="Please create a Scenario in order to generate Build-Up chart.",
@@ -540,7 +554,7 @@ def main():
             efficient_curve_window = tbv_curve_charts.tab("Efficient Curve")
             hypothetical_curve_window = tbv_curve_charts.tab("Hypothetical Curve")
             cost_avoidance_window = tbv_curve_charts.tab("Cost Avoidance")
-            batches_curve_window = tbv_curve_charts.tab("Batch Curve")
+            batches_curve_window = tbv_curve_charts.tab("Batches Curve")
 
             # Window settings
             scenario_window.title("Add New Scenario")
