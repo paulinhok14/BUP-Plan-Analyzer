@@ -832,8 +832,8 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         # Calling function to generate Cost Avoidance Chart
         generate_cost_avoidance_screen(cost_avoidance_window, scenario_dataframes, scenarios_list, df_scope_with_scenarios, df_dates_eff, df_dates_hyp, bup_cost)
 
-        # Calling function to generate Batches Build-Up chart
-        generate_batches_curve(batches_curve_window, scenarios_list, df_scope_with_scenarios)
+        # Calling function to generate Batches Build-Up chart and return the frames
+        batch_qty_frame, batch_cost_frame = generate_batches_curve(batches_curve_window, scenarios_list, df_scope_with_scenarios)
 
         # Adding 1 to IntVar with the Scenarios count
         var_scenarios_count.set(var_scenarios_count.get() + 1)
@@ -2241,7 +2241,9 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                                             bg_color='#cfcfcf',
                                             text_color='#000000')
         lbl_no_batches_curve.place(rely=0.5, relx=0.5, anchor=ctk.CENTER)  
-    
+
+    # Returning to create_scenario() scope the Batches Chart Frames so as to place Export Data button in BUP_GUI
+    return batch_qty_frame, batch_cost_frame
 
 
 @function_timer
