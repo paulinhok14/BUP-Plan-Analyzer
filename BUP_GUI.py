@@ -121,7 +121,7 @@ def main():
         def export_data(xl_spreadsheet: str) -> None:
             """ Function that will run when user click on "Export to Excel" button.
             param xl_spreadsheet: It contains the specific spreadsheet that will be exported.
-            Possibilities: 'efficient_chart', 'hypothetical_chart' and 'scope'.
+            Possibilities: 'efficient_chart', 'hypothetical_chart', 'scope', 'batches'.
             All used variables is consumed from bup_plan_analyzer.py.
             """
 
@@ -189,6 +189,25 @@ def main():
                             messagebox.showinfo(title="Error!",
                                                 message=str(ex) + "\n\nPlease make sure that the Excel file is "
                                                                   "closed and you have access to the Downloads folder.")
+
+                case 'batches':
+
+                    try:
+                        full_path = export_output_path + r'\BUP_Analyzer_Batches_Data.xlsx'
+                        with pd.ExcelWriter(full_path) as writer:
+
+                            df_export_batches_data = pd.DataFrame()
+                            for scenario_name, scenario_df_list in bup.scenario_dataframes.items():
+                                df_export_batches_data = pd.concat([df_export_batches_data, scenario_df_list[0]],
+                                                                       ignore_index=True)
+
+                            # eff_consolidated_scenarios.to_excel(writer, sheet_name='Batches Data', index=False)
+                        messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
+
+                    except Exception as ex:
+                        messagebox.showinfo(title="Error!",
+                                            message=str(ex) + "\n\nPlease make sure that the Excel file is "
+                                                              "closed and you have access to the Downloads folder.")
 
         # Tab 1 - Scope
         bup_cost: float = bup_scope.apply(lambda linha: linha['Acq Cost'] * linha['Qty'], axis=1).sum()
