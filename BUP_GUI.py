@@ -14,7 +14,7 @@ active_user = os.getlogin()
 ctk.set_appearance_mode("light")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 # Version
-app_version: str = 'Release: ' + 'v3.0'
+app_version: str = 'Release: ' + 'v3.1'
 
 # Reference Variables
 logo_path = r'src\images\logo.png'
