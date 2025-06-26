@@ -197,18 +197,11 @@ def main():
                                                                   "closed and you have access to the Downloads folder.")
 
                 case 'batches':
-                    print('exported batches')
-
                     try:
                         full_path = export_output_path + r'\BUP_Analyzer_Batches_Data.xlsx'
                         with pd.ExcelWriter(full_path) as writer:
+                            bup.df_batches_full_info.to_excel(writer, sheet_name='Batches Info', index=False)
 
-                            df_export_batches_data = pd.DataFrame()
-                            # for scenario_name, scenario_df_list in bup.scenario_dataframes.items():
-                            #     df_export_batches_data = pd.concat([df_export_batches_data, scenario_df_list[0]],
-                            #                                            ignore_index=True)
-
-                            # eff_consolidated_scenarios.to_excel(writer, sheet_name='Batches Data', index=False)
                         messagebox.showinfo(title="Success!", message=str("Excel sheet was exported to: " + full_path))
 
                     except Exception as ex:
@@ -218,7 +211,6 @@ def main():
 
         # Tab 1 - Scope
         bup_cost: float = bup_scope.apply(lambda linha: linha['Acq Cost'] * linha['Qty'], axis=1).sum()
-        # print(bup_cost)
         bup_cost_label = f'List Value: US$ {(bup_cost / 1000000):.2f} MM'
 
         label_cost = ctk.CTkLabel(tbvmenu.tab("Scope"), text=bup_cost_label,
@@ -403,7 +395,26 @@ def main():
                 swt_toggle_parts_acqcost_hyp.place(relx=0.94, rely=0.02, anchor=ctk.CENTER)
                 lbl_chart_mode_hyp.place(relx=0.88, rely=0.02, anchor="e")
                 # Batches Screen
-                btn_export_data_batches.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
+                # Export data button - Batches (Parts Qty)
+                btn_export_data_batches_parts = ctk.CTkButton(master=bup.tbv_batch_charts.tab('Parts Qty'),
+                                                              text="Export to Excel",
+                                                              font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                                              image=excel_icon, compound="top", fg_color="transparent",
+                                                              bg_color='#cfcfcf',
+                                                              text_color="#000000", hover=False, border_spacing=1,
+                                                              command=lambda: (export_data('batches')))
+
+                # Export data button - Batches (Acq Cost)
+                btn_export_data_batches_cost = ctk.CTkButton(master=bup.tbv_batch_charts.tab('Acq Cost'),
+                                                             text="Export to Excel",
+                                                             font=ctk.CTkFont('open sans', size=10, weight='bold'),
+                                                             image=excel_icon, compound="top", fg_color="transparent",
+                                                             bg_color='#cfcfcf',
+                                                             text_color="#000000", hover=False, border_spacing=1,
+                                                             command=lambda: (export_data('batches')))
+                # Placing
+                btn_export_data_batches_parts.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
+                btn_export_data_batches_cost.place(relx=0.92, rely=0.93, anchor=ctk.CENTER)
 
                 # Only in the first time, the ComboBox 'placeholder' will have the first Scenario
                 cbx_selected_scenario_eff.set(list(bup.scenario_dataframes.keys())[0])
@@ -540,18 +551,11 @@ def main():
                                             command=lambda: (export_data('efficient_chart')))
 
         # Export data button - Hypothetical
-        btn_export_data_hyp = ctk.CTkButton(tbv_curve_charts.tab("Hypothetical Curve"), text="Export to Excel",
+        btn_export_data_hyp = ctk.CTkButton(master=tbv_curve_charts.tab('Hypothetical Curve'), text="Export to Excel",
                                             font=ctk.CTkFont('open sans', size=10, weight='bold'),
                                             image=excel_icon, compound="top", fg_color="transparent",
                                             text_color="#000000", hover=False, border_spacing=1,
                                             command=lambda: (export_data('hypothetical_chart')))
-
-        # Export data button - Batches
-        btn_export_data_batches = ctk.CTkButton(tbv_curve_charts.tab("Batches Curve"), text="Export to Excel",
-                                                font=ctk.CTkFont('open sans', size=10, weight='bold'),
-                                                image=excel_icon, compound="top", fg_color="transparent",
-                                                text_color="#000000", hover=False, border_spacing=1,
-                                                command=lambda: (export_data('batches')))
 
         # Label with the instruction to create a Scenario
         lbl_pending_scenario = ctk.CTkLabel(tbvmenu.tab("Scenarios"),

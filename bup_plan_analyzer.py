@@ -59,6 +59,11 @@ df_scope_with_scenarios, scenario_dataframes = None, {}
 # Global variables to store FigureCanvasTkAgg objects to be toggled in SwitchButton. Changing Build-Up curves from Parts/AcqCost and also Cost Avoidance
 canvas_eff, canvas_hyp, canvas_list_acqcost_eff, canvas_list_acqcost_hyp, canvas_list_cost_avoidance = None, None, [], [], []
 
+# Global TabView from batcharts, so as to be accessed in BUP_GUI, insertind Export buttons
+tbv_batch_charts = None
+# Global Batch spreadsheet to be exported by export_data() func in BUP_GUI
+df_batches_full_info = pd.DataFrame()
+
 # Log Configs
 open('execution_info.log', 'w').close()  # Clean log file before system execution
 log_format = "%(asctime)s: %(levelname)s: %(message)s"
@@ -833,7 +838,7 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
         generate_cost_avoidance_screen(cost_avoidance_window, scenario_dataframes, scenarios_list, df_scope_with_scenarios, df_dates_eff, df_dates_hyp, bup_cost)
 
         # Calling function to generate Batches Build-Up chart and return the frames
-        batch_qty_frame, batch_cost_frame = generate_batches_curve(batches_curve_window, scenarios_list, df_scope_with_scenarios)
+        generate_batches_curve(batches_curve_window, scenarios_list, df_scope_with_scenarios)
 
         # Adding 1 to IntVar with the Scenarios count
         var_scenarios_count.set(var_scenarios_count.get() + 1)
@@ -854,7 +859,6 @@ def create_scenario(scenario_window: ctk.CTkFrame, var_scenarios_count: ctk.IntV
                                width=100, height=30, corner_radius=30, cursor="hand2"
                                )
     btn_cancel.place(relx=0.7, rely=0.95, anchor=ctk.CENTER)
-
 
 
 @function_timer
@@ -1873,8 +1877,10 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
     Function that receives the input so as to generate the Build-Up Curve based on batches.
     '''
     # Adding 2 tabs to Batch Charts: Parts Qty & Acq Cost (its inside this function because this screen is generated only if Batches feature was selected)
+    # Global Scope tbv_batch_charts so as to be invoked in BUP_GUI.py
+    global tbv_batch_charts, df_batches_full_info
     # TabView - Batch Charts
-    tbv_batch_charts = ctk.CTkTabview(batches_curve_window, width=600, height=450, corner_radius=15,
+    tbv_batch_charts = ctk.CTkTabview(batches_curve_window, width=600, height=500, corner_radius=15,
                                       segmented_button_fg_color="#009898",
                                       segmented_button_unselected_color="#009898",
                                       segmented_button_selected_color="#006464",
@@ -1882,6 +1888,9 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
     tbv_batch_charts.pack()
     tbv_batch_charts.add('Parts Qty')
     tbv_batch_charts.add('Acq Cost')
+
+    # Export to Excel button - Batches Info
+
     # Naming Frames
     batch_qty_frame = tbv_batch_charts.tab('Parts Qty')
     batch_cost_frame = tbv_batch_charts.tab('Acq Cost')
@@ -1957,8 +1966,9 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
             .reset_index()
             .rename(columns={'Ecode': 'PNs Qty'})
         )
-        #debug
-        pns_full_procurement_length.to_excel('pns_full_procurement_length.xlsx')
+
+        # Copying content from pns_full_procurement_length to df_batches_full_info
+        df_batches_full_info = pns_full_procurement_length.copy()
 
         # As it is for visualizing purposes only, I remove 'No Batch Assigned' rows
         df_batches = df_batches[df_batches['Batch'] != 'No Batch Assigned'].reset_index(drop=True)
@@ -1983,8 +1993,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         df_batches[['Batch Start Date', 'Batch Date']] = df_batches[['Batch Start Date', 'Batch Date']].apply(
             lambda col: pd.to_datetime(col, format='%d/%m/%Y')
         )
-        # Making a copy of df_batches without dropping "No Batch Assigned" Parts
-        df_batches_full_info = df_batches.copy()
+
         # Adding Acq Cost (US$) per Batch info
         total_acq_cost_batch = pns_full_procurement_length.groupby('Batch Date')['Total Part Acq Cost'].sum().reset_index()
         total_acq_cost_batch = total_acq_cost_batch[total_acq_cost_batch['Batch Date'] != 'No Batch Assigned']
@@ -1996,7 +2005,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Based on Batches spreasheet, generates Chart Images for Parts Qty batch feature
         def create_qty_batch_chart(df_grouped_qty_delivery_date: pd.DataFrame):
             # Image size
-            width, height = 680, 415
+            width, height = 680, 365
             # Creating figure and axes to insert the chart: Batch Line Items
             fig, ax = plt.subplots(figsize=(width / 100, height / 100),
                                    layout='constrained')  # Layout property that handles "cutting" axes labels
@@ -2111,7 +2120,7 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
         # Based on Batches spreasheet, generates Chart Images for Acq Cost batch feature
         def create_acqcost_batch_chart(df_grouped_acqcost_delivery_date: pd.DataFrame):
             # Image size
-            width, height = 680, 415
+            width, height = 680, 365
             # Creating figure and axes to insert the chart: Batch Line Items
             fig, ax = plt.subplots(figsize=(width / 100, height / 100),
                                    layout='constrained')  # Layout property that handles "cutting" axes labels
@@ -2241,9 +2250,6 @@ def generate_batches_curve(batches_curve_window: ctk.CTkFrame, scenarios_list: l
                                             bg_color='#cfcfcf',
                                             text_color='#000000')
         lbl_no_batches_curve.place(rely=0.5, relx=0.5, anchor=ctk.CENTER)  
-
-    # Returning to create_scenario() scope the Batches Chart Frames so as to place Export Data button in BUP_GUI
-    return batch_qty_frame, batch_cost_frame
 
 
 @function_timer
